@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+/* Fashinza design tokens */
+@theme {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --color-navy: #14263d;
+  --color-navy-700: #1c3352;
+  --color-navy-50: #eef2f7;
+  --color-slate-blue: #456078;
+  --color-teal: #168c83;
+  --color-teal-700: #11706a;
+  --color-teal-50: #e8f5f4;
+  --color-canvas: #f7f8fa;
+  --color-ink: #202938;
+  --color-muted: #5b6676;
+  --color-line: #e3e7ec;
+  --color-danger: #b42318;
+  --color-danger-50: #fef3f2;
+  --color-success: #127a4a;
+  --color-success-50: #ecfdf3;
+  --color-warning: #a15c07;
+  --color-warning-50: #fffaeb;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  --shadow-card: 0 1px 2px rgb(20 38 61 / 0.05);
+  --shadow-pop: 0 8px 24px rgb(20 38 61 / 0.12);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  *,
+  ::before,
+  ::after {
+    border-color: var(--color-line);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-teal);
+    outline-offset: 2px;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--color-navy);
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer components {
+  .container-page {
+    width: 100%;
+    max-width: 72rem;
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+  @media (min-width: 640px) {
+    .container-page {
+      padding-inline: 1.5rem;
+    }
+  }
+}

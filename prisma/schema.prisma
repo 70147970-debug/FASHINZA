@@ -1,0 +1,596 @@
+// Fashinza — database schema (PostgreSQL, Prisma 7)
+// Money is stored as Decimal(12,2). Files are stored outside the database;
+// only metadata and the storage key are kept here.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────────── Enums ─────────────────────────────
+
+enum Role {
+  BRAND
+  MANUFACTURER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum VerificationStatus {
+  UNSUBMITTED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum GarmentCategory {
+  T_SHIRTS
+  SHIRTS
+  DRESSES
+  DENIM
+  TROUSERS
+  ACTIVEWEAR
+  OUTERWEAR
+  KNITWEAR
+  HOODIES_SWEATSHIRTS
+  KIDSWEAR
+  SLEEPWEAR
+  ACCESSORIES
+}
+
+enum CapabilityKind {
+  PRODUCTION
+  FABRIC
+  FINISHING
+}
+
+enum DocumentType {
+  CERTIFICATION
+  BUSINESS_REGISTRATION
+  OTHER
+}
+
+enum DocumentStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum ProjectStatus {
+  DRAFT
+  SUBMITTED
+  QUOTING
+  QUOTATION_ACCEPTED
+  IN_PRODUCTION
+  QUALITY_CHECK
+  READY_TO_SHIP
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum QuotationStatus {
+  ACTIVE
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum OrderStatus {
+  IN_PRODUCTION
+  QUALITY_CHECK
+  READY_TO_SHIP
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum MilestoneStage {
+  FABRIC_SOURCING
+  SAMPLING
+  CUTTING
+  STITCHING
+  FINISHING
+  QUALITY_CONTROL
+  SHIPPING
+  DELIVERY
+}
+
+enum MilestoneStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  BLOCKED
+}
+
+enum QCResult {
+  PASS
+  FAIL
+}
+
+enum NotificationType {
+  PROJECT_SUBMITTED
+  QUOTATION_RECEIVED
+  QUOTATION_ACCEPTED
+  QUOTATION_REJECTED
+  ORDER_CREATED
+  MILESTONE_UPDATED
+  QC_REPORT_SUBMITTED
+  ORDER_SHIPPED
+  ORDER_DELIVERED
+  VERIFICATION_DECISION
+  ACCOUNT_STATUS
+  SYSTEM
+}
+
+enum InquiryStatus {
+  NEW
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum IssueStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+  CLOSED
+}
+
+// ─────────────────────── Users & authentication ───────────────────────
+// User / Session / Account / Verification follow the Better Auth schema.
+
+model User {
+  id               String     @id
+  name             String
+  email            String     @unique
+  emailVerified    Boolean    @default(false)
+  image            String?
+  role             Role       @default(BRAND)
+  status           UserStatus @default(ACTIVE)
+  statusReason     String?
+  profileCompleted Boolean    @default(false)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  sessions            Session[]
+  accounts            Account[]
+  brandProfile        BrandProfile?
+  manufacturerProfile ManufacturerProfile?
+  projects            Project[]             @relation("BrandProjects")
+  quotations          Quotation[]           @relation("ManufacturerQuotations")
+  brandOrders         Order[]               @relation("BrandOrders")
+  manufacturerOrders  Order[]               @relation("ManufacturerOrders")
+  notifications       Notification[]
+  qcReports           QCReport[]
+  milestoneUpdates    ProductionMilestone[]
+  activities          ActivityLog[]
+  auditLogs           AuditLog[]
+  issues              IssueReport[]
+  uploads             ProjectAttachment[]
+
+  @@index([role, status])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// ───────────────────────────── Profiles ─────────────────────────────
+
+model BrandProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName String
+  description String?
+  country     String
+  city        String?
+  website     String?
+  phone       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("brand_profile")
+}
+
+model ManufacturerProfile {
+  id                   String             @id @default(cuid())
+  userId               String             @unique
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessName         String
+  description          String
+  country              String
+  city                 String
+  categories           GarmentCategory[]
+  minOrderQuantity     Int
+  maxMonthlyCapacity   Int
+  contactName          String
+  contactEmail         String
+  contactPhone         String?
+  website              String?
+  verificationStatus   VerificationStatus @default(UNSUBMITTED)
+  verificationNote     String?
+  verificationRequestedAt DateTime?
+  verifiedAt           DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  capabilities ManufacturerCapability[]
+  documents    ManufacturerDocument[]
+
+  @@index([verificationStatus])
+  @@index([country])
+  @@map("manufacturer_profile")
+}
+
+model ManufacturerCapability {
+  id        String              @id @default(cuid())
+  profileId String
+  profile   ManufacturerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  kind      CapabilityKind
+  name      String
+
+  @@unique([profileId, kind, name])
+  @@index([name])
+  @@map("manufacturer_capability")
+}
+
+model ManufacturerDocument {
+  id                String              @id @default(cuid())
+  profileId         String
+  profile           ManufacturerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  type              DocumentType
+  certificationName String?
+  fileKey           String              @unique
+  fileName          String
+  mimeType          String
+  size              Int
+  status            DocumentStatus      @default(PENDING)
+  reviewNote        String?
+  reviewedAt        DateTime?
+  createdAt         DateTime            @default(now())
+
+  @@index([profileId, status])
+  @@map("manufacturer_document")
+}
+
+// ───────────────────────────── Projects ─────────────────────────────
+
+model Project {
+  id                     String          @id @default(cuid())
+  brandId                String
+  brand                  User            @relation("BrandProjects", fields: [brandId], references: [id], onDelete: Cascade)
+  name                   String
+  category               GarmentCategory
+  description            String
+  quantity               Int
+  targetUnitPrice        Decimal?        @db.Decimal(12, 2)
+  currency               String          @default("USD")
+  deadline               DateTime
+  fabricRequirements     String
+  sizes                  String[]
+  colors                 String
+  additionalInstructions String?
+  requiredCapabilities   String[]
+  preferredCountry       String?
+  requiredCertifications String[]
+  status                 ProjectStatus   @default(DRAFT)
+  submittedAt            DateTime?
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+
+  attachments ProjectAttachment[]
+  revisions   ProjectRevision[]
+  quotations  Quotation[]
+  order       Order?
+  activities  ActivityLog[]
+  issues      IssueReport[]
+
+  @@index([brandId, status])
+  @@index([status, category])
+  @@map("project")
+}
+
+model ProjectAttachment {
+  id           String   @id @default(cuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  uploadedById String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  fileKey      String   @unique
+  fileName     String
+  mimeType     String
+  size         Int
+  createdAt    DateTime @default(now())
+
+  @@index([projectId])
+  @@map("project_attachment")
+}
+
+/// Snapshot of changed fields when a brand edits a project that already has quotations.
+model ProjectRevision {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  changedById String
+  changes     Json
+  createdAt   DateTime @default(now())
+
+  @@index([projectId, createdAt])
+  @@map("project_revision")
+}
+
+// ──────────────────────── Quotations & orders ────────────────────────
+
+/// One quotation per manufacturer per project; revisions keep the history.
+model Quotation {
+  id             String          @id @default(cuid())
+  projectId      String
+  project        Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  manufacturerId String
+  manufacturer   User            @relation("ManufacturerQuotations", fields: [manufacturerId], references: [id], onDelete: Cascade)
+  unitPrice      Decimal         @db.Decimal(12, 2)
+  currency       String
+  minQuantity    Int
+  productionDays Int
+  samplingCost   Decimal?        @db.Decimal(12, 2)
+  notes          String?
+  validUntil     DateTime
+  status         QuotationStatus @default(ACTIVE)
+  version        Int             @default(1)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  revisions QuotationRevision[]
+  order     Order?
+
+  @@unique([projectId, manufacturerId])
+  @@index([manufacturerId, status])
+  @@map("quotation")
+}
+
+model QuotationRevision {
+  id             String    @id @default(cuid())
+  quotationId    String
+  quotation      Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  version        Int
+  unitPrice      Decimal   @db.Decimal(12, 2)
+  minQuantity    Int
+  productionDays Int
+  samplingCost   Decimal?  @db.Decimal(12, 2)
+  notes          String?
+  validUntil     DateTime
+  createdAt      DateTime  @default(now())
+
+  @@unique([quotationId, version])
+  @@map("quotation_revision")
+}
+
+/// projectId and quotationId are unique, so a project can never have two orders.
+model Order {
+  id                     String      @id @default(cuid())
+  reference              String      @unique
+  projectId              String      @unique
+  project                Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  quotationId            String      @unique
+  quotation              Quotation   @relation(fields: [quotationId], references: [id])
+  brandId                String
+  brand                  User        @relation("BrandOrders", fields: [brandId], references: [id])
+  manufacturerId         String
+  manufacturer           User        @relation("ManufacturerOrders", fields: [manufacturerId], references: [id])
+  quantity               Int
+  unitPrice              Decimal     @db.Decimal(12, 2)
+  currency               String
+  status                 OrderStatus @default(IN_PRODUCTION)
+  expectedCompletionDate DateTime
+  trackingInfo           String?
+  shippedAt              DateTime?
+  deliveredAt            DateTime?
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+
+  milestones ProductionMilestone[]
+  qcReports  QCReport[]
+  activities ActivityLog[]
+  issues     IssueReport[]
+
+  @@index([brandId, status])
+  @@index([manufacturerId, status])
+  @@map("order")
+}
+
+model ProductionMilestone {
+  id                String          @id @default(cuid())
+  orderId           String
+  order             Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  stage             MilestoneStage
+  sequence          Int
+  status            MilestoneStatus @default(NOT_STARTED)
+  startedAt         DateTime?
+  completedAt       DateTime?
+  responsibleUserId String?
+  responsibleUser   User?           @relation(fields: [responsibleUserId], references: [id])
+  notes             String?
+  attachmentKey     String?
+  attachmentName    String?
+  attachmentMime    String?
+  isDelayed         Boolean         @default(false)
+  delayReason       String?
+  updatedAt         DateTime        @updatedAt
+
+  @@unique([orderId, stage])
+  @@unique([orderId, sequence])
+  @@map("production_milestone")
+}
+
+model QCReport {
+  id                 String          @id @default(cuid())
+  orderId            String
+  order              Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  inspectorId        String
+  inspector          User            @relation(fields: [inspectorId], references: [id])
+  inspectionDate     DateTime
+  sampleSize         Int
+  defectiveCount     Int
+  defectRate         Decimal         @db.Decimal(5, 2)
+  defectDescriptions String?
+  notes              String?
+  result             QCResult
+  createdAt          DateTime        @default(now())
+
+  photos QCReportPhoto[]
+
+  @@index([orderId, createdAt])
+  @@map("qc_report")
+}
+
+model QCReportPhoto {
+  id       String   @id @default(cuid())
+  reportId String
+  report   QCReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  fileKey  String   @unique
+  fileName String
+  mimeType String
+  size     Int
+
+  @@map("qc_report_photo")
+}
+
+// ───────────────────── Activity, notifications, admin ─────────────────────
+
+/// Append-only history of project and order events. Never updated or deleted by the app.
+model ActivityLog {
+  id        String   @id @default(cuid())
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  orderId   String?
+  order     Order?   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  actorId   String?
+  actor     User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  type      String
+  message   String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([projectId, createdAt])
+  @@index([orderId, createdAt])
+  @@map("activity_log")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  message   String
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@index([userId, readAt, createdAt])
+  @@map("notification")
+}
+
+model ContactInquiry {
+  id        String        @id @default(cuid())
+  name      String
+  email     String
+  company   String?
+  inquiryType String
+  subject   String
+  message   String
+  status    InquiryStatus @default(NEW)
+  createdAt DateTime      @default(now())
+
+  @@index([status, createdAt])
+  @@map("contact_inquiry")
+}
+
+model IssueReport {
+  id          String      @id @default(cuid())
+  reporterId  String
+  reporter    User        @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  projectId   String?
+  project     Project?    @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  orderId     String?
+  order       Order?      @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  subject     String
+  description String
+  status      IssueStatus @default(OPEN)
+  adminNote   String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([status, createdAt])
+  @@map("issue_report")
+}
+
+/// Records sensitive administrative actions. Append-only.
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String
+  actor      User     @relation(fields: [actorId], references: [id])
+  action     String
+  targetType String
+  targetId   String
+  reason     String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([targetType, targetId])
+  @@index([createdAt])
+  @@map("audit_log")
+}
