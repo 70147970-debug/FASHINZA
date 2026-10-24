@@ -1,8 +1,14 @@
 @import "tailwindcss";
 
-/* Fashinza design tokens */
+/*
+ * Fashinza design tokens.
+ * Contrast (WCAG 2.1 AA): teal #168C83 is 4.1:1 on white, so it is used for icons, borders,
+ * focus rings and fills behind large text; text and small-text buttons use teal-700 (5.9:1).
+ * Warning amber #C27A19 is likewise used for fills/icons, with warning-700 for text.
+ */
 @theme {
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Manrope Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
 
   --color-navy: #14263d;
   --color-navy-700: #1c3352;
@@ -10,17 +16,21 @@
   --color-slate-blue: #456078;
   --color-teal: #168c83;
   --color-teal-700: #11706a;
+  --color-teal-800: #0d5b56;
   --color-teal-50: #e8f5f4;
   --color-canvas: #f7f8fa;
+  --color-card: #ffffff;
   --color-ink: #202938;
-  --color-muted: #5b6676;
-  --color-line: #e3e7ec;
-  --color-danger: #b42318;
-  --color-danger-50: #fef3f2;
-  --color-success: #127a4a;
-  --color-success-50: #ecfdf3;
-  --color-warning: #a15c07;
-  --color-warning-50: #fffaeb;
+  --color-muted: #657286;
+  --color-line: #e2e7ee;
+  --color-danger: #c43d4b;
+  --color-danger-700: #a3303d;
+  --color-danger-50: #fcf1f2;
+  --color-success: #16835d;
+  --color-success-50: #ebf6f1;
+  --color-warning: #c27a19;
+  --color-warning-700: #8a5510;
+  --color-warning-50: #fdf5e8;
 
   --radius-sm: 4px;
   --radius-md: 6px;
@@ -28,6 +38,8 @@
 
   --shadow-card: 0 1px 2px rgb(20 38 61 / 0.05);
   --shadow-pop: 0 8px 24px rgb(20 38 61 / 0.12);
+
+  --text-2xs: 0.6875rem;
 }
 
 @layer base {
@@ -54,7 +66,20 @@
   h3,
   h4 {
     color: var(--color-navy);
+    font-family: var(--font-display);
     letter-spacing: -0.01em;
+  }
+  /* Numeric data lines up in tables and stat cards. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 

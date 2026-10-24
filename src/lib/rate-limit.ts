@@ -5,7 +5,11 @@
 type Bucket = { count: number; resetAt: number };
 const buckets = new Map<string, Bucket>();
 
-export function rateLimit(key: string, limit: number, windowMs: number, now = Date.now()) {
+// Multiplies every limit; only raised in automated test environments (e.g. RATE_LIMIT_SCALE=50 for e2e).
+const SCALE = Math.max(1, Number(process.env.RATE_LIMIT_SCALE ?? 1) || 1);
+
+export function rateLimit(key: string, baseLimit: number, windowMs: number, now = Date.now()) {
+  const limit = baseLimit * SCALE;
   const bucket = buckets.get(key);
   if (!bucket || bucket.resetAt <= now) {
     buckets.set(key, { count: 1, resetAt: now + windowMs });

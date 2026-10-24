@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { startTransition, useActionState, useRef, useState } from "react";
 import { Loader2, Send } from "lucide-react";
 import { submitContact } from "./actions";
 import { initialFormState, zodFieldErrors } from "@/lib/form-state";
@@ -23,16 +23,18 @@ export function ContactForm() {
   return (
     <form
       ref={formRef}
-      action={action}
       noValidate
       className="space-y-5"
       onSubmit={(e) => {
         const parsed = contactSchema.safeParse(Object.fromEntries(new FormData(e.currentTarget)));
+        // Submitted manually so React does not reset the form (and the user's input) after a server error.
+        e.preventDefault();
         if (!parsed.success) {
-          e.preventDefault();
           setClientErrors(zodFieldErrors(parsed.error));
-        } else {
+        } else if (!pending) {
           setClientErrors({});
+          const data = new FormData(e.currentTarget);
+          startTransition(() => action(data));
         }
       }}
     >

@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { startTransition, useActionState, useState } from "react";
+import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { loginAction } from "../actions";
 import { initialFormState, zodFieldErrors } from "@/lib/form-state";
@@ -10,27 +11,38 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 
-export function LoginForm() {
+export function LoginForm({ next }: { next?: string }) {
   const [state, action, pending] = useActionState(loginAction, initialFormState);
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const errors = { ...state.fieldErrors, ...clientErrors };
   return (
     <form
-      action={action}
       noValidate
       className="space-y-5"
       onSubmit={(e) => {
         const parsed = loginSchema.safeParse(Object.fromEntries(new FormData(e.currentTarget)));
-        if (!parsed.success) { e.preventDefault(); setClientErrors(zodFieldErrors(parsed.error)); } else setClientErrors({});
+        // Submitted manually so React does not reset the form (and the user's input) after a server error.
+        e.preventDefault();
+        if (!parsed.success) { setClientErrors(zodFieldErrors(parsed.error)); return; }
+        setClientErrors({});
+        if (pending) return;
+        const data = new FormData(e.currentTarget);
+        startTransition(() => action(data));
       }}
     >
       {state.message && <Alert tone={state.status === "success" ? "success" : "error"}>{state.message}</Alert>}
+      {next && <input type="hidden" name="next" value={next} />}
       <Field id="email" label="Email" required error={errors.email}>
         <Input name="email" type="email" autoComplete="email" />
       </Field>
-      <Field id="password" label="Password" required error={errors.password}>
-        <Input name="password" type="password" autoComplete="current-password" />
-      </Field>
+      <div className="space-y-1.5">
+        <Field id="password" label="Password" required error={errors.password}>
+          <Input name="password" type="password" autoComplete="current-password" />
+        </Field>
+        <p className="text-right text-xs">
+          <Link href="/forgot-password" className="font-medium text-teal-700 hover:underline">Forgot password?</Link>
+        </p>
+      </div>
       <Button type="submit" className="w-full" disabled={pending}>
         {pending && <Loader2 className="animate-spin" />} {pending ? "Signing in…" : "Sign in"}
       </Button>

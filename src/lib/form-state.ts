@@ -4,6 +4,8 @@ export type FormState = {
   status: "idle" | "success" | "error";
   message?: string;
   fieldErrors?: Record<string, string>;
+  /** Where ActionForm should navigate after success (used instead of redirect() in form actions). */
+  redirectTo?: string;
 };
 
 export const initialFormState: FormState = { status: "idle" };

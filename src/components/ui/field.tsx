@@ -1,38 +1,54 @@
+"use client";
 import * as React from "react";
 import { Label } from "./label";
+import { FormErrorsContext } from "@/components/forms/action-form";
 
-/** Label + control + hint/error, wired for screen readers. */
+/** Label + control + hint/error, wired for screen readers. Errors come from props or the enclosing ActionForm. */
 export function Field({
   id,
   label,
   error,
   hint,
   required,
+  name,
   children,
+  className,
 }: {
   id: string;
   label: string;
   error?: string;
   hint?: string;
   required?: boolean;
+  /** Error key when it differs from id (defaults to id). */
+  name?: string;
   children: React.ReactElement<{ id?: string; "aria-invalid"?: boolean; "aria-describedby"?: string; required?: boolean }>;
+  className?: string;
 }) {
-  const describedBy = [hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(" ") || undefined;
+  const ctx = React.useContext(FormErrorsContext);
+  const message = error ?? ctx[name ?? id];
+  const describedBy = [hint && `${id}-hint`, message && `${id}-error`].filter(Boolean).join(" ") || undefined;
   const control = React.cloneElement(children, {
     id,
-    "aria-invalid": error ? true : undefined,
+    "aria-invalid": message ? true : undefined,
     "aria-describedby": describedBy,
     required,
   });
   return (
-    <div className="space-y-1.5">
+    <div className={className ?? "space-y-1.5"}>
       <Label htmlFor={id}>
         {label}
         {required ? <span className="text-danger" aria-hidden> *</span> : <span className="font-normal text-muted"> (optional)</span>}
       </Label>
       {control}
-      {hint && !error && <p id={`${id}-hint`} className="text-xs text-muted">{hint}</p>}
-      {error && <p id={`${id}-error`} className="text-xs text-danger">{error}</p>}
+      {hint && !message && <p id={`${id}-hint`} className="text-xs text-muted">{hint}</p>}
+      {message && <p id={`${id}-error`} className="text-xs text-danger">{message}</p>}
     </div>
   );
+}
+
+/** Error line for groups (checkbox sets, file pickers) that are not a single labelled control. */
+export function FieldError({ name, className }: { name: string; className?: string }) {
+  const message = React.useContext(FormErrorsContext)[name];
+  if (!message) return null;
+  return <p className={className ?? "mt-1 text-xs text-danger"}>{message}</p>;
 }

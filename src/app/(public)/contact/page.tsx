@@ -13,7 +13,7 @@ export default function ContactPage() {
     <section className="py-14 sm:py-20">
       <div className="container-page grid gap-10 lg:grid-cols-[1fr_1.4fr]">
         <div>
-          <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-teal">Contact</p>
+          <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-teal-700">Contact</p>
           <h1 className="text-3xl font-semibold sm:text-4xl">Talk to the Fashinza team</h1>
           <p className="mt-4 text-muted">
             Questions about briefing a project, registering your factory or verification? Send us a message and the

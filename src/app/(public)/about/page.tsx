@@ -32,7 +32,7 @@ export default function AboutPage() {
           </div>
           <div>
             <SectionHeading title="Our approach" />
-            <ul className="list-disc space-y-3 pl-5 text-muted marker:text-teal">
+            <ul className="list-disc space-y-3 pl-5 text-muted marker:text-teal-700">
               <li><span className="text-ink">Transparent matching.</span> Compatibility is calculated from documented rules, and the reasons are always shown.</li>
               <li><span className="text-ink">One shared status.</span> Brands and manufacturers see the same milestones, quotations and quality results.</li>
               <li><span className="text-ink">Manual verification.</span> An administrator reviews manufacturer documents; nothing is verified automatically.</li>
@@ -45,7 +45,7 @@ export default function AboutPage() {
         <SectionHeading
           id="project-title"
           title="About this project"
-          description="Fashinza is being developed as a Final Year Project in the Department of Software Engineering at The University of Lahore. This version is a working MVP; payments, real-time chat and mobile apps are planned for later stages."
+          description="Fashinza is being developed as a Final Year Project in the Department of Software Engineering at The University of Lahore. This version is a working MVP: payments run through a sandbox provider (no real money), production updates refresh by polling, and email delivery is not yet configured. Demand forecasting and message translation are planned extensions."
         />
       </Section>
       <CtaBand />

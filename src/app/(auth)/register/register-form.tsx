@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { startTransition, useActionState, useState } from "react";
 import { Factory, Loader2, Shirt } from "lucide-react";
 import { registerAction } from "../actions";
 import { initialFormState, zodFieldErrors } from "@/lib/form-state";
@@ -23,12 +23,17 @@ export function RegisterForm({ defaultRole }: { defaultRole: "BRAND" | "MANUFACT
   const errors = { ...state.fieldErrors, ...clientErrors };
   return (
     <form
-      action={action}
       noValidate
       className="space-y-5"
       onSubmit={(e) => {
         const parsed = registerSchema.safeParse(Object.fromEntries(new FormData(e.currentTarget)));
-        if (!parsed.success) { e.preventDefault(); setClientErrors(zodFieldErrors(parsed.error)); } else setClientErrors({});
+        // Submitted manually so React does not reset the form (and the user's input) after a server error.
+        e.preventDefault();
+        if (!parsed.success) { setClientErrors(zodFieldErrors(parsed.error)); return; }
+        setClientErrors({});
+        if (pending) return;
+        const data = new FormData(e.currentTarget);
+        startTransition(() => action(data));
       }}
     >
       {state.message && <Alert tone={state.status === "success" ? "success" : "error"}>{state.message}</Alert>}

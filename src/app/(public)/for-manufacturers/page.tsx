@@ -25,21 +25,23 @@ export default function ForManufacturersPage() {
         <SectionHeading id="mfr-features" title="What you can do as a manufacturer" />
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           <FeatureCard icon={Factory} title="A detailed business profile">
-            List your location, garment categories, minimum order quantity, monthly capacity, and production, fabric
-            and finishing capabilities.
+            List your location, garment categories, minimum order quantity, monthly capacity, typical lead time, and
+            production, fabric and finishing capabilities.
           </FeatureCard>
           <FeatureCard icon={Inbox} title="Matching opportunities">
-            See submitted brand projects that match your profile, with the reasons for each match.
+            See brand projects that your verified factory is eligible for, with a match score and the reasons behind it.
           </FeatureCard>
           <FeatureCard icon={FileText} title="Structured quotations">
-            Quote unit price, minimum quantity, production time, sampling cost, notes and a validity date. Revise later
-            with the history kept.
+            Break down making, fabric, finishing, packaging, sampling, logistics and tax. Fashinza calculates the total,
+            and every revision is kept in the history.
           </FeatureCard>
           <FeatureCard icon={ListChecks} title="Milestone updates">
-            Move accepted orders through each production stage, add notes and photos, and report delays with a reason.
+            Move accepted orders through each production stage by uploading evidence such as photos of cut panels.
+            Overdue stages are flagged automatically.
           </FeatureCard>
           <FeatureCard icon={ScanSearch} title="Quality-control reports">
-            Record inspection results so the brand sees the same quality data you do.
+            Record AQL inspections (ISO 2859-1 sampling plans) with defects by severity; the pass or fail result is
+            calculated, and failed batches open a rework task.
           </FeatureCard>
           <FeatureCard icon={BadgeCheck} title="Verification">
             Upload business and certification documents for an administrator to review and earn the verified badge.
@@ -52,7 +54,7 @@ export default function ForManufacturersPage() {
           <SectionHeading
             id="mfr-steps"
             title="Getting listed"
-            description="Your profile becomes visible in matching once it is complete. Verification is a separate, manual review."
+            description="Only verified factories are matched to brand projects. Verification is a manual review by a Fashinza administrator."
           />
           <CheckList
             items={[

@@ -9,11 +9,11 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary: "bg-navy text-white hover:bg-navy-700",
-        accent: "bg-teal text-white hover:bg-teal-700",
+        accent: "bg-teal-700 text-white hover:bg-teal-800",
         outline: "border border-line bg-white text-navy hover:bg-navy-50",
         ghost: "text-navy hover:bg-navy-50",
         danger: "bg-danger text-white hover:bg-danger/90",
-        link: "text-teal underline-offset-4 hover:underline px-0 h-auto",
+        link: "text-teal-700 underline-offset-4 hover:underline px-0 h-auto",
       },
       size: {
         sm: "h-8 px-3",

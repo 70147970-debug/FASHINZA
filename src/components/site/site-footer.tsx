@@ -10,12 +10,14 @@ const columns = [
       { href: "/how-it-works", label: "How It Works" },
       { href: "/for-brands", label: "For Brands" },
       { href: "/for-manufacturers", label: "For Manufacturers" },
+      { href: "/sustainability", label: "Sustainability" },
     ],
   },
   {
     title: "Company",
     links: [
       { href: "/about", label: "About" },
+      { href: "/faq", label: "FAQ" },
       { href: "/contact", label: "Contact" },
     ],
   },
@@ -27,12 +29,19 @@ const columns = [
       { href: "/register?role=manufacturer", label: "Join as a manufacturer" },
     ],
   },
+  {
+    title: "Legal",
+    links: [
+      { href: "/privacy", label: "Privacy Policy" },
+      { href: "/terms", label: "Terms of Service" },
+    ],
+  },
 ];
 
 export function SiteFooter() {
   return (
     <footer className="bg-navy text-white/80">
-      <div className="container-page grid gap-10 py-12 md:grid-cols-[1.4fr_repeat(3,1fr)]">
+      <div className="container-page grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(4,1fr)]">
         <div className="space-y-4">
           <Logo inverted />
           <p className="max-w-xs text-sm">{SITE.tagline} Connecting fashion brands with clothing manufacturers.</p>

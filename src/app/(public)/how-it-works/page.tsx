@@ -10,12 +10,12 @@ export const metadata: Metadata = {
 
 const STATUSES = [
   ["Draft", "The brand is still writing the project. Only the brand can see it."],
-  ["Submitted", "The project is complete and visible to compatible manufacturers."],
-  ["Quoting", "At least one manufacturer has sent a quotation."],
+  ["Submitted", "The project is complete and matching has run. Only invited, verified manufacturers can see it."],
+  ["Receiving quotes", "At least one verified manufacturer was invited or has sent a quotation."],
   ["Quotation accepted", "The brand accepted one quotation; the others are closed and an order is created."],
   ["In production", "The manufacturer is working through the production milestones."],
-  ["Quality check", "An inspection is recorded with sample size, defects and a pass or fail result."],
-  ["Ready to ship", "The order passed quality control and is packed."],
+  ["Quality check", "An AQL inspection is recorded; a failed batch returns to stitching for rework."],
+  ["Ready to ship", "The brand accepted the passing inspection; the factory prepares the shipment."],
   ["Shipped", "The order has left the factory."],
   ["Delivered", "The brand confirms the order arrived."],
 ];
@@ -27,31 +27,33 @@ const DETAIL = [
       "Garment category, description, target quantity and target unit price with currency.",
       "Preferred production deadline, fabric requirements, sizes and colours.",
       "Optional required capabilities, preferred manufacturing country and required certifications.",
-      "An optional tech-pack attachment (PDF or image, up to 10 MB). Projects can be saved as drafts first.",
+      "A tech pack (PDF or image, up to 10 MB) is required to submit. New uploads become new versions; earlier versions are kept.",
+      "Projects can be saved as drafts at any step and finished later.",
     ],
   },
   {
     title: "2. Compatible manufacturers are matched",
     points: [
-      "Manufacturers that fail a mandatory requirement — wrong category, quantity below their minimum or above their capacity, or a missing required capability or certification — are excluded.",
-      "The remaining manufacturers receive a compatibility score calculated from documented weights, with the reasons listed next to it.",
+      "Only verified manufacturers are considered. Those that fail a mandatory requirement — wrong category, a minimum order above your limit, a lead time longer than your deadline allows, too little free capacity, or a missing verified certification — are excluded.",
+      "The remaining manufacturers receive a score from documented weights (processes, fabric, capacity, lead time, location and track record), with the reasons listed next to it.",
       "Matching is rule-based and shows compatibility only. It is not a guarantee of quality or on-time delivery.",
     ],
   },
   {
     title: "3. Manufacturers send quotations",
     points: [
-      "Each quotation includes unit price, minimum acceptable quantity, production time, sampling cost, notes and a validity date.",
+      "Each quotation breaks down making, fabric, finishing and packaging cost per unit, plus sampling, logistics and tax. Fashinza calculates the total.",
       "A manufacturer holds one quotation per project and can revise it; earlier versions stay in the history.",
-      "The brand compares all quotations side by side and accepts one. The others are closed automatically.",
+      "The brand compares all quotations side by side, can ask for a revision, and accepts one. Expired quotations cannot be accepted, and the others are closed automatically.",
     ],
   },
   {
     title: "4. Production and quality control are tracked",
     points: [
       "Accepting a quotation creates an order with eight milestones: fabric sourcing, sampling, cutting, stitching, finishing, quality control, shipping and delivery.",
-      "Milestones must be completed in order. Each can carry notes, a supporting file and a reported delay reason.",
-      "Quality-control reports record the observed defect rate (defective items ÷ inspected items × 100). This is a simple calculation, not a formal AQL inspection.",
+      "Milestones must be completed in order, each with its required evidence. Sampling completes when the brand approves a sample; overdue stages are flagged and the delivery estimate is adjusted.",
+      "Quality control uses ISO 2859-1 AQL sampling plans. A failed batch creates a rework task and returns production to stitching; a passed batch needs the brand's acceptance.",
+      "A milestone payment schedule (30% / 40% / 30% by default) becomes due as stages complete. This build uses a clearly labelled sandbox payment provider.",
     ],
   },
 ];
@@ -79,7 +81,7 @@ export default function HowItWorksPage() {
           {DETAIL.map((d) => (
             <div key={d.title} className="rounded-lg border border-line p-6">
               <h3 className="text-lg font-semibold">{d.title}</h3>
-              <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-muted marker:text-teal">
+              <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-muted marker:text-teal-700">
                 {d.points.map((p) => <li key={p}>{p}</li>)}
               </ul>
             </div>

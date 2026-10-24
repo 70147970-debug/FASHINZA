@@ -61,7 +61,7 @@ export function SectionHeading({
   return (
     <div className={cn("mb-10 max-w-2xl", align === "center" && "mx-auto text-center")}>
       {eyebrow && (
-        <p className={cn("mb-2 text-sm font-semibold uppercase tracking-wide", inverted ? "text-teal-50" : "text-teal")}>
+        <p className={cn("mb-2 text-sm font-semibold uppercase tracking-wide", inverted ? "text-teal-50" : "text-teal-700")}>
           {eyebrow}
         </p>
       )}
@@ -87,7 +87,7 @@ export function PageHero({
   return (
     <section className="border-b border-line bg-white py-14 sm:py-20">
       <div className="container-page max-w-3xl">
-        <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-teal">{eyebrow}</p>
+        <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-teal-700">{eyebrow}</p>
         <h1 className="text-3xl font-semibold sm:text-4xl">{title}</h1>
         <p className="mt-4 text-lg text-muted">{description}</p>
         {children && <div className="mt-8 flex flex-col gap-3 sm:flex-row">{children}</div>}
