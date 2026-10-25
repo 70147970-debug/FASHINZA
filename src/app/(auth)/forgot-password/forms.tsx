@@ -11,7 +11,7 @@ export function ForgotPasswordForm() {
       <Field id="email" label="Email" required>
         <Input name="email" type="email" autoComplete="email" />
       </Field>
-      <SubmitButton className="w-full" pendingText="Sending…">Send reset link</SubmitButton>
+      <SubmitButton size="lg" className="w-full" pendingText="Sending…">Send reset link</SubmitButton>
       {process.env.NODE_ENV !== "production" && (
         <p className="text-xs text-muted">Development build: no email service is configured, so the reset link is written to the server log.</p>
       )}
@@ -29,7 +29,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
       <Field id="confirmPassword" label="Confirm new password" required>
         <Input name="confirmPassword" type="password" autoComplete="new-password" />
       </Field>
-      <SubmitButton className="w-full" pendingText="Saving…">Set new password</SubmitButton>
+      <SubmitButton size="lg" className="w-full" pendingText="Saving…">Set new password</SubmitButton>
     </ActionForm>
   );
 }

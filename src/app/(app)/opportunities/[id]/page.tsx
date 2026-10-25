@@ -5,15 +5,15 @@ import { ArrowRight } from "lucide-react";
 import { requireOnboardedUser } from "@/server/auth/session";
 import { getOpportunity } from "@/server/services/opportunities";
 import { isAppError } from "@/server/errors";
-import { DetailList, PageHeader, Panel, StatusBadge } from "@/components/app/primitives";
+import { DescriptionList, Metric, MetricStrip, PageHeader, Panel, StatusBadge, Timeline } from "@/components/app/primitives";
 import { AttachmentList } from "@/components/projects/attachment-list";
-import { ScoreBreakdownView } from "@/components/projects/match-card";
+import { ScoreBreakdownView, ScoreRing } from "@/components/projects/match-card";
 import { QuotationForm, WithdrawQuotationButton } from "@/components/quotations/quotation-form";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import type { ScoreBreakdown } from "@/lib/matching";
 import { PROJECT_STATUS, QUOTATION_STATUS, categoryLabel } from "@/lib/labels";
-import { formatDate, formatDateTime, formatMoney, formatNumber, isoDateInDays } from "@/lib/format";
+import { formatDate, formatDateTime, formatMoney, formatNumber, isoDateInDays, relativeDays } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Opportunity" };
 
@@ -29,30 +29,68 @@ export default async function OpportunityPage({ params }: { params: Promise<{ id
   const wonOrder = project.order?.manufacturerId === actor.id ? project.order.id : null;
   const s = (v: { toFixed(n: number): string } | null | undefined) => (v ? v.toFixed(2) : "");
 
+  const brand = project.brand.brandProfile;
+  const score = Number(match.score);
+  const quoteValue = quotation && quotation.status !== "DRAFT" ? formatMoney(quotation.totalAmount, quotation.currency) : quotation ? "Draft" : "Not sent";
+
+  const requirements = (
+    <Panel id="requirements" title="Requirements">
+      <DescriptionList
+        items={[
+          { label: "Fabric", value: project.fabricRequirements },
+          { label: "Fabrics", value: project.fabrics.join(", ") || "—" },
+          { label: "Colours", value: project.colors },
+          { label: "Sizes", value: project.sizes.join(", ") },
+          { label: "Target price", value: project.targetUnitPrice ? `${formatMoney(project.targetUnitPrice, project.currency)} / unit` : "Not shared" },
+          { label: "Processes", value: project.requiredCapabilities.join(", ") || "None specified" },
+          { label: "Certifications", value: project.requiredCertifications.join(", ") || "None required" },
+          { label: "Preferred country", value: project.preferredCountry ?? "No preference" },
+        ]}
+      />
+      {(project.description || project.sustainabilityNotes || project.additionalInstructions) && (
+        <div className="mt-5 space-y-3 border-t border-line-subtle pt-4 text-sm leading-6">
+          {project.description && <p className="whitespace-pre-line text-ink">{project.description}</p>}
+          {project.sustainabilityNotes && <p><span className="font-medium text-navy">Sustainability: </span>{project.sustainabilityNotes}</p>}
+          {project.additionalInstructions && <p><span className="font-medium text-navy">Instructions: </span>{project.additionalInstructions}</p>}
+        </div>
+      )}
+    </Panel>
+  );
+
   return (
     <>
       <PageHeader
+        eyebrow="Opportunity"
         title={project.name}
         breadcrumbs={[{ href: "/opportunities", label: "Opportunities" }]}
         meta={quotation ? <StatusBadge map={QUOTATION_STATUS} value={quotation.status} /> : <StatusBadge map={PROJECT_STATUS} value={project.status} />}
-        description={`${project.brand.brandProfile?.companyName ?? "Brand"} (${project.brand.brandProfile?.country || "—"}) · ${categoryLabel(project.category)} · ${formatNumber(project.quantity)} units · deliver by ${formatDate(project.deadline)}`}
+        description={`${brand?.companyName ?? "Brand"} (${brand?.country || "—"}) · ${categoryLabel(project.category)} · ${formatNumber(project.quantity)} units · deliver by ${formatDate(project.deadline)}`}
         actions={
           <>
-            {wonOrder && <Button asChild variant="accent"><Link href={`/orders/${wonOrder}`}>Open order <ArrowRight /></Link></Button>}
             {quotation && editable && <WithdrawQuotationButton quotationId={quotation.id} projectId={id} />}
+            {wonOrder && <Button asChild variant="accent"><Link href={`/orders/${wonOrder}`}>Open order <ArrowRight /></Link></Button>}
           </>
         }
       />
 
       {quotation?.status === "REVISION_REQUESTED" && quotation.revisionRequest && (
-        <Alert tone="info" className="mb-6"><span className="font-medium">The brand asked for a revision:</span> {quotation.revisionRequest}</Alert>
+        <Alert tone="warning" title="The brand asked for a revision" className="mb-6">{quotation.revisionRequest}</Alert>
       )}
       {quotation?.status === "REJECTED" && <Alert tone="error" className="mb-6">This quotation was declined{quotation.revisionRequest ? `: ${quotation.revisionRequest}` : "."}</Alert>}
       {quotation?.status === "EXPIRED" && <Alert tone="info" className="mb-6">This quotation expired on {formatDate(quotation.validUntil)} and can no longer be accepted.</Alert>}
       {!open && !wonOrder && !quotation && <Alert tone="info" className="mb-6">This project is no longer accepting quotations.</Alert>}
 
-      <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
+      <MetricStrip label="Key facts">
+        <Metric label="Quantity" value={project.quantity ? formatNumber(project.quantity) : "—"} hint="units" muted={!project.quantity} />
+        <Metric label="Deliver by" value={formatDate(project.deadline)} hint={project.deadline && open ? relativeDays(project.deadline) : undefined} />
+        <Metric label="Target price" value={project.targetUnitPrice ? formatMoney(project.targetUnitPrice, project.currency) : "—"} hint={project.targetUnitPrice ? "per unit" : "Not shared"} muted={!project.targetUnitPrice} />
+        <Metric label="Match score" value={`${score.toFixed(0)}/100`} tone={score >= 70 ? "accent" : undefined} />
+        <Metric label="Your quotation" value={quoteValue} muted={!quotation || quotation.status === "DRAFT"} hint={quotation && quotation.status !== "DRAFT" ? `v${quotation.version}` : undefined} />
+      </MetricStrip>
+
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <div className="space-y-6">
+          {editable && requirements}
           {editable ? (
             <Panel id="quote" title={quotation?.submittedAt ? `Revise quotation (currently v${quotation.version})` : "Your quotation"} description="Fashinza calculates the total from your breakdown. The brand sees every line.">
               <QuotationForm
@@ -76,11 +114,11 @@ export default async function OpportunityPage({ params }: { params: Promise<{ id
               />
             </Panel>
           ) : quotation && quotation.status !== "DRAFT" ? (
-            <Panel title={`Your quotation · v${quotation.version}`}>
-              <DetailList
+            <Panel title={`Your quotation · v${quotation.version}`} actions={<StatusBadge map={QUOTATION_STATUS} value={quotation.status} />}>
+              <DescriptionList
                 columns={3}
                 items={[
-                  { label: "Total", value: formatMoney(quotation.totalAmount, quotation.currency) },
+                  { label: "Total", value: <span className="tabular font-display text-lg font-semibold text-navy">{formatMoney(quotation.totalAmount, quotation.currency)}</span> },
                   { label: "Quantity", value: formatNumber(quotation.quantity) },
                   { label: "Production", value: `${quotation.productionDays} days` },
                   { label: "Sent", value: formatDateTime(quotation.submittedAt) },
@@ -93,27 +131,15 @@ export default async function OpportunityPage({ params }: { params: Promise<{ id
             <Alert tone="info">Your factory must be verified before you can send quotations.</Alert>
           ) : null}
 
-          <Panel title="Requirements">
-            <DetailList
-              items={[
-                { label: "Fabric", value: project.fabricRequirements },
-                { label: "Fabrics", value: project.fabrics.join(", ") || "—" },
-                { label: "Colours", value: project.colors },
-                { label: "Sizes", value: project.sizes.join(", ") },
-                { label: "Target price", value: project.targetUnitPrice ? `${formatMoney(project.targetUnitPrice, project.currency)} / unit` : "Not shared" },
-                { label: "Processes", value: project.requiredCapabilities.join(", ") || "None specified" },
-                { label: "Certifications", value: project.requiredCertifications.join(", ") || "None required" },
-                { label: "Preferred country", value: project.preferredCountry ?? "No preference" },
-              ]}
-            />
-            {project.description && <p className="mt-4 whitespace-pre-line border-t border-line pt-4 text-sm">{project.description}</p>}
-            {project.sustainabilityNotes && <p className="mt-3 text-sm"><span className="font-medium text-navy">Sustainability: </span>{project.sustainabilityNotes}</p>}
-            {project.additionalInstructions && <p className="mt-3 text-sm"><span className="font-medium text-navy">Instructions: </span>{project.additionalInstructions}</p>}
-          </Panel>
+          {!editable && requirements}
         </div>
 
         <div className="space-y-6">
-          <Panel title="Why you were matched" description={`Score ${Number(match.score).toFixed(0)}/100 · ${match.algorithm}`}>
+          <Panel title="Why you were matched" description={`Score ${score.toFixed(0)}/100 · ${match.algorithm}`}>
+            <div className="mb-5 flex items-center gap-4 border-b border-line-subtle pb-5">
+              <ScoreRing score={score} size="lg" />
+              <p className="text-[13px] leading-5 text-muted">Each criterion adds points up to its weight. Only factories that meet every mandatory requirement are matched.</p>
+            </div>
             <ScoreBreakdownView breakdown={match.breakdown as unknown as ScoreBreakdown} />
           </Panel>
           <Panel title="Tech pack and files" description="Always quote against the current tech pack version.">
@@ -121,22 +147,27 @@ export default async function OpportunityPage({ params }: { params: Promise<{ id
           </Panel>
           {project.revisions.length > 0 && (
             <Panel title="Requirement changes">
-              <ul className="space-y-2 text-sm">
-                {project.revisions.map((r) => (
-                  <li key={r.id}>
-                    <span className="text-xs text-muted">{formatDateTime(r.createdAt)}: </span>
-                    {Object.keys(r.changes as object).join(", ")} changed
-                  </li>
-                ))}
-              </ul>
+              <Timeline
+                items={project.revisions.map((r) => ({
+                  id: r.id,
+                  title: `${Object.keys(r.changes as object).join(", ")} changed`,
+                  meta: formatDateTime(r.createdAt),
+                  tone: "warning" as const,
+                }))}
+              />
             </Panel>
           )}
           {quotation && quotation.revisions.length > 0 && (
-            <Panel title="Your earlier versions">
-              <ul className="space-y-1 text-sm">
+            <Panel title="Your earlier versions" bodyClassName="p-0 sm:p-0">
+              <ul className="divide-y divide-line-subtle">
                 {quotation.revisions.map((r) => {
                   const snap = (r.snapshot ?? {}) as { totalAmount?: string };
-                  return <li key={r.id}>v{r.version} · {formatDate(r.createdAt)} · {snap.totalAmount ? formatMoney(snap.totalAmount, quotation.currency) : "—"}</li>;
+                  return (
+                    <li key={r.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm sm:px-5">
+                      <span><span className="font-medium text-navy">v{r.version}</span> <span className="text-muted">· {formatDate(r.createdAt)}</span></span>
+                      <span className="tabular text-ink">{snap.totalAmount ? formatMoney(snap.totalAmount, quotation.currency) : "—"}</span>
+                    </li>
+                  );
                 })}
               </ul>
             </Panel>

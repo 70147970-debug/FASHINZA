@@ -8,6 +8,10 @@ export const Sheet = Dialog.Root;
 export const SheetTrigger = Dialog.Trigger;
 export const SheetClose = Dialog.Close;
 
+/**
+ * Side drawer (a Radix dialog). The title is always the dialog's accessible name; `hideTitle` keeps it for
+ * screen readers only, in which case the close button floats in the top-right corner over the content.
+ */
 export function SheetContent({
   className,
   children,
@@ -16,23 +20,39 @@ export function SheetContent({
   hideTitle = false,
   ...props
 }: React.ComponentProps<typeof Dialog.Content> & { title: string; side?: "left" | "right"; hideTitle?: boolean }) {
+  const close = (
+    <Dialog.Close
+      className={cn(
+        "grid size-10 shrink-0 place-items-center rounded-md text-muted transition-colors hover:bg-neutral-100 hover:text-navy",
+        hideTitle && "absolute right-2 top-2 z-10",
+      )}
+      aria-label="Close menu"
+    >
+      <X className="size-5" />
+    </Dialog.Close>
+  );
   return (
     <Dialog.Portal>
-      <Dialog.Overlay className="fixed inset-0 z-50 bg-navy/40" />
+      <Dialog.Overlay className="fixed inset-0 z-50 bg-navy/35" />
       <Dialog.Content
         className={cn(
-          "fixed inset-y-0 z-50 flex w-[85vw] max-w-sm flex-col bg-white p-5 shadow-pop focus:outline-none",
-          side === "right" ? "right-0" : "left-0",
+          "fixed inset-y-0 z-50 flex w-[85vw] max-w-sm flex-col overflow-y-auto bg-white p-5 shadow-pop focus:outline-none",
+          side === "right" ? "right-0 border-l border-line" : "left-0 border-r border-line",
           className,
         )}
         {...props}
       >
-        <div className="mb-4 flex items-center justify-between">
-          <Dialog.Title className={cn("text-base font-semibold text-navy", hideTitle && "sr-only")}>{title}</Dialog.Title>
-          <Dialog.Close className="ml-auto rounded-md p-2 text-navy hover:bg-navy-50" aria-label="Close menu">
-            <X className="size-5" />
-          </Dialog.Close>
-        </div>
+        {hideTitle ? (
+          <>
+            <Dialog.Title className="sr-only">{title}</Dialog.Title>
+            {close}
+          </>
+        ) : (
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <Dialog.Title className="font-display text-base font-semibold text-navy">{title}</Dialog.Title>
+            <span className="-mr-2">{close}</span>
+          </div>
+        )}
         <Dialog.Description className="sr-only">{title}</Dialog.Description>
         {children}
       </Dialog.Content>

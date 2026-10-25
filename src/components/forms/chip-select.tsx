@@ -4,6 +4,7 @@ import { useId, useState } from "react";
 import { Check, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FieldError } from "@/components/ui/field";
+import { fieldClass } from "@/components/ui/input";
 
 /**
  * Multi-select rendered as toggle chips. Each chip is a real checkbox named `name`, so the
@@ -44,7 +45,7 @@ export function ChipSelect({
 
   return (
     <fieldset aria-describedby={hint ? `${id}-hint` : undefined}>
-      <legend className="mb-2 text-sm font-medium text-ink">
+      <legend className="mb-2 text-[13px] font-medium leading-5 text-ink">
         {label}
         {required ? <span className="text-danger" aria-hidden> *</span> : <span className="font-normal text-muted"> (optional)</span>}
       </legend>
@@ -55,8 +56,8 @@ export function ChipSelect({
             <label
               key={o.value}
               className={cn(
-                "inline-flex cursor-pointer select-none items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-teal",
-                on ? "border-teal bg-teal-50 text-teal-800" : "border-line bg-white text-ink hover:bg-canvas",
+                "inline-flex min-h-8 cursor-pointer select-none items-center gap-1.5 rounded-full border px-3 py-1 text-[13px] font-medium transition-colors duration-150 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-teal max-sm:min-h-10",
+                on ? "border-teal bg-teal-50 text-teal-800" : "border-line-strong bg-white text-neutral-700 hover:border-neutral-400 hover:text-navy",
               )}
             >
               <input type="checkbox" name={name} value={o.value} checked={on} onChange={() => toggle(o.value)} className="sr-only" />
@@ -94,9 +95,13 @@ export function ChipSelect({
               }
             }}
             placeholder="Add another…"
-            className="h-9 w-full rounded-md border border-line bg-white px-3 text-sm focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
+            className={cn(fieldClass, "h-9 max-sm:h-10")}
           />
-          <button type="button" onClick={addCustom} className="inline-flex h-9 items-center gap-1 rounded-md border border-line px-3 text-sm font-medium text-navy hover:bg-navy-50">
+          <button
+            type="button"
+            onClick={addCustom}
+            className="inline-flex h-9 shrink-0 items-center gap-1 rounded-md border border-line-strong bg-white px-3 text-[13px] font-medium text-navy shadow-card transition-colors hover:bg-surface-muted max-sm:h-10"
+          >
             <Plus className="size-4" aria-hidden /> Add
           </button>
         </div>

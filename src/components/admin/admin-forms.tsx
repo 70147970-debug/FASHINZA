@@ -92,10 +92,27 @@ export function RevokeVerificationButton({ profileId, name }: { profileId: strin
   );
 }
 
-export function UserStatusButton({ userId, name, suspended }: { userId: string; name: string; suspended: boolean }) {
+export function UserStatusButton({
+  userId,
+  name,
+  suspended,
+  size = "sm",
+}: {
+  userId: string;
+  name: string;
+  suspended: boolean;
+  /** "md" when the button sits in a page header next to other md actions. */
+  size?: "sm" | "md";
+}) {
   return (
     <ActionDialog
-      trigger={suspended ? <Button variant="outline" size="sm"><RotateCcw /> Reactivate</Button> : <Button variant="ghost" size="sm"><Ban /> Suspend</Button>}
+      trigger={
+        suspended ? (
+          <Button variant="outline" size={size}><RotateCcw /> Reactivate</Button>
+        ) : (
+          <Button variant={size === "md" ? "outline" : "ghost"} size={size}><Ban /> Suspend</Button>
+        )
+      }
       title={suspended ? `Reactivate ${name}?` : `Suspend ${name}?`}
       description={suspended ? "The user can sign in again." : "The user is signed out everywhere and cannot sign in until reactivated. Their records are kept."}
       action={setUserStatusAction}
@@ -148,7 +165,7 @@ export function EnquiryStatusForm({ id, status }: { id: string; status: string }
     <ActionForm action={setEnquiryStatusAction} className="flex items-center gap-2">
       <input type="hidden" name="id" value={id} />
       <label htmlFor={`enq-${id}`} className="sr-only">Status</label>
-      <Select id={`enq-${id}`} name="status" defaultValue={status} className="h-8 w-36 text-xs">
+      <Select id={`enq-${id}`} name="status" defaultValue={status} className="w-40 sm:h-8 sm:text-[13px]">
         <option value="NEW">New</option>
         <option value="IN_PROGRESS">In progress</option>
         <option value="RESOLVED">Resolved</option>

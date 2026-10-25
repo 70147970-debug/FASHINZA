@@ -1,122 +1,31 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  BadgeCheck,
-  CheckCircle2,
-  Circle,
-  ClipboardCheck,
-  FileSearch,
-  FileText,
-  GitCompareArrows,
-  Loader2,
-  ScanSearch,
-  Send,
-  Users,
-  Activity,
-  Leaf,
-  MapPin,
-} from "lucide-react";
+import { ArrowRight, BadgeCheck, Check, FileText, Leaf, ScanSearch, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { CheckList, CtaBand, FeatureCard, Section, SectionHeading, WorkflowDiagram } from "@/components/site/marketing";
+import { CheckList, CtaBand, Section, SectionHeading, StepList, WorkflowDiagram } from "@/components/site/marketing";
+import { MatchMock, OrderOverviewMock, TrackingMock } from "@/components/site/product-mocks";
 import { FaqList } from "@/components/site/faq-list";
 import { FAQ } from "@/lib/faq";
+import { CERTIFICATIONS } from "@/lib/constants";
 
-const DEMO_STAGES = [
-  { name: "Fabric sourcing", state: "done", date: "Completed 3 Mar" },
-  { name: "Sampling", state: "done", date: "Completed 10 Mar" },
-  { name: "Cutting", state: "done", date: "Completed 14 Mar" },
-  { name: "Stitching", state: "active", date: "In progress" },
-  { name: "Finishing", state: "todo", date: "Not started" },
-  { name: "Quality control", state: "todo", date: "Not started" },
-] as const;
-
-function HeroPreview() {
-  return (
-    <div className="rounded-lg border border-line bg-white shadow-pop" aria-label="Example order tracking view with demo data">
-      <div className="flex items-center justify-between border-b border-line px-5 py-3">
-        <div>
-          <p className="text-xs text-muted">Order FZ-DEMO-0001</p>
-          <p className="font-semibold text-navy">Organic cotton crew-neck tee</p>
-        </div>
-        <Badge tone="warning">Demo data</Badge>
-      </div>
-      <dl className="grid grid-cols-3 gap-3 border-b border-line px-5 py-3 text-sm">
-        <div>
-          <dt className="text-xs text-muted">Quantity</dt>
-          <dd className="font-medium">500 pcs</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-muted">Unit price</dt>
-          <dd className="font-medium">USD 6.40</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-muted">Expected</dt>
-          <dd className="font-medium">12 Apr</dd>
-        </div>
-      </dl>
-      <ol className="space-y-3 px-5 py-4">
-        {DEMO_STAGES.map((s) => (
-          <li key={s.name} className="flex items-center gap-3 text-sm">
-            {s.state === "done" && <CheckCircle2 className="size-4 text-success" aria-label="Completed" />}
-            {s.state === "active" && <Loader2 className="size-4 text-teal" aria-label="In progress" />}
-            {s.state === "todo" && <Circle className="size-4 text-line" aria-label="Not started" />}
-            <span className={s.state === "todo" ? "text-muted" : "font-medium text-ink"}>{s.name}</span>
-            <span className="ml-auto text-xs text-muted">{s.date}</span>
-          </li>
-        ))}
-      </ol>
-    </div>
-  );
-}
-
-const EXAMPLE_MATCHES = [
-  { name: "Example Knit Unit A", place: "Lahore, PK", score: 91, notes: ["2 of 2 required processes", "GOTS verified", "35-day lead time, 90 days available"] },
-  { name: "Example Knit Unit B", place: "Dhaka, BD", score: 74, notes: ["1 of 2 required processes (no screen printing)", "GOTS verified", "Outside preferred country"] },
-];
-
-function MatchPreview() {
-  return (
-    <div className="rounded-lg border border-line bg-white shadow-card" aria-label="Example factory matching result with illustrative data">
-      <div className="flex items-center justify-between border-b border-line px-5 py-3">
-        <div>
-          <p className="text-xs text-muted">Project · 500 organic cotton tees · GOTS required</p>
-          <p className="font-semibold text-navy">2 verified factories matched</p>
-        </div>
-        <Badge tone="warning">Example data</Badge>
-      </div>
-      <ul className="divide-y divide-line">
-        {EXAMPLE_MATCHES.map((m) => (
-          <li key={m.name} className="px-5 py-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="flex items-center gap-1 text-sm font-semibold text-navy">{m.name}<BadgeCheck className="size-4 text-success" aria-label="Verified" /></p>
-                <p className="flex items-center gap-1 text-xs text-muted"><MapPin className="size-3" aria-hidden />{m.place}</p>
-              </div>
-              <p className="tabular font-display text-xl font-semibold text-navy">{m.score}<span className="text-xs font-normal text-muted">/100</span></p>
-            </div>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-navy-50" aria-hidden><div className="h-full rounded-full bg-teal" style={{ width: `${m.score}%` }} /></div>
-            <ul className="mt-2 space-y-0.5 text-xs text-muted">{m.notes.map((n) => <li key={n}>· {n}</li>)}</ul>
-          </li>
-        ))}
-      </ul>
-      <p className="border-t border-line px-5 py-3 text-xs text-muted">3 other factories excluded: MOQ above the order (1), lead time too long (1), no verified GOTS (1).</p>
-    </div>
-  );
-}
+const HOME_FAQ = ["How are factories matched to my project?", "Who can see my designs and tech packs?", "How do payments work?", "Why am I not receiving any opportunities?"];
 
 export default function HomePage() {
   return (
     <>
       {/* Hero */}
-      <section className="border-b border-line bg-white">
-        <div className="container-page grid items-center gap-12 py-14 sm:py-20 lg:grid-cols-[1.1fr_1fr]">
-          <div>
-            <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-teal-700">B2B apparel manufacturing platform</p>
-            <h1 className="text-4xl font-semibold leading-tight sm:text-5xl">
-              From tech pack to delivery, with every step in view.
-            </h1>
-            <p className="mt-5 max-w-xl text-lg text-muted">
+      <section className="relative overflow-hidden border-b border-line bg-white">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-dot-grid opacity-70 [mask-image:radial-gradient(ellipse_70%_80%_at_75%_30%,black,transparent_75%)]"
+        />
+        <div className="container-page relative grid items-center gap-12 py-14 sm:py-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-14 lg:py-24">
+          <div className="max-w-xl">
+            <p className="eyebrow mb-5 inline-flex items-center gap-2 rounded-full border border-line bg-white px-3 py-1.5 text-teal-700 shadow-card">
+              <span className="size-1.5 rounded-full bg-teal" aria-hidden />
+              B2B apparel manufacturing platform
+            </p>
+            <h1 className="type-display text-balance text-navy">From tech pack to delivery, with every step in view.</h1>
+            <p className="mt-6 text-base leading-7 text-muted sm:text-lg sm:leading-8">
               Fashinza helps fashion brands find compatible clothing manufacturers, compare quotations, and follow
               production and quality control in one place — so you spend less time chasing updates.
             </p>
@@ -130,59 +39,52 @@ export default function HomePage() {
                 <Link href="/register?role=manufacturer">Join as a Manufacturer</Link>
               </Button>
             </div>
-            <p className="mt-4 text-sm text-muted">Free to register. Manufacturers are listed only after an administrator reviews them.</p>
+            <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted">
+              {["Free to register", "Manufacturers reviewed by an administrator", "Matching reasons always shown", "Sandbox payments, clearly labelled"].map((t) => (
+                <li key={t} className="flex items-center gap-2">
+                  <Check className="size-4 shrink-0 text-teal" aria-hidden />
+                  {t}
+                </li>
+              ))}
+            </ul>
           </div>
-          <HeroPreview />
+          <OrderOverviewMock />
         </div>
       </section>
 
       {/* Workflow */}
       <Section labelledBy="workflow-title">
-        <SectionHeading
-          id="workflow-title"
-          eyebrow="Production workflow"
-          title="One workflow from requirements to delivery"
-          description="Every project follows the same clear stages, and both sides see the same status."
-        />
-        <WorkflowDiagram />
-      </Section>
-
-      {/* Three steps */}
-      <Section tone="white" labelledBy="steps-title">
-        <SectionHeading id="steps-title" eyebrow="How it works" title="Three steps to get production moving" align="center" />
-        <ol className="grid gap-6 md:grid-cols-3">
-          {[
-            { icon: Send, title: "Submit requirements", text: "Describe the garment, quantity, fabric, sizes, target price and deadline, and attach your tech pack." },
-            { icon: Users, title: "Connect with manufacturers", text: "Compatible manufacturers review your project and send quotations you can compare side by side." },
-            { icon: Activity, title: "Track production", text: "Accept a quotation to create an order, then follow each milestone and quality-control result." },
-          ].map((step, i) => (
-            <li key={step.title} className="rounded-lg border border-line p-6">
-              <div className="mb-4 flex items-center gap-3">
-                <span className="grid size-8 place-items-center rounded-full bg-navy text-sm font-semibold text-white">{i + 1}</span>
-                <step.icon className="size-5 text-teal" aria-hidden />
-              </div>
-              <h3 className="text-lg font-semibold">{step.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted">{step.text}</p>
-            </li>
-          ))}
-        </ol>
-        <div className="mt-8 text-center">
-          <Button asChild variant="link">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <SectionHeading
+            id="workflow-title"
+            eyebrow="Production workflow"
+            title="One workflow from requirements to delivery"
+            description="Every project follows the same clear stages, and both sides see the same status."
+            className="mb-0 lg:mb-12"
+          />
+          <Button asChild variant="link" className="mb-8 self-start lg:mb-14 lg:self-auto">
             <Link href="/how-it-works">
               See the full process <ArrowRight />
             </Link>
           </Button>
         </div>
+        <WorkflowDiagram />
       </Section>
 
       {/* Benefits */}
-      <Section labelledBy="benefits-title">
-        <h2 id="benefits-title" className="sr-only">Benefits</h2>
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-lg border border-line bg-white p-6 sm:p-8">
-            <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-teal-700">For fashion brands</p>
-            <h3 className="mb-5 text-xl font-semibold">Less sourcing effort, more visibility</h3>
+      <Section tone="white" labelledBy="benefits-title">
+        <SectionHeading
+          id="benefits-title"
+          eyebrow="Who it is for"
+          title="Built for both sides of the order"
+          description="Brands and manufacturers work from the same project, quotation and order — each with the tools their role needs."
+        />
+        <div className="grid overflow-hidden rounded-lg border border-line shadow-card lg:grid-cols-2">
+          <div className="bg-white p-6 sm:p-8 lg:p-10">
+            <p className="eyebrow mb-2 text-teal-700">For fashion brands</p>
+            <h3 className="font-display text-xl font-semibold text-navy">Less sourcing effort, more visibility</h3>
             <CheckList
+              className="mt-6"
               items={[
                 "Shortlist manufacturers by category, quantity, capability and location instead of searching directories.",
                 "See why each manufacturer was matched before you contact them.",
@@ -190,14 +92,15 @@ export default function HomePage() {
                 "Follow production milestones and quality-control results without chasing messages.",
               ]}
             />
-            <Button asChild variant="outline" className="mt-6">
-              <Link href="/for-brands">Learn more for brands</Link>
+            <Button asChild variant="outline" className="mt-8">
+              <Link href="/for-brands">Learn more for brands <ArrowRight /></Link>
             </Button>
           </div>
-          <div className="rounded-lg border border-line bg-white p-6 sm:p-8">
-            <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-teal-700">For manufacturers</p>
-            <h3 className="mb-5 text-xl font-semibold">Requests that fit your factory</h3>
+          <div className="border-t border-line bg-canvas p-6 sm:p-8 lg:border-l lg:border-t-0 lg:p-10">
+            <p className="eyebrow mb-2 text-teal-700">For manufacturers</p>
+            <h3 className="font-display text-xl font-semibold text-navy">Requests that fit your factory</h3>
             <CheckList
+              className="mt-6"
               items={[
                 "Receive project requests that match your categories, capacity and capabilities.",
                 "Submit and revise structured quotations, with the history kept for both sides.",
@@ -205,118 +108,143 @@ export default function HomePage() {
                 "Show your verified profile and documents to brands looking for partners.",
               ]}
             />
-            <Button asChild variant="outline" className="mt-6">
-              <Link href="/for-manufacturers">Learn more for manufacturers</Link>
+            <Button asChild variant="outline" className="mt-8">
+              <Link href="/for-manufacturers">Learn more for manufacturers <ArrowRight /></Link>
             </Button>
           </div>
         </div>
       </Section>
 
-      {/* Features */}
-      <Section tone="white" labelledBy="features-title">
-        <SectionHeading
-          id="features-title"
-          eyebrow="Platform features"
-          title="The tools a production run actually needs"
-          description="Built around the four parts of manufacturing that cause the most back-and-forth."
-        />
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <FeatureCard icon={FileSearch} title="Factory matching">
-            A transparent, rule-based engine filters verified factories on category, MOQ, capacity, lead time and
-            certifications, then ranks them with a score and the reasons behind it.
-          </FeatureCard>
-          <FeatureCard icon={GitCompareArrows} title="Quotations">
-            Manufacturers send structured quotes. Brands compare them side by side and accept one; the others are
-            closed automatically.
-          </FeatureCard>
-          <FeatureCard icon={ClipboardCheck} title="Production tracking">
-            Eight milestones from fabric sourcing to delivery, each gated by evidence or approval, with planned and
-            actual dates and automatic delay warnings.
-          </FeatureCard>
-          <FeatureCard icon={ScanSearch} title="Quality control">
-            AQL inspections follow ISO 2859-1 sampling plans. Defects are recorded by severity, the result is calculated,
-            and a failed batch automatically opens a rework task.
-          </FeatureCard>
-        </div>
-      </Section>
-
       {/* Matching preview */}
       <Section labelledBy="matching-title">
-        <div className="grid items-center gap-10 lg:grid-cols-2">
+        <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-16">
           <div>
             <SectionHeading
               id="matching-title"
               eyebrow="Factory matching"
               title="See why each factory was matched — and why others were not"
-              description="Mandatory filters come first: verification, category, MOQ, capacity, lead time and required certifications. Eligible factories are then ranked with documented weights, and every score comes with its reasons."
+              description="A transparent, rule-based engine. No black box: every score comes with its reasons."
+              className="mb-8 lg:mb-10"
             />
-            <Button asChild variant="outline"><Link href="/how-it-works">How matching works</Link></Button>
+            <StepList
+              items={[
+                { title: "Mandatory filters first", text: "Verification, category, MOQ, capacity, lead time and required certifications. A factory that fails one is excluded, not just ranked lower." },
+                { title: "Ranked with documented weights", text: "Eligible factories are scored on processes, fabric, capacity, lead time, location and track record." },
+                { title: "Reasons shown with every score", text: "Brands see what matched and what did not before inviting anyone to quote." },
+              ]}
+            />
+            <Button asChild variant="outline" className="mt-8"><Link href="/how-it-works">How matching works</Link></Button>
           </div>
-          <MatchPreview />
+          <MatchMock />
+        </div>
+      </Section>
+
+      {/* Production tracking preview */}
+      <Section tone="white" labelledBy="tracking-title">
+        <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:gap-16">
+          <div className="lg:order-2">
+            <SectionHeading
+              id="tracking-title"
+              eyebrow="Production tracking"
+              title="Every milestone, inspection and payment in one view"
+              description="Accepting a quotation creates an order with eight milestones, from fabric sourcing to delivery."
+              className="mb-8"
+            />
+            <CheckList
+              items={[
+                "Milestones complete in order, each with its required evidence or approval.",
+                "Planned and actual dates side by side, with automatic delay warnings.",
+                "Payment milestones (30% / 40% / 30% by default) fall due as stages complete.",
+                "Both sides see the same status, so nobody has to ask for an update.",
+              ]}
+            />
+          </div>
+          <div className="lg:order-1">
+            <TrackingMock />
+          </div>
         </div>
       </Section>
 
       {/* Quality & sustainability */}
-      <Section tone="white" labelledBy="quality-title">
+      <Section labelledBy="quality-title">
+        <SectionHeading
+          id="quality-title"
+          eyebrow="Quality and sustainability"
+          title="Standards you can hold a factory to"
+          description="Quality is checked against a published standard, and certifications count only once a person has reviewed the document."
+        />
         <div className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-lg border border-line p-6 sm:p-8">
-            <ScanSearch className="size-6 text-teal" aria-hidden />
-            <h2 id="quality-title" className="mt-3 text-xl font-semibold">Quality checked against a standard</h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted">
+          <article className="rounded-lg border border-line bg-white p-6 shadow-card sm:p-8">
+            <div className="flex items-center gap-3">
+              <span className="grid size-9 place-items-center rounded-md bg-teal-50 text-teal-700"><ScanSearch className="size-[18px]" aria-hidden /></span>
+              <h3 className="font-display text-lg font-semibold text-navy">Quality checked against a standard</h3>
+            </div>
+            <p className="mt-4 text-[0.9375rem] leading-7 text-muted">
               Samples are approved before bulk production. Inspections use ISO 2859-1 AQL sampling plans, so the number of
               units to inspect and the defects allowed are set by the standard, not by negotiation. Failed batches go back
               for rework, and every report is kept.
             </p>
-          </div>
-          <div className="rounded-lg border border-line p-6 sm:p-8">
-            <Leaf className="size-6 text-teal" aria-hidden />
-            <h2 className="mt-3 text-xl font-semibold">Certifications you can require</h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted">
+            <dl className="mt-6 grid grid-cols-3 divide-x divide-line-subtle rounded-lg border border-line bg-surface-muted text-center">
+              {[["Sampling plan", "ISO 2859-1"], ["Defects", "By severity"], ["Failed batch", "Rework task"]].map(([k, v]) => (
+                <div key={k} className="px-2 py-3">
+                  <dt className="text-xs text-muted">{k}</dt>
+                  <dd className="mt-0.5 text-[13px] font-semibold text-navy">{v}</dd>
+                </div>
+              ))}
+            </dl>
+          </article>
+          <article className="rounded-lg border border-line bg-white p-6 shadow-card sm:p-8">
+            <div className="flex items-center gap-3">
+              <span className="grid size-9 place-items-center rounded-md bg-teal-50 text-teal-700"><Leaf className="size-[18px]" aria-hidden /></span>
+              <h3 className="font-display text-lg font-semibold text-navy">Certifications you can require</h3>
+            </div>
+            <p className="mt-4 text-[0.9375rem] leading-7 text-muted">
               Make GOTS, OEKO-TEX, Fairtrade, BCI and other certifications mandatory for a project. A certification only
               counts after an administrator has reviewed the certificate.
             </p>
-            <Button asChild variant="link" className="mt-2"><Link href="/sustainability">Our approach to sustainability <ArrowRight /></Link></Button>
-          </div>
+            <ul className="mt-6 flex flex-wrap gap-2" aria-label="Supported certifications">
+              {CERTIFICATIONS.map((c) => (
+                <li key={c} className="inline-flex h-7 items-center gap-1.5 rounded-full border border-line bg-surface-muted px-3 text-xs font-medium text-navy">
+                  <ShieldCheck className="size-3.5 text-teal" aria-hidden />
+                  {c}
+                </li>
+              ))}
+            </ul>
+            <Button asChild variant="link" className="mt-6"><Link href="/sustainability">Our approach to sustainability <ArrowRight /></Link></Button>
+          </article>
         </div>
       </Section>
 
       {/* Trust / verification */}
-      <Section labelledBy="trust-title">
-        <div className="grid gap-10 lg:grid-cols-2 lg:items-start">
-          <SectionHeading
-            id="trust-title"
-            eyebrow="Manufacturer verification"
-            title="How manufacturers are reviewed"
-            description="Verification is a manual step taken by a Fashinza administrator. It is never applied automatically."
-          />
-          <ol className="space-y-4">
-            {[
-              { icon: FileText, title: "Profile and documents submitted", text: "The manufacturer completes its business profile and uploads supporting documents, such as business registration or certificates." },
-              { icon: ScanSearch, title: "Administrator review", text: "An administrator reviews the profile and documents and records an approval or a rejection with a reason." },
-              { icon: BadgeCheck, title: "Verified badge shown", text: "Only approved manufacturers carry the verified badge. Certifications count in matching only after their document is verified." },
-            ].map((item) => (
-              <li key={item.title} className="flex gap-4 rounded-lg border border-line bg-white p-5">
-                <item.icon className="mt-0.5 size-5 shrink-0 text-teal" aria-hidden />
-                <div>
-                  <h3 className="font-semibold">{item.title}</h3>
-                  <p className="mt-1 text-sm text-muted">{item.text}</p>
-                </div>
-              </li>
-            ))}
-            <li className="text-sm text-muted">
-              Verification confirms that documents were reviewed. It is not a guarantee of product quality or
-              delivery, so brands should still approve samples before bulk production.
-            </li>
-          </ol>
-        </div>
+      <Section tone="white" labelledBy="trust-title">
+        <SectionHeading
+          id="trust-title"
+          eyebrow="Manufacturer verification"
+          title="How manufacturers are reviewed"
+          description="Verification is a manual step taken by a Fashinza administrator. It is never applied automatically."
+        />
+        <StepList
+          horizontal
+          items={[
+            { icon: FileText, title: "Profile and documents submitted", text: "The manufacturer completes its business profile and uploads supporting documents, such as business registration or certificates." },
+            { icon: ScanSearch, title: "Administrator review", text: "An administrator reviews the profile and documents and records an approval or a rejection with a reason." },
+            { icon: BadgeCheck, title: "Verified badge shown", text: "Only approved manufacturers carry the verified badge. Certifications count in matching only after their document is verified." },
+          ]}
+        />
+        <p className="mt-10 flex max-w-3xl gap-3 rounded-lg border border-line bg-surface-muted px-4 py-3.5 text-sm leading-6 text-muted">
+          <ShieldCheck className="mt-0.5 size-4 shrink-0 text-slate-blue" aria-hidden />
+          Verification confirms that documents were reviewed. It is not a guarantee of product quality or delivery, so
+          brands should still approve samples before bulk production.
+        </p>
       </Section>
 
       {/* FAQ */}
-      <Section tone="white" labelledBy="faq-title">
-        <div className="mx-auto max-w-3xl">
-          <SectionHeading id="faq-title" eyebrow="FAQ" title="Common questions" align="center" />
-          <FaqList items={FAQ.filter((f) => ["How are factories matched to my project?", "Who can see my designs and tech packs?", "How do payments work?", "Why am I not receiving any opportunities?"].includes(f.q))} />
-          <p className="mt-6 text-center"><Button asChild variant="link"><Link href="/faq">All questions <ArrowRight /></Link></Button></p>
+      <Section labelledBy="faq-title">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
+          <SectionHeading id="faq-title" eyebrow="FAQ" title="Common questions" description="How matching, file access, payments and opportunities work." className="lg:mb-0">
+            <Button asChild variant="outline"><Link href="/faq">All questions <ArrowRight /></Link></Button>
+          </SectionHeading>
+          <FaqList items={FAQ.filter((f) => HOME_FAQ.includes(f.q))} />
         </div>
       </Section>
 

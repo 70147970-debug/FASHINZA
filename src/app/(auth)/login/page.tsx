@@ -14,12 +14,12 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const { next, reset, signedOut } = await searchParams;
   return (
     <>
-      <h1 className="text-2xl font-semibold">Sign in to Fashinza</h1>
-      <p className="mb-8 mt-2 text-sm text-muted">Use the email and password you registered with.</p>
+      <h1 className="type-title text-navy">Sign in to Fashinza</h1>
+      <p className="mb-7 mt-1.5 text-sm leading-6 text-muted">Use the email and password you registered with.</p>
       {reset && <Alert tone="success" className="mb-5">Your password was changed. Sign in with your new password.</Alert>}
       {signedOut && <Alert tone="info" className="mb-5">You have been signed out.</Alert>}
       <LoginForm next={next} />
-      <p className="mt-6 text-center text-sm text-muted">
+      <p className="mt-7 border-t border-line-subtle pt-5 text-center text-sm text-muted">
         New to Fashinza? <Link href="/register" className="font-medium text-teal-700 hover:underline">Create an account</Link>
       </p>
     </>

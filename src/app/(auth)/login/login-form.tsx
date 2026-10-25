@@ -35,15 +35,13 @@ export function LoginForm({ next }: { next?: string }) {
       <Field id="email" label="Email" required error={errors.email}>
         <Input name="email" type="email" autoComplete="email" />
       </Field>
-      <div className="space-y-1.5">
+      <div className="relative">
         <Field id="password" label="Password" required error={errors.password}>
           <Input name="password" type="password" autoComplete="current-password" />
         </Field>
-        <p className="text-right text-xs">
-          <Link href="/forgot-password" className="font-medium text-teal-700 hover:underline">Forgot password?</Link>
-        </p>
+        <Link href="/forgot-password" className="absolute right-0 top-0 rounded-sm text-[13px] font-medium leading-5 text-teal-700 hover:underline">Forgot password?</Link>
       </div>
-      <Button type="submit" className="w-full" disabled={pending}>
+      <Button type="submit" size="lg" className="w-full" disabled={pending}>
         {pending && <Loader2 className="animate-spin" />} {pending ? "Signing in…" : "Sign in"}
       </Button>
     </form>

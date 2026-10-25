@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useState } from "react";
-import { Factory, Loader2, Shirt } from "lucide-react";
+import { Check, Factory, Loader2, Shirt } from "lucide-react";
 import { registerAction } from "../actions";
 import { initialFormState, zodFieldErrors } from "@/lib/form-state";
 import { registerSchema } from "@/lib/validation/auth";
@@ -39,19 +39,28 @@ export function RegisterForm({ defaultRole }: { defaultRole: "BRAND" | "MANUFACT
       {state.message && <Alert tone={state.status === "success" ? "success" : "error"}>{state.message}</Alert>}
       <fieldset>
         <legend className="mb-2 text-sm font-medium text-ink">Account type <span className="text-danger" aria-hidden>*</span></legend>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2">
           {ROLES.map((r) => (
             <label
               key={r.value}
               className={cn(
-                "flex cursor-pointer flex-col gap-1 rounded-md border p-3 text-sm has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-teal",
-                role === r.value ? "border-teal bg-teal-50" : "border-line bg-white hover:bg-canvas",
+                "relative flex cursor-pointer flex-col gap-1 rounded-lg border p-3.5 text-sm transition-colors duration-150 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-teal has-[:focus-visible]:ring-offset-2",
+                role === r.value ? "border-teal bg-teal-50 shadow-card" : "border-line-strong bg-white hover:bg-surface-muted",
               )}
             >
               <input type="radio" name="role" value={r.value} checked={role === r.value} onChange={() => setRole(r.value)} className="sr-only" />
-              <r.icon className="size-5 text-teal" aria-hidden />
+              <span
+                className={cn(
+                  "absolute right-3 top-3 grid size-4 place-items-center rounded-full border",
+                  role === r.value ? "border-teal-700 bg-teal-700 text-white" : "border-line-strong bg-white",
+                )}
+                aria-hidden
+              >
+                {role === r.value && <Check className="size-2.5" strokeWidth={3.5} />}
+              </span>
+              <r.icon className={cn("mb-1 size-5", role === r.value ? "text-teal-700" : "text-neutral-500")} aria-hidden />
               <span className="font-medium text-navy">{r.label}</span>
-              <span className="text-xs text-muted">{r.hint}</span>
+              <span className="text-xs leading-4 text-muted">{r.hint}</span>
             </label>
           ))}
         </div>
@@ -72,7 +81,7 @@ export function RegisterForm({ defaultRole }: { defaultRole: "BRAND" | "MANUFACT
       <Field id="confirmPassword" label="Confirm password" required error={errors.confirmPassword}>
         <Input name="confirmPassword" type="password" autoComplete="new-password" />
       </Field>
-      <Button type="submit" variant="accent" className="w-full" disabled={pending}>
+      <Button type="submit" variant="accent" size="lg" className="w-full" disabled={pending}>
         {pending && <Loader2 className="animate-spin" />} {pending ? "Creating account…" : "Create account"}
       </Button>
     </form>

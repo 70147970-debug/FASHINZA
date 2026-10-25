@@ -44,104 +44,131 @@ export function QuotationCompare({ quotes, projectId, canDecide }: { quotes: Quo
   const fastest = open.length > 1 ? open.reduce((a, b) => (a.productionDays <= b.productionDays ? a : b)).id : null;
   const perUnit = (q: QuoteRow) => Number(q.totalAmount) / q.quantity;
 
-  const rows: { label: string; render: (q: QuoteRow) => React.ReactNode; strong?: boolean }[] = [
-    { label: "Total (incl. tax)", strong: true, render: (q) => formatMoney(q.totalAmount, q.currency) },
-    { label: "Effective price / unit", render: (q) => formatMoney(perUnit(q), q.currency) },
-    { label: "Quoted quantity", render: (q) => formatNumber(q.quantity) },
-    { label: "Minimum quantity", render: (q) => formatNumber(q.minQuantity) },
-    { label: "Production time", render: (q) => `${q.productionDays} days` },
-    { label: "Making cost / unit", render: (q) => formatMoney(q.unitPrice, q.currency) },
-    { label: "Fabric / unit", render: (q) => formatMoney(q.fabricCostPerUnit, q.currency) },
-    { label: "Finishing / unit", render: (q) => formatMoney(q.finishingCostPerUnit, q.currency) },
-    { label: "Packaging / unit", render: (q) => formatMoney(q.packagingCostPerUnit, q.currency) },
-    { label: "Sampling charge", render: (q) => formatMoney(q.samplingCost ?? 0, q.currency) },
-    { label: "Logistics estimate", render: (q) => formatMoney(q.logisticsCost, q.currency) },
-    { label: "Tax", render: (q) => `${Number(q.taxPercent)}% · ${formatMoney(q.taxAmount, q.currency)}` },
-    { label: "Valid until", render: (q) => formatDate(q.validUntil) },
+  type Row = { label: string; render: (q: QuoteRow) => React.ReactNode; strong?: boolean };
+  const groups: { title: string; rows: Row[] }[] = [
+    {
+      title: "Summary",
+      rows: [
+        { label: "Total (incl. tax)", strong: true, render: (q) => formatMoney(q.totalAmount, q.currency) },
+        { label: "Effective price / unit", render: (q) => formatMoney(perUnit(q), q.currency) },
+        { label: "Quoted quantity", render: (q) => formatNumber(q.quantity) },
+        { label: "Minimum quantity", render: (q) => formatNumber(q.minQuantity) },
+        { label: "Production time", render: (q) => `${q.productionDays} days` },
+      ],
+    },
+    {
+      title: "Cost breakdown",
+      rows: [
+        { label: "Making cost / unit", render: (q) => formatMoney(q.unitPrice, q.currency) },
+        { label: "Fabric / unit", render: (q) => formatMoney(q.fabricCostPerUnit, q.currency) },
+        { label: "Finishing / unit", render: (q) => formatMoney(q.finishingCostPerUnit, q.currency) },
+        { label: "Packaging / unit", render: (q) => formatMoney(q.packagingCostPerUnit, q.currency) },
+        { label: "Sampling charge", render: (q) => formatMoney(q.samplingCost ?? 0, q.currency) },
+        { label: "Logistics estimate", render: (q) => formatMoney(q.logisticsCost, q.currency) },
+        { label: "Tax", render: (q) => `${Number(q.taxPercent)}% · ${formatMoney(q.taxAmount, q.currency)}` },
+      ],
+    },
+    { title: "Terms", rows: [{ label: "Valid until", render: (q) => formatDate(q.validUntil) }] },
   ];
+  const highlight = (q: QuoteRow) => (q.id === lowest || q.id === fastest ? "bg-teal-50/40" : "");
+  const rowHead = "sticky left-0 z-10 border-t border-line-subtle bg-white py-2.5 pl-4 pr-3 text-left text-[13px] font-normal text-muted sm:pl-5";
+  const cell = "border-l border-t border-line-subtle px-4 py-2.5";
 
   return (
-    <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-      <table className="w-full min-w-[560px] border-separate border-spacing-0 text-left text-sm">
-        <caption className="sr-only">Quotation comparison</caption>
-        <thead>
-          <tr>
-            <th scope="col" className="sticky left-0 z-10 w-44 bg-white pb-3 pr-3 align-bottom text-xs font-medium text-muted">Factory</th>
-            {quotes.map((q) => {
-              const f = q.manufacturer.manufacturerProfile;
-              return (
-                <th key={q.id} scope="col" className="min-w-48 border-l border-line px-3 pb-3 align-bottom font-normal">
-                  <span className="flex items-center gap-1 font-semibold text-navy">
-                    {f?.businessName ?? "Factory"}
-                    {f?.verificationStatus === "VERIFIED" && <BadgeCheck className="size-4 text-success" aria-label="Verified" />}
-                  </span>
-                  <span className="block text-xs text-muted">{f ? `${f.city}, ${f.country}` : ""} · v{q.version}</span>
-                  <span className="mt-1.5 flex flex-wrap gap-1">
-                    <StatusBadge map={QUOTATION_STATUS} value={q.status} />
-                    {q.id === lowest && <Badge tone="success">Lowest total</Badge>}
-                    {q.id === fastest && <Badge tone="teal">Fastest</Badge>}
-                  </span>
-                </th>
-              );
-            })}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.label}>
-              <th scope="row" className="sticky left-0 z-10 border-t border-line bg-white py-2 pr-3 text-xs font-medium text-muted">{r.label}</th>
-              {quotes.map((q) => (
-                <td key={q.id} className={`tabular border-l border-t border-line px-3 py-2 ${r.strong ? "font-semibold text-navy" : ""}`}>{r.render(q)}</td>
-              ))}
-            </tr>
-          ))}
-          <tr>
-            <th scope="row" className="sticky left-0 z-10 border-t border-line bg-white py-2 pr-3 align-top text-xs font-medium text-muted">Terms</th>
-            {quotes.map((q) => (
-              <td key={q.id} className="border-l border-t border-line px-3 py-2 align-top text-xs text-ink">
-                {q.notes ?? <span className="text-muted">—</span>}
-                {q.status === "REVISION_REQUESTED" && q.revisionRequest && <p className="mt-2 text-warning-700">You asked: {q.revisionRequest}</p>}
-                {q.revisions.length > 0 && (
-                  <details className="mt-2">
-                    <summary className="cursor-pointer font-medium text-teal-700">History ({q.revisions.length} earlier version{q.revisions.length === 1 ? "" : "s"})</summary>
-                    <ul className="mt-1 space-y-1 text-muted">
-                      {q.revisions.map((r) => {
-                        const s = (r.snapshot ?? {}) as { totalAmount?: string; productionDays?: number; quantity?: number };
-                        return (
-                          <li key={r.version}>
-                            v{r.version} · {formatDate(r.createdAt)}: {s.totalAmount ? formatMoney(s.totalAmount, q.currency) : "—"}
-                            {s.productionDays ? `, ${s.productionDays} days` : ""}{s.quantity ? `, ${formatNumber(s.quantity)} units` : ""}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </details>
-                )}
-              </td>
-            ))}
-          </tr>
-          {canDecide && (
+    <div className="relative">
+      {quotes.length > 1 && <p className="border-b border-line-subtle px-4 py-2 text-xs text-muted md:hidden">Scroll sideways to compare factories.</p>}
+      <div className="overflow-x-auto" role="region" aria-label="Quotation comparison, scrollable" tabIndex={0}>
+        <table className="w-full min-w-[34rem] border-separate border-spacing-0 text-left text-sm">
+          <caption className="sr-only">Quotation comparison</caption>
+          <thead>
             <tr>
-              <th scope="row" className="sticky left-0 z-10 border-t border-line bg-white py-3 pr-3 text-xs font-medium text-muted">Decision</th>
-              {quotes.map((q) => (
-                <td key={q.id} className="border-l border-t border-line px-3 py-3 align-top">
-                  {OPEN.includes(q.status) ? (
-                    <QuotationDecisionButtons
-                      quotationId={q.id}
-                      projectId={projectId}
-                      factory={q.manufacturer.manufacturerProfile?.businessName ?? "this factory"}
-                      total={formatMoney(q.totalAmount, q.currency)}
-                      canAccept={q.status === "SUBMITTED"}
-                    />
-                  ) : (
-                    <span className="text-xs text-muted">No action</span>
-                  )}
-                </td>
-              ))}
+              <th scope="col" className="label-caps sticky left-0 z-10 w-40 min-w-36 bg-surface-muted py-3 pl-4 pr-3 align-bottom text-muted sm:w-48 sm:pl-5">Factory</th>
+              {quotes.map((q) => {
+                const f = q.manufacturer.manufacturerProfile;
+                return (
+                  <th key={q.id} scope="col" className={`min-w-52 border-l border-line-subtle bg-surface-muted px-4 py-3 align-bottom font-normal`}>
+                    <span className="flex items-center gap-1 text-sm font-semibold text-navy">
+                      {f?.businessName ?? "Factory"}
+                      {f?.verificationStatus === "VERIFIED" && <BadgeCheck className="size-4 shrink-0 text-success" aria-label="Verified" />}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-muted">{f ? `${f.city}, ${f.country}` : ""} · v{q.version}</span>
+                    <span className="mt-2 flex flex-wrap gap-1">
+                      <StatusBadge map={QUOTATION_STATUS} value={q.status} />
+                      {q.id === lowest && <Badge tone="success">Lowest total</Badge>}
+                      {q.id === fastest && <Badge tone="accent">Fastest</Badge>}
+                    </span>
+                  </th>
+                );
+              })}
             </tr>
+          </thead>
+          {groups.map((g) => (
+            <tbody key={g.title}>
+              <tr>
+                <th scope="rowgroup" className="label-caps sticky left-0 z-10 border-t border-line bg-white pb-1.5 pl-4 pr-3 pt-4 text-left text-slate-blue sm:pl-5">{g.title}</th>
+                <td colSpan={quotes.length} className="border-t border-line" />
+              </tr>
+              {g.rows.map((r) => (
+                <tr key={r.label}>
+                  <th scope="row" className={rowHead}>{r.label}</th>
+                  {quotes.map((q) => (
+                    <td key={q.id} className={`tabular ${cell} ${highlight(q)} ${r.strong ? "font-display text-base font-semibold text-navy" : "text-ink"}`}>{r.render(q)}</td>
+                  ))}
+                </tr>
+              ))}
+              {g.title === "Terms" && (
+                <tr>
+                  <th scope="row" className={`${rowHead} align-top`}>Terms</th>
+                  {quotes.map((q) => (
+                    <td key={q.id} className={`${cell} ${highlight(q)} align-top text-xs leading-5 text-ink`}>
+                      {q.notes ?? <span className="text-muted">—</span>}
+                      {q.status === "REVISION_REQUESTED" && q.revisionRequest && <p className="mt-2 rounded-md bg-warning-50 px-2 py-1.5 text-warning-700">You asked: {q.revisionRequest}</p>}
+                      {q.revisions.length > 0 && (
+                        <details className="mt-2">
+                          <summary className="cursor-pointer font-medium text-teal-700 hover:underline hover:underline-offset-4">History ({q.revisions.length} earlier version{q.revisions.length === 1 ? "" : "s"})</summary>
+                          <ul className="mt-1.5 space-y-1 text-muted">
+                            {q.revisions.map((r) => {
+                              const s = (r.snapshot ?? {}) as { totalAmount?: string; productionDays?: number; quantity?: number };
+                              return (
+                                <li key={r.version} className="tabular">
+                                  v{r.version} · {formatDate(r.createdAt)}: {s.totalAmount ? formatMoney(s.totalAmount, q.currency) : "—"}
+                                  {s.productionDays ? `, ${s.productionDays} days` : ""}{s.quantity ? `, ${formatNumber(s.quantity)} units` : ""}
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </details>
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              )}
+            </tbody>
+          ))}
+          {canDecide && (
+            <tbody>
+              <tr>
+                <th scope="row" className={`${rowHead} border-line bg-surface-muted py-3.5`}>Decision</th>
+                {quotes.map((q) => (
+                  <td key={q.id} className="border-l border-t border-line bg-surface-muted px-4 py-3.5 align-top">
+                    {OPEN.includes(q.status) ? (
+                      <QuotationDecisionButtons
+                        quotationId={q.id}
+                        projectId={projectId}
+                        factory={q.manufacturer.manufacturerProfile?.businessName ?? "this factory"}
+                        total={formatMoney(q.totalAmount, q.currency)}
+                        canAccept={q.status === "SUBMITTED"}
+                      />
+                    ) : (
+                      <span className="text-xs text-muted">No action</span>
+                    )}
+                  </td>
+                ))}
+              </tr>
+            </tbody>
           )}
-        </tbody>
-      </table>
+        </table>
+      </div>
     </div>
   );
 }

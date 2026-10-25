@@ -8,7 +8,7 @@ import { Field } from "@/components/ui/field";
 import { Input, Textarea } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { calculateQuotationTotals } from "@/lib/quotation-math";
-import { formatMoney, isoDateInDays } from "@/lib/format";
+import { formatMoney, formatNumber, isoDateInDays } from "@/lib/format";
 import { saveQuotationAction, withdrawQuotationAction } from "@/app/(app)/opportunities/actions";
 
 export type QuotationDefaults = {
@@ -68,67 +68,121 @@ export function QuotationForm({
       return null;
     }
   }, [v]);
+  const production = useMemo(() => {
+    try {
+      return calculateQuotationTotals({
+        quantity: Number(v.quantity),
+        unitPrice: v.unitPrice || 0,
+        fabricCostPerUnit: v.fabricCostPerUnit || 0,
+        finishingCostPerUnit: v.finishingCostPerUnit || 0,
+        packagingCostPerUnit: v.packagingCostPerUnit || 0,
+      }).subtotal;
+    } catch {
+      return null;
+    }
+  }, [v]);
   const tomorrow = isoDateInDays(1);
+  const money = (x: string | number) => formatMoney(x || 0, currency);
 
   return (
-    <ActionForm action={saveQuotationAction} className="space-y-6">
+    <ActionForm action={saveQuotationAction} className="space-y-7">
       <input type="hidden" name="projectId" value={projectId} />
-      <div className="grid gap-5 sm:grid-cols-3">
-        <Field id="quantity" label="Quoted quantity" required>
-          <Input name="quantity" type="number" inputMode="numeric" min={1} value={v.quantity} onChange={set("quantity")} />
-        </Field>
-        <Field id="minQuantity" label="Minimum quantity" required hint="The lowest quantity you would accept at these prices.">
-          <Input name="minQuantity" type="number" inputMode="numeric" min={1} value={v.minQuantity} onChange={set("minQuantity")} />
-        </Field>
-        <Field id="productionDays" label="Production duration (days)" required hint="From order to ready for shipment.">
-          <Input name="productionDays" type="number" inputMode="numeric" min={7} value={v.productionDays} onChange={set("productionDays")} />
-        </Field>
-      </div>
+      <Section title="Volume and timing">
+        <div className="grid gap-5 sm:grid-cols-3">
+          <Field id="quantity" label="Quoted quantity" required>
+            <Input name="quantity" type="number" inputMode="numeric" min={1} value={v.quantity} onChange={set("quantity")} />
+          </Field>
+          <Field id="minQuantity" label="Minimum quantity" required hint="The lowest quantity you would accept at these prices.">
+            <Input name="minQuantity" type="number" inputMode="numeric" min={1} value={v.minQuantity} onChange={set("minQuantity")} />
+          </Field>
+          <Field id="productionDays" label="Production duration (days)" required hint="From order to ready for shipment.">
+            <Input name="productionDays" type="number" inputMode="numeric" min={7} value={v.productionDays} onChange={set("productionDays")} />
+          </Field>
+        </div>
+      </Section>
 
-      <fieldset>
-        <legend className="mb-3 text-sm font-semibold text-navy">Cost breakdown ({currency})</legend>
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <Section title={`Cost breakdown (${currency})`} description="Per-unit costs are multiplied by the quoted quantity; sampling and logistics are totals.">
+        <div className="grid gap-5 sm:grid-cols-2">
           {MONEY_FIELDS.map((f) => (
             <Field key={f.name} id={f.name} label={f.label} required={"required" in f && f.required} hint={"hint" in f ? f.hint : undefined}>
-              <Input name={f.name} inputMode="decimal" placeholder="0.00" value={v[f.name]} onChange={set(f.name)} />
+              <Input name={f.name} inputMode="decimal" placeholder="0.00" value={v[f.name]} onChange={set(f.name)} className="tabular" />
             </Field>
           ))}
           <Field id="taxPercent" label="Applicable tax (%)" hint="Sales tax or VAT charged on the subtotal.">
-            <Input name="taxPercent" inputMode="decimal" placeholder="0" value={v.taxPercent} onChange={set("taxPercent")} />
+            <Input name="taxPercent" inputMode="decimal" placeholder="0" value={v.taxPercent} onChange={set("taxPercent")} className="tabular" />
           </Field>
         </div>
-      </fieldset>
+      </Section>
 
-      <div className="rounded-md border border-line bg-canvas p-4" aria-live="polite">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted">Preview</p>
+      {/* Live breakdown: same calculation as the server, which recalculates and stores its own totals. */}
+      <section aria-label="Quotation preview" className="overflow-hidden rounded-lg border border-line bg-surface-muted" aria-live="polite">
+        <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
+          <p className="label-caps text-muted">Preview</p>
+          <p className="text-xs text-muted">Calculated as you type</p>
+        </div>
         {preview ? (
-          <dl className="mt-2 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-            <div><dt className="text-xs text-muted">Cost per unit</dt><dd className="tabular font-medium">{formatMoney(preview.perUnitCost, currency)}</dd></div>
-            <div><dt className="text-xs text-muted">Subtotal</dt><dd className="tabular font-medium">{formatMoney(preview.subtotal, currency)}</dd></div>
-            <div><dt className="text-xs text-muted">Tax</dt><dd className="tabular font-medium">{formatMoney(preview.taxAmount, currency)}</dd></div>
-            <div><dt className="text-xs text-muted">Total</dt><dd className="tabular font-display text-lg font-semibold text-navy">{formatMoney(preview.totalAmount, currency)}</dd></div>
-          </dl>
+          <>
+            <dl className="divide-y divide-line-subtle px-4 text-sm">
+              <Line label="Cost per unit" value={money(preview.perUnitCost)} />
+              <Line label={`Production · ${formatNumber(Number(v.quantity))} units`} value={production ? money(production) : "—"} />
+              <Line label="Sampling charge" value={money(v.samplingCost)} />
+              <Line label="Logistics estimate" value={money(v.logisticsCost)} />
+              <Line label="Subtotal" value={money(preview.subtotal)} strong />
+              <Line label={`Tax${Number(v.taxPercent) ? ` (${Number(v.taxPercent)}%)` : ""}`} value={money(preview.taxAmount)} />
+            </dl>
+            <dl className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1 border-t border-line bg-white px-4 py-3.5">
+              <div>
+                <dt className="text-[13px] font-medium text-navy">Total</dt>
+                <dd className="tabular text-xs text-muted">{money(preview.effectiveUnitPrice)} effective per unit</dd>
+              </div>
+              <dd className="tabular font-display text-2xl font-semibold text-navy">{money(preview.totalAmount)}</dd>
+            </dl>
+          </>
         ) : (
-          <p className="mt-2 text-sm text-muted">Enter a quantity and costs to see the total.</p>
+          <p className="px-4 py-4 text-sm text-muted">Enter a quantity and costs to see the total.</p>
         )}
-      </div>
+      </section>
 
-      <div className="grid gap-5 sm:grid-cols-[220px_1fr]">
-        <Field id="validUntil" label="Quotation expires on" required>
-          <Input name="validUntil" type="date" min={tomorrow} value={v.validUntil} onChange={set("validUntil")} />
-        </Field>
-        <Field id="notes" label="Additional terms" hint="Incoterms, payment expectations, assumptions or exclusions.">
-          <Textarea name="notes" rows={3} defaultValue={defaults.notes} />
-        </Field>
-      </div>
+      <Section title="Validity and terms">
+        <div className="grid gap-5 sm:grid-cols-[13rem_minmax(0,1fr)]">
+          <Field id="validUntil" label="Quotation expires on" required>
+            <Input name="validUntil" type="date" min={tomorrow} value={v.validUntil} onChange={set("validUntil")} />
+          </Field>
+          <Field id="notes" label="Additional terms" hint="Incoterms, payment expectations, assumptions or exclusions.">
+            <Textarea name="notes" rows={3} defaultValue={defaults.notes} />
+          </Field>
+        </div>
+      </Section>
 
-      <div className="flex flex-col-reverse gap-2 border-t border-line pt-5 sm:flex-row sm:justify-end">
+      <div className="flex flex-col-reverse gap-2 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-end">
+        <p className="mr-auto hidden text-xs text-muted sm:block">The brand sees every line of your breakdown.</p>
         {!hasBeenSent && <SubmitButton variant="outline" name="intent" value="draft" pendingText="Saving…">Save draft</SubmitButton>}
         <SubmitButton variant="accent" name="intent" value="submit" pendingText="Sending…">
           <Send /> {hasBeenSent ? "Send revised quotation" : "Send quotation"}
         </SubmitButton>
       </div>
     </ActionForm>
+  );
+}
+
+function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="type-heading text-navy">{title}</h3>
+        {description && <p className="mt-0.5 text-[13px] leading-5 text-muted">{description}</p>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Line({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 py-2">
+      <dt className={strong ? "font-medium text-ink" : "text-muted"}>{label}</dt>
+      <dd className={`tabular text-right ${strong ? "font-semibold text-navy" : "text-ink"}`}>{value}</dd>
+    </div>
   );
 }
 

@@ -1,5 +1,6 @@
 "use client";
 import * as React from "react";
+import { AlertCircle } from "lucide-react";
 import { Label } from "./label";
 import { FormErrorsContext } from "@/components/forms/action-form";
 
@@ -40,8 +41,13 @@ export function Field({
         {required ? <span className="text-danger" aria-hidden> *</span> : <span className="font-normal text-muted"> (optional)</span>}
       </Label>
       {control}
-      {hint && !message && <p id={`${id}-hint`} className="text-xs text-muted">{hint}</p>}
-      {message && <p id={`${id}-error`} className="text-xs text-danger">{message}</p>}
+      {hint && !message && <p id={`${id}-hint`} className="text-xs leading-4 text-muted">{hint}</p>}
+      {message && (
+        <p id={`${id}-error`} className="flex items-start gap-1 text-xs font-medium leading-4 text-danger-700">
+          <AlertCircle className="mt-px size-3.5 shrink-0" aria-hidden />
+          {message}
+        </p>
+      )}
     </div>
   );
 }
@@ -50,5 +56,5 @@ export function Field({
 export function FieldError({ name, className }: { name: string; className?: string }) {
   const message = React.useContext(FormErrorsContext)[name];
   if (!message) return null;
-  return <p className={className ?? "mt-1 text-xs text-danger"}>{message}</p>;
+  return <p className={className ?? "mt-1.5 text-xs font-medium leading-4 text-danger-700"}>{message}</p>;
 }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
 
@@ -19,15 +19,15 @@ export function FilterBar({
 }) {
   const active = !!q || selects.some((s) => s.value) || Object.values(hidden).some(Boolean);
   return (
-    <form action={basePath} className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
+    <form action={basePath} className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
       {Object.entries(hidden).map(([k, v]) => v && <input key={k} type="hidden" name={k} value={v} />)}
-      <div className="relative min-w-0 flex-1 sm:max-w-sm">
+      <div className="relative min-w-0 flex-1 sm:max-w-xs">
         <label htmlFor="filter-q" className="sr-only">{searchLabel}</label>
-        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden />
+        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-subtle" aria-hidden />
         <Input id="filter-q" name="q" type="search" defaultValue={q} placeholder={searchLabel} className="pl-9" />
       </div>
       {selects.map((s) => (
-        <div key={s.name} className="sm:w-48">
+        <div key={s.name} className="min-w-0 sm:w-48">
           <label htmlFor={`filter-${s.name}`} className="sr-only">{s.label}</label>
           <Select id={`filter-${s.name}`} name={s.name} defaultValue={s.value ?? ""}>
             <option value="">{s.label}: all</option>
@@ -36,8 +36,12 @@ export function FilterBar({
         </div>
       ))}
       <div className="flex gap-2">
-        <Button type="submit" variant="outline">Apply</Button>
-        {active && <Button asChild variant="ghost"><Link href={basePath}>Clear</Link></Button>}
+        <Button type="submit" variant="outline" className="max-sm:flex-1">Apply</Button>
+        {active && (
+          <Button asChild variant="ghost" className="text-muted hover:text-navy max-sm:flex-1">
+            <Link href={basePath}><X aria-hidden /> Clear</Link>
+          </Button>
+        )}
       </div>
     </form>
   );

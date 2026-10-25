@@ -9,8 +9,8 @@ export default async function ResetPasswordPage({ searchParams }: { searchParams
   const { token } = await searchParams;
   return (
     <>
-      <h1 className="text-2xl font-semibold">Choose a new password</h1>
-      <p className="mb-8 mt-2 text-sm text-muted">Setting a new password signs you out on every other device.</p>
+      <h1 className="type-title text-navy">Choose a new password</h1>
+      <p className="mb-7 mt-1.5 text-sm leading-6 text-muted">Setting a new password signs you out on every other device.</p>
       {token ? (
         <ResetPasswordForm token={token} />
       ) : (

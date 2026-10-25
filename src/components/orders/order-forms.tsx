@@ -19,7 +19,7 @@ import {
 } from "@/app/(app)/orders/actions";
 
 const fileInputCls =
-  "block w-full text-sm text-muted file:mr-3 file:rounded-md file:border file:border-line file:bg-white file:px-3 file:py-2 file:text-sm file:font-medium file:text-navy hover:file:bg-navy-50";
+  "block w-full min-w-0 cursor-pointer rounded-md border border-dashed border-line-strong bg-white p-1.5 text-[13px] text-muted transition-colors duration-150 hover:border-teal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal file:mr-3 file:h-8 file:cursor-pointer file:rounded-md file:border file:border-solid file:border-line-strong file:bg-white file:px-3 file:text-[13px] file:font-medium file:text-navy hover:file:bg-neutral-50";
 
 /** Re-fetches server data every 30 s while the tab is visible (polling instead of a socket server). */
 export function LiveRefresh({ seconds = 30 }: { seconds?: number }) {
@@ -146,7 +146,7 @@ export function QcReportForm({ orderId, defaultBatch }: { orderId: string; defau
     <ActionForm action={submitQcAction} className="space-y-5">
       <input type="hidden" name="orderId" value={orderId} />
       <input type="hidden" name="defects" value={JSON.stringify(defects.filter((d) => d.count > 0))} />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2">
         <Field id="inspectionDate" label="Inspection date" required>
           <Input name="inspectionDate" type="date" max={today} defaultValue={today} />
         </Field>
@@ -165,7 +165,7 @@ export function QcReportForm({ orderId, defaultBatch }: { orderId: string; defau
         </Field>
       </div>
       {plan && (
-        <div className="rounded-md border border-line bg-canvas p-3 text-sm">
+        <div className="rounded-md border border-navy-100 bg-info-50 p-3.5 text-sm leading-6 text-ink">
           <p className="text-xs text-muted">{SAMPLING_STANDARD}</p>
           <p className="mt-1">
             Inspect at least <strong className="tabular">{plan.sampleSize}</strong> units (code letter {plan.major.codeLetter}
@@ -340,7 +340,7 @@ export function ScheduleEditor({ orderId, items, total, currency }: { orderId: s
       </ul>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Button type="button" variant="outline" size="sm" disabled={rows.length >= 8} onClick={() => setRows((x) => [...x, { label: "Additional payment", percentage: 0, triggerStage: "DELIVERY" }])}><Plus /> Add payment</Button>
-        <p className={`tabular text-sm ${Math.abs(sum - 100) < 1e-9 ? "text-success" : "text-danger"}`}>
+        <p className={`tabular text-sm font-medium ${Math.abs(sum - 100) < 1e-9 ? "text-success-700" : "text-danger-700"}`}>
           Total {sum.toFixed(2)}% {Math.abs(sum - 100) < 1e-9 ? `· ${formatMoney(total, currency)}` : "· must equal 100%"}
         </p>
       </div>

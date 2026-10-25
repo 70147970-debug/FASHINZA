@@ -11,7 +11,7 @@ type BrandValues = { companyName?: string; country?: string; city?: string | nul
 
 export function BrandProfileForm({ values, submitLabel = "Save profile" }: { values: BrandValues; submitLabel?: string }) {
   return (
-    <ActionForm action={saveBrandProfileAction} className="space-y-5">
+    <ActionForm action={saveBrandProfileAction} className="space-y-6">
       <div className="grid gap-5 sm:grid-cols-2">
         <Field id="companyName" label="Company name" required>
           <Input name="companyName" defaultValue={values.companyName} autoComplete="organization" />
@@ -32,7 +32,9 @@ export function BrandProfileForm({ values, submitLabel = "Save profile" }: { val
       <Field id="description" label="About your brand" hint="What you sell and who you sell to. Factories see this with your projects.">
         <Textarea name="description" rows={4} defaultValue={values.description ?? ""} />
       </Field>
-      <SubmitButton variant="accent" pendingText="Saving…">{submitLabel}</SubmitButton>
+      <FormActions>
+        <SubmitButton variant={submitLabel === "Save and continue" ? "accent" : "primary"} pendingText="Saving…">{submitLabel}</SubmitButton>
+      </FormActions>
     </ActionForm>
   );
 }
@@ -58,9 +60,9 @@ type FactoryValues = {
 export function FactoryProfileForm({ values, submitLabel = "Save factory profile" }: { values: FactoryValues; submitLabel?: string }) {
   const num = (n?: number) => (n ? String(n) : "");
   return (
-    <ActionForm action={saveFactoryProfileAction} className="space-y-8">
+    <ActionForm action={saveFactoryProfileAction} className="space-y-8 [&>section+section]:border-t [&>section+section]:border-line-subtle [&>section+section]:pt-8">
       <section className="space-y-5" aria-labelledby="fp-business">
-        <h2 id="fp-business" className="text-base font-semibold">Business details</h2>
+        <SectionHead id="fp-business" title="Business details" />
         <div className="grid gap-5 sm:grid-cols-2">
           <Field id="businessName" label="Factory or business name" required>
             <Input name="businessName" defaultValue={values.businessName} autoComplete="organization" />
@@ -81,10 +83,7 @@ export function FactoryProfileForm({ values, submitLabel = "Save factory profile
       </section>
 
       <section className="space-y-5" aria-labelledby="fp-capabilities">
-        <div>
-          <h2 id="fp-capabilities" className="text-base font-semibold">Capabilities</h2>
-          <p className="text-sm text-muted">Matching uses these to decide which projects you are invited to quote on.</p>
-        </div>
+        <SectionHead id="fp-capabilities" title="Capabilities" description="Matching uses these to decide which projects you are invited to quote on." />
         <ChipSelect name="categories" label="Product categories" required options={GARMENT_CATEGORIES} defaultValue={values.categories} />
         <ChipSelect name="production" label="Production processes" required options={CAPABILITIES.PRODUCTION} defaultValue={values.production} allowCustom />
         <ChipSelect name="fabrics" label="Fabric expertise" options={CAPABILITIES.FABRIC} defaultValue={values.fabrics} allowCustom />
@@ -92,10 +91,7 @@ export function FactoryProfileForm({ values, submitLabel = "Save factory profile
       </section>
 
       <section className="space-y-5" aria-labelledby="fp-capacity">
-        <div>
-          <h2 id="fp-capacity" className="text-base font-semibold">Capacity and lead time</h2>
-          <p className="text-sm text-muted">Projects below your minimum, beyond your free capacity, or due sooner than your lead time are not matched to you.</p>
-        </div>
+        <SectionHead id="fp-capacity" title="Capacity and lead time" description="Projects below your minimum, beyond your free capacity, or due sooner than your lead time are not matched to you." />
         <div className="grid gap-5 sm:grid-cols-3">
           <Field id="minOrderQuantity" label="Minimum order (units)" required>
             <Input name="minOrderQuantity" type="number" inputMode="numeric" min={1} defaultValue={num(values.minOrderQuantity)} />
@@ -110,7 +106,7 @@ export function FactoryProfileForm({ values, submitLabel = "Save factory profile
       </section>
 
       <section className="space-y-5" aria-labelledby="fp-contact">
-        <h2 id="fp-contact" className="text-base font-semibold">Contact person</h2>
+        <SectionHead id="fp-contact" title="Contact person" />
         <div className="grid gap-5 sm:grid-cols-3">
           <Field id="contactName" label="Name" required>
             <Input name="contactName" defaultValue={values.contactName} autoComplete="name" />
@@ -124,7 +120,23 @@ export function FactoryProfileForm({ values, submitLabel = "Save factory profile
         </div>
       </section>
 
-      <SubmitButton variant="accent" pendingText="Saving…">{submitLabel}</SubmitButton>
+      <FormActions>
+        <SubmitButton variant={submitLabel === "Save and continue" ? "accent" : "primary"} pendingText="Saving…">{submitLabel}</SubmitButton>
+      </FormActions>
     </ActionForm>
   );
+}
+
+function SectionHead({ id, title, description }: { id: string; title: string; description?: string }) {
+  return (
+    <div>
+      <h3 id={id} className="type-heading text-navy">{title}</h3>
+      {description && <p className="mt-0.5 text-[13px] leading-5 text-muted">{description}</p>}
+    </div>
+  );
+}
+
+/** Save row: full-width button on phones, right-aligned with a divider above from sm. */
+function FormActions({ children }: { children: React.ReactNode }) {
+  return <div className="flex flex-col gap-2 border-t border-line-subtle pt-5 sm:flex-row sm:justify-end">{children}</div>;
 }

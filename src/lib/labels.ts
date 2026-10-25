@@ -1,34 +1,44 @@
 import { GARMENT_CATEGORIES } from "./constants";
 
-export type Tone = "neutral" | "teal" | "success" | "warning" | "danger" | "navy";
+/**
+ * Status tones, one mapping used everywhere (see docs/design-system.md#status):
+ *  neutral  not started, draft, closed, withdrawn
+ *  info     moving normally / in progress
+ *  accent   open in the marketplace or in transit (submitted, receiving quotes, shipped)
+ *  success  complete, approved, paid, verified
+ *  warning  waiting on a decision or due
+ *  danger   failed, rejected, blocked, cancelled, suspended
+ * "teal" and "navy" are legacy values still accepted by <Badge>.
+ */
+export type Tone = "neutral" | "info" | "accent" | "success" | "warning" | "danger" | "teal" | "navy";
 
 type StatusMap = Record<string, { label: string; tone: Tone }>;
 
 export const PROJECT_STATUS: StatusMap = {
   DRAFT: { label: "Draft", tone: "neutral" },
-  SUBMITTED: { label: "Submitted", tone: "teal" },
-  QUOTING: { label: "Receiving quotes", tone: "teal" },
+  SUBMITTED: { label: "Submitted", tone: "accent" },
+  QUOTING: { label: "Receiving quotes", tone: "accent" },
   QUOTATION_ACCEPTED: { label: "Quote accepted", tone: "success" },
-  IN_PRODUCTION: { label: "In production", tone: "navy" },
+  IN_PRODUCTION: { label: "In production", tone: "info" },
   QUALITY_CHECK: { label: "Quality check", tone: "warning" },
-  READY_TO_SHIP: { label: "Ready to ship", tone: "teal" },
-  SHIPPED: { label: "Shipped", tone: "teal" },
+  READY_TO_SHIP: { label: "Ready to ship", tone: "accent" },
+  SHIPPED: { label: "Shipped", tone: "accent" },
   DELIVERED: { label: "Delivered", tone: "success" },
   CANCELLED: { label: "Cancelled", tone: "danger" },
 };
 
 export const ORDER_STATUS: StatusMap = {
-  IN_PRODUCTION: { label: "In production", tone: "navy" },
+  IN_PRODUCTION: { label: "In production", tone: "info" },
   QUALITY_CHECK: { label: "Quality check", tone: "warning" },
-  READY_TO_SHIP: { label: "Ready to ship", tone: "teal" },
-  SHIPPED: { label: "Shipped", tone: "teal" },
+  READY_TO_SHIP: { label: "Ready to ship", tone: "accent" },
+  SHIPPED: { label: "Shipped", tone: "accent" },
   DELIVERED: { label: "Delivered", tone: "success" },
   CANCELLED: { label: "Cancelled", tone: "danger" },
 };
 
 export const QUOTATION_STATUS: StatusMap = {
   DRAFT: { label: "Draft", tone: "neutral" },
-  SUBMITTED: { label: "Submitted", tone: "teal" },
+  SUBMITTED: { label: "Submitted", tone: "accent" },
   REVISION_REQUESTED: { label: "Revision requested", tone: "warning" },
   ACCEPTED: { label: "Accepted", tone: "success" },
   REJECTED: { label: "Declined", tone: "danger" },
@@ -38,7 +48,7 @@ export const QUOTATION_STATUS: StatusMap = {
 
 export const MILESTONE_STATUS: StatusMap = {
   NOT_STARTED: { label: "Not started", tone: "neutral" },
-  IN_PROGRESS: { label: "In progress", tone: "navy" },
+  IN_PROGRESS: { label: "In progress", tone: "info" },
   AWAITING_APPROVAL: { label: "Awaiting approval", tone: "warning" },
   COMPLETED: { label: "Completed", tone: "success" },
   BLOCKED: { label: "Blocked", tone: "danger" },
@@ -54,7 +64,7 @@ export const SAMPLE_STATUS: StatusMap = {
 export const PAYMENT_STATUS: StatusMap = {
   SCHEDULED: { label: "Scheduled", tone: "neutral" },
   DUE: { label: "Due", tone: "warning" },
-  PROCESSING: { label: "Processing", tone: "teal" },
+  PROCESSING: { label: "Processing", tone: "info" },
   PAID: { label: "Paid", tone: "success" },
   FAILED: { label: "Failed", tone: "danger" },
   REFUNDED: { label: "Refunded", tone: "neutral" },
@@ -75,7 +85,7 @@ export const DOCUMENT_STATUS: StatusMap = {
 
 export const DISPUTE_STATUS: StatusMap = {
   OPEN: { label: "Open", tone: "warning" },
-  IN_REVIEW: { label: "In review", tone: "teal" },
+  IN_REVIEW: { label: "In review", tone: "info" },
   RESOLVED: { label: "Resolved", tone: "success" },
   CLOSED: { label: "Closed", tone: "neutral" },
 };
@@ -87,7 +97,7 @@ export const USER_STATUS: StatusMap = {
 
 export const INQUIRY_STATUS: StatusMap = {
   NEW: { label: "New", tone: "warning" },
-  IN_PROGRESS: { label: "In progress", tone: "teal" },
+  IN_PROGRESS: { label: "In progress", tone: "info" },
   RESOLVED: { label: "Resolved", tone: "success" },
 };
 

@@ -1,21 +1,55 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
+/**
+ * Card: white surface, 1px line border, 10px radius, barely-there shadow, 20px padding.
+ *
+ *   <Card>
+ *     <CardHeader>
+ *       <CardTitle>Upcoming payments</CardTitle>
+ *       <CardAction><Link href="/payments">All payments</Link></CardAction>
+ *     </CardHeader>
+ *     <CardBody>…</CardBody>
+ *   </Card>
+ *
+ * For app pages prefer <Panel> from components/app/primitives, which wires the heading id for you.
+ */
 export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("rounded-lg border border-line bg-white shadow-card", className)} {...props} />;
+  return <div className={cn("rounded-lg border border-line bg-surface shadow-card", className)} {...props} />;
 }
-export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("flex flex-col gap-1 p-5 pb-3", className)} {...props} />;
+
+/** Title row. Add `divided` for a bottom border (use when the body is a list or table). */
+export function CardHeader({ className, divided = false, ...props }: React.HTMLAttributes<HTMLDivElement> & { divided?: boolean }) {
+  return (
+    <div
+      className={cn("flex flex-wrap items-start justify-between gap-x-4 gap-y-2 px-5 pt-4 pb-3", divided && "border-b border-line pb-4", className)}
+      {...props}
+    />
+  );
 }
-export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h3 className={cn("text-base font-semibold text-navy", className)} {...props} />;
+
+export function CardTitle({ className, as: Tag = "h3", ...props }: React.HTMLAttributes<HTMLHeadingElement> & { as?: "h2" | "h3" | "h4" }) {
+  return <Tag className={cn("type-heading text-navy", className)} {...props} />;
 }
+
 export function CardDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn("text-sm text-muted", className)} {...props} />;
+  return <p className={cn("mt-0.5 text-[13px] leading-5 text-muted", className)} {...props} />;
 }
+
+/** Right-aligned header action (usually a small link or button). */
+export function CardAction({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("flex shrink-0 items-center gap-2 text-[13px] font-medium", className)} {...props} />;
+}
+
+export function CardBody({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("px-5 pb-5", className)} {...props} />;
+}
+
+/** Legacy name for CardBody. */
 export function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("p-5 pt-0", className)} {...props} />;
+  return <div className={cn("px-5 pb-5", className)} {...props} />;
 }
+
 export function CardFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("flex items-center gap-2 border-t border-line px-5 py-3", className)} {...props} />;
+  return <div className={cn("flex items-center gap-2 border-t border-line bg-surface-muted/60 px-5 py-3 rounded-b-lg", className)} {...props} />;
 }

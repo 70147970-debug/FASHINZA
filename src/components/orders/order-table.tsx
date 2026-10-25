@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
-import { StatusBadge } from "@/components/app/primitives";
+import { DataTable, MobileCard, MobileCardList, ProgressBar, StatusBadge } from "@/components/app/primitives";
 import { ORDER_STATUS } from "@/lib/labels";
 import { STAGES, stageLabel } from "@/lib/workflow";
 import { formatDate } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import type { MilestoneStage } from "@/generated/prisma/enums";
 
 type Row = {
@@ -22,74 +23,116 @@ function progress(o: Row) {
   return o.milestones.filter((m) => m.status === "COMPLETED").length;
 }
 
+function isClosed(o: Row) {
+  return ["DELIVERED", "CANCELLED"].includes(o.status);
+}
+
 function delayed(o: Row) {
-  if (["DELIVERED", "CANCELLED"].includes(o.status)) return false;
+  if (isClosed(o)) return false;
   return o.milestones.some((m) => m.isDelayed && !m.completedAt) || o.expectedCompletionDate < new Date();
 }
 
-/** Orders as cards on phones and a table from tablet width, with stage progress. */
+function DelayedFlag() {
+  return (
+    <span className="inline-flex items-center gap-1 text-xs font-medium text-danger-700">
+      <AlertTriangle className="size-3.5" aria-hidden />
+      Delayed
+    </span>
+  );
+}
+
+function Stage({ o }: { o: Row }) {
+  const done = progress(o);
+  return (
+    <span className="block min-w-0">
+      <span className="block truncate text-[13px] text-ink">{o.status === "DELIVERED" ? "All stages complete" : isClosed(o) ? `Stopped at ${stageLabel(o.currentStage).toLowerCase()}` : stageLabel(o.currentStage)}</span>
+      <span className="mt-1.5 flex items-center gap-2">
+        <ProgressBar value={done} max={STAGES.length} label={`${done} of ${STAGES.length} stages complete`} tone={delayed(o) ? "warning" : "accent"} className="w-24" />
+        <span className="tabular text-xs text-muted">
+          {done}/{STAGES.length}
+        </span>
+      </span>
+    </span>
+  );
+}
+
+/**
+ * Orders as a table from tablet width and as stacked cards on phones (only one is in the accessibility tree),
+ * with stage progress and delay flags. Delayed open orders get a warning edge so they stand out in long lists.
+ */
 export function OrderTable({ items, counterpart }: { items: Row[]; counterpart: "brand" | "factory" | "both" }) {
   const party = (o: Row) =>
-    counterpart === "brand" ? o.brand.brandProfile?.companyName : counterpart === "factory" ? o.manufacturer.manufacturerProfile?.businessName : `${o.brand.brandProfile?.companyName ?? "Brand"} → ${o.manufacturer.manufacturerProfile?.businessName ?? "Factory"}`;
-  const bar = (o: Row) => (
-    <div className="flex items-center gap-2">
-      <div className="h-1.5 w-24 overflow-hidden rounded-full bg-navy-50" role="img" aria-label={`${progress(o)} of ${STAGES.length} stages complete`}>
-        <div className="h-full rounded-full bg-teal" style={{ width: `${(progress(o) / STAGES.length) * 100}%` }} />
-      </div>
-      <span className="tabular text-xs text-muted">{progress(o)}/{STAGES.length}</span>
-    </div>
+    counterpart === "brand"
+      ? o.brand.brandProfile?.companyName
+      : counterpart === "factory"
+        ? o.manufacturer.manufacturerProfile?.businessName
+        : `${o.brand.brandProfile?.companyName ?? "Brand"} → ${o.manufacturer.manufacturerProfile?.businessName ?? "Factory"}`;
+
+  const cards = (
+    <MobileCardList>
+      {items.map((o) => (
+        <MobileCard
+          key={o.id}
+          href={`/orders/${o.id}`}
+          title={o.project.name}
+          badge={<StatusBadge map={ORDER_STATUS} value={o.status} />}
+          meta={
+            <>
+              <span className="tabular">{o.reference}</span> · {party(o)}
+            </>
+          }
+        >
+          <span className="flex items-end justify-between gap-3">
+            <Stage o={o} />
+            <span className="shrink-0 text-right text-xs text-muted">
+              <span className="block">Due {formatDate(o.expectedCompletionDate)}</span>
+              {delayed(o) && <DelayedFlag />}
+            </span>
+          </span>
+        </MobileCard>
+      ))}
+    </MobileCardList>
   );
+
   return (
-    <>
-      <ul className="space-y-3 md:hidden">
-        {items.map((o) => (
-          <li key={o.id}>
-            <Link href={`/orders/${o.id}`} className="block rounded-lg border border-line bg-white p-4 shadow-card">
-              <div className="flex items-start justify-between gap-2">
-                <span className="font-medium text-navy">{o.project.name}</span>
-                <StatusBadge map={ORDER_STATUS} value={o.status} />
-              </div>
-              <p className="mt-1 text-xs text-muted">{o.reference} · {party(o)}</p>
-              <div className="mt-2 flex items-center justify-between gap-2">
-                {bar(o)}
-                {delayed(o) && <span className="flex items-center gap-1 text-xs font-medium text-danger"><AlertTriangle className="size-3.5" aria-hidden />Delayed</span>}
-              </div>
-            </Link>
-          </li>
-        ))}
-      </ul>
-      <div className="hidden overflow-x-auto rounded-lg border border-line bg-white shadow-card md:block">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-line bg-canvas text-xs uppercase tracking-wide text-muted">
-            <tr>
-              <th scope="col" className="px-4 py-3 font-medium">Order</th>
-              <th scope="col" className="px-4 py-3 font-medium">{counterpart === "brand" ? "Brand" : counterpart === "factory" ? "Factory" : "Parties"}</th>
-              <th scope="col" className="px-4 py-3 font-medium">Stage</th>
-              <th scope="col" className="px-4 py-3 font-medium">Progress</th>
-              <th scope="col" className="px-4 py-3 font-medium">Due</th>
-              <th scope="col" className="px-4 py-3 font-medium">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-line">
-            {items.map((o) => (
-              <tr key={o.id} className="hover:bg-canvas">
-                <td className="px-4 py-3">
-                  <Link href={`/orders/${o.id}`} className="font-medium text-navy hover:underline">{o.project.name}</Link>
-                  <p className="text-xs text-muted">{o.reference}</p>
+    <DataTable label="Orders" cards={cards}>
+      <table className="data-table">
+        <thead>
+          <tr>
+            <th scope="col">Order</th>
+            <th scope="col">{counterpart === "brand" ? "Brand" : counterpart === "factory" ? "Factory" : "Parties"}</th>
+            <th scope="col">Stage</th>
+            <th scope="col">Due</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((o) => {
+            const late = delayed(o);
+            return (
+              <tr key={o.id} className={cn(late && "bg-danger-50/40")}>
+                <td className={cn("relative", late && "shadow-[inset_2px_0_0_var(--color-danger)]")}>
+                  <Link href={`/orders/${o.id}`} className="cell-primary rounded-sm">
+                    {o.project.name}
+                  </Link>
+                  <p className="tabular mt-0.5 text-xs text-muted">{o.reference}</p>
                 </td>
-                <td className="px-4 py-3">{party(o)}</td>
-                <td className="px-4 py-3">{["DELIVERED", "CANCELLED"].includes(o.status) ? "—" : stageLabel(o.currentStage)}</td>
-                <td className="px-4 py-3">{bar(o)}</td>
-                <td className="px-4 py-3">
-                  {formatDate(o.expectedCompletionDate)}
-                  {delayed(o) && <span className="ml-1 inline-flex items-center gap-0.5 text-xs font-medium text-danger"><AlertTriangle className="size-3" aria-hidden />Delayed</span>}
+                <td className="max-w-56 text-[13px]">{party(o)}</td>
+                <td>
+                  <Stage o={o} />
                 </td>
-                <td className="px-4 py-3"><StatusBadge map={ORDER_STATUS} value={o.status} /></td>
+                <td className="whitespace-nowrap">
+                  <p className={cn("tabular text-[13px]", late ? "font-medium text-danger-700" : "text-ink")}>{formatDate(o.expectedCompletionDate)}</p>
+                  {late && <DelayedFlag />}
+                </td>
+                <td>
+                  <StatusBadge map={ORDER_STATUS} value={o.status} />
+                </td>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </>
+            );
+          })}
+        </tbody>
+      </table>
+    </DataTable>
   );
 }

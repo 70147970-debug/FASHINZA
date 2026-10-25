@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BadgeCheck, Factory, FileText, Inbox, ListChecks, ScanSearch } from "lucide-react";
-import { CheckList, CtaBand, FeatureCard, PageHero, Section, SectionHeading } from "@/components/site/marketing";
+import { CtaBand, FeatureCard, FeatureGrid, PageHero, Section, SectionHeading, StepList } from "@/components/site/marketing";
+import { OpportunityMock } from "@/components/site/product-mocks";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
@@ -16,14 +17,15 @@ export default function ForManufacturersPage() {
         eyebrow="For manufacturers"
         title="Receive project requests that fit your factory"
         description="Show what your factory can make, and Fashinza shows you brand projects that match your categories, capacity and capabilities."
+        aside={<OpportunityMock />}
       >
         <Button asChild variant="accent" size="lg"><Link href="/register?role=manufacturer">Join as a Manufacturer</Link></Button>
         <Button asChild variant="outline" size="lg"><Link href="/how-it-works">How it works</Link></Button>
       </PageHero>
 
       <Section labelledBy="mfr-features">
-        <SectionHeading id="mfr-features" title="What you can do as a manufacturer" />
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <SectionHeading id="mfr-features" eyebrow="Capabilities" title="What you can do as a manufacturer" description="Quote, produce and report from one dashboard, with the same record the brand sees." />
+        <FeatureGrid>
           <FeatureCard icon={Factory} title="A detailed business profile">
             List your location, garment categories, minimum order quantity, monthly capacity, typical lead time, and
             production, fabric and finishing capabilities.
@@ -46,28 +48,30 @@ export default function ForManufacturersPage() {
           <FeatureCard icon={BadgeCheck} title="Verification">
             Upload business and certification documents for an administrator to review and earn the verified badge.
           </FeatureCard>
-        </div>
+        </FeatureGrid>
       </Section>
 
       <Section tone="white" labelledBy="mfr-steps">
-        <div className="grid gap-10 lg:grid-cols-2">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-16">
           <SectionHeading
             id="mfr-steps"
+            eyebrow="Verification"
             title="Getting listed"
             description="Only verified factories are matched to brand projects. Verification is a manual review by a Fashinza administrator."
+            className="lg:mb-0"
           />
-          <CheckList
+          <StepList
             items={[
-              "Register as a manufacturer and complete your business profile.",
-              "Add your capabilities and upload supporting documents, such as business registration or certificates.",
-              "Request verification. An administrator reviews your documents and records a decision with a reason.",
-              "Certifications count in matching only after the administrator has verified the document.",
+              { title: "Register and build your profile", text: "Register as a manufacturer and complete your business profile." },
+              { title: "Add capabilities and documents", text: "Add your capabilities and upload supporting documents, such as business registration or certificates." },
+              { title: "Request verification", text: "An administrator reviews your documents and records a decision with a reason." },
+              { title: "Certifications start to count", text: "Certifications count in matching only after the administrator has verified the document." },
             ]}
           />
         </div>
       </Section>
 
-      <CtaBand title="Register your factory" description="Create your profile now; you can request verification once your documents are uploaded." />
+      <CtaBand primary="manufacturer" title="Register your factory" description="Create your profile now; you can request verification once your documents are uploaded." />
     </>
   );
 }

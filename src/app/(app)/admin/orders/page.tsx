@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { PackageSearch } from "lucide-react";
+import Link from "next/link";
+import { AlertTriangle, PackageSearch, X } from "lucide-react";
 import type { OrderStatus } from "@/generated/prisma/enums";
 import { requireUser } from "@/server/auth/session";
 import { listOrders, refreshDelays } from "@/server/services/orders";
@@ -7,6 +8,7 @@ import { EmptyState, PageHeader, Pagination } from "@/components/app/primitives"
 import { FilterBar } from "@/components/app/filter-bar";
 import { OrderTable } from "@/components/orders/order-table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ORDER_STATUS } from "@/lib/labels";
 
 export const metadata: Metadata = { title: "Order monitoring" };
@@ -20,8 +22,27 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
   const data = await listOrders(actor, { q: sp.q, status, delayed, page: Number(sp.page) || 1, pageSize: 20 });
   return (
     <>
-      <PageHeader title="Order monitoring" description="All orders on the platform. Delays are flagged when a stage passes its planned end date or an order passes its agreed date." />
-      {delayed && <div className="mb-3"><Badge tone="danger">Delayed only</Badge></div>}
+      <PageHeader
+        eyebrow="Administration"
+        title="Order monitoring"
+        meta={delayed ? <Badge tone="danger" dot>Delayed only</Badge> : undefined}
+        description="All orders on the platform. Delays are flagged when a stage passes its planned end date or an order passes its agreed date."
+        actions={
+          delayed ? (
+            <Button asChild variant="outline">
+              <Link href={sp.status ? `/admin/orders?status=${encodeURIComponent(sp.status)}` : "/admin/orders"}>
+                <X /> Clear delayed filter
+              </Link>
+            </Button>
+          ) : (
+            <Button asChild variant="outline">
+              <Link href="/admin/orders?delayed=1">
+                <AlertTriangle /> Show delayed orders
+              </Link>
+            </Button>
+          )
+        }
+      />
       <FilterBar
         basePath="/admin/orders"
         q={sp.q}
@@ -30,7 +51,12 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
         selects={[{ name: "status", label: "Status", value: status, options: [{ value: "ACTIVE", label: "All active" }, ...Object.entries(ORDER_STATUS).map(([value, s]) => ({ value, label: s.label }))] }]}
       />
       {data.items.length === 0 ? (
-        <EmptyState icon={PackageSearch} title="No orders match" description="Orders appear when brands accept quotations." />
+        <EmptyState
+          icon={PackageSearch}
+          title="No orders match"
+          description={delayed ? "No orders are running late right now." : "Orders appear when brands accept quotations."}
+          action={sp.q || status || delayed ? <Button asChild variant="outline"><Link href="/admin/orders">Show all orders</Link></Button> : undefined}
+        />
       ) : (
         <>
           <OrderTable items={data.items} counterpart="both" />

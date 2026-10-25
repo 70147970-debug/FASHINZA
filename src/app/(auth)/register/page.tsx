@@ -14,10 +14,10 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
   const defaultRole = role?.toLowerCase() === "manufacturer" ? "MANUFACTURER" : "BRAND";
   return (
     <>
-      <h1 className="text-2xl font-semibold">Create your account</h1>
-      <p className="mb-8 mt-2 text-sm text-muted">Registration is free. You will complete your profile after signing in.</p>
+      <h1 className="type-title text-navy">Create your account</h1>
+      <p className="mb-7 mt-1.5 text-sm leading-6 text-muted">Registration is free. You will complete your profile after signing in.</p>
       <RegisterForm defaultRole={defaultRole} />
-      <p className="mt-6 text-center text-sm text-muted">
+      <p className="mt-7 border-t border-line-subtle pt-5 text-center text-sm text-muted">
         Already have an account? <Link href="/login" className="font-medium text-teal-700 hover:underline">Sign in</Link>
       </p>
     </>

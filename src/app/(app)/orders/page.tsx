@@ -29,13 +29,18 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
 
   return (
     <>
-      <PageHeader title="Orders" description={actor.role === "BRAND" ? "Production orders created from accepted quotations." : "Orders your factory is producing."} />
-      {(delayed || attention) && (
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          {delayed && <Badge tone="danger">Delayed only</Badge>}
-          {attention && <Badge tone="warning">{ATTENTION[attention]}</Badge>}
-        </div>
-      )}
+      <PageHeader
+        title="Orders"
+        meta={
+          delayed || attention ? (
+            <>
+              {delayed && <Badge tone="danger" dot>Delayed only</Badge>}
+              {attention && <Badge tone="warning" dot>{ATTENTION[attention]}</Badge>}
+            </>
+          ) : undefined
+        }
+        description={actor.role === "BRAND" ? "Production orders created from accepted quotations." : "Orders your factory is producing."}
+      />
       <FilterBar
         basePath="/orders"
         q={sp.q}
