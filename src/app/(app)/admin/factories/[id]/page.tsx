@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = { title: "Review factory" };
 
 function ChipList({ items }: { items: string[] }) {
-  if (items.length === 0) return <p className="text-sm text-muted">—</p>;
+  if (items.length === 0) return <p className="text-sm text-ink-muted">—</p>;
   return (
     <ul className="flex flex-wrap gap-1.5">
       {items.map((i) => (
@@ -33,13 +33,13 @@ function Check1({ done, children }: { done: boolean; children: React.ReactNode }
   return (
     <li className="flex items-center gap-2 text-[13px]">
       {done ? (
-        <span className="grid size-4 shrink-0 place-items-center rounded-full bg-teal text-white" aria-hidden>
+        <span className="grid size-4 shrink-0 place-items-center rounded-full bg-primary text-primary-fg" aria-hidden>
           <Check className="size-2.5" strokeWidth={3} />
         </span>
       ) : (
         <CircleDashed className="size-4 shrink-0 text-warning" aria-hidden />
       )}
-      <span className={done ? "text-ink" : "font-medium text-warning-700"}>{children}</span>
+      <span className={done ? "text-ink" : "font-medium text-warning-strong"}>{children}</span>
       <span className="sr-only">{done ? "(done)" : "(to do)"}</span>
     </li>
   );
@@ -106,7 +106,7 @@ export default async function AdminFactoryPage({ params }: { params: Promise<{ i
             description="Open each file and check it before verifying."
             bodyClassName="p-0 sm:p-0"
           >
-            <ul className="flex flex-wrap gap-x-6 gap-y-2 border-b border-line-subtle bg-surface-muted/60 px-4 py-3 sm:px-5" aria-label="Review checklist">
+            <ul className="flex flex-wrap gap-x-6 gap-y-2 border-b border-line bg-surface-muted px-4 py-3 sm:px-5" aria-label="Review checklist">
               <Check1 done={regVerified}>{regVerified ? "Business registration verified" : hasReg ? "Business registration not verified yet" : "No business registration uploaded"}</Check1>
               <Check1 done={p.documents.length > 0 && reviewed === p.documents.length}>
                 <span className="tabular">
@@ -120,8 +120,8 @@ export default async function AdminFactoryPage({ params }: { params: Promise<{ i
             ) : (
               <ul className="divide-y divide-line-subtle">
                 {p.documents.map((d) => (
-                  <li key={d.id} className={cn("flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:px-5", d.status === "PENDING" && "bg-warning-50/30")}>
-                    <span className="hidden size-9 shrink-0 place-items-center rounded-md border border-line bg-white text-slate-blue sm:grid" aria-hidden>
+                  <li key={d.id} className={cn("flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:px-5", d.status === "PENDING" && "bg-warning-soft/40")}>
+                    <span className="hidden size-9 shrink-0 place-items-center rounded-md border border-line bg-canvas text-ink-muted sm:grid" aria-hidden>
                       <FileText className="size-4" />
                     </span>
                     <div className="min-w-0 flex-1">
@@ -130,13 +130,13 @@ export default async function AdminFactoryPage({ params }: { params: Promise<{ i
                           href={`/api/files/${d.fileKey}`}
                           target="_blank"
                           rel="noopener"
-                          className="rounded-sm text-sm font-medium text-navy underline-offset-4 hover:underline"
+                          className="rounded-sm text-sm font-medium text-ink underline-offset-4 hover:underline"
                         >
                           {d.certificationName ?? DOCUMENT_TYPE[d.type]}
                         </a>
                         <StatusBadge map={DOCUMENT_STATUS} value={d.status} />
                       </div>
-                      <p className="mt-0.5 break-words text-xs leading-5 text-muted">
+                      <p className="mt-0.5 break-words text-xs leading-5 text-ink-muted">
                         {d.certificationName ? `${DOCUMENT_TYPE[d.type]} · ` : ""}
                         {d.fileName} · {formatBytes(d.size)} · uploaded {formatDate(d.createdAt)}
                       </p>
@@ -190,21 +190,21 @@ export default async function AdminFactoryPage({ params }: { params: Promise<{ i
           <Panel title="Contact and about">
             <ul className="space-y-2.5 text-[13px]">
               <li className="flex items-start gap-2.5">
-                <UserRound className="mt-0.5 size-4 shrink-0 text-subtle" aria-hidden />
+                <UserRound className="mt-0.5 size-4 shrink-0 text-ink-subtle" aria-hidden />
                 <span className="min-w-0 break-words text-ink">{p.contactName}</span>
               </li>
               <li className="flex items-start gap-2.5">
-                <Mail className="mt-0.5 size-4 shrink-0 text-subtle" aria-hidden />
+                <Mail className="mt-0.5 size-4 shrink-0 text-ink-subtle" aria-hidden />
                 <span className="min-w-0 break-all text-ink">{p.contactEmail}</span>
               </li>
               {p.contactPhone && (
                 <li className="flex items-start gap-2.5">
-                  <Phone className="mt-0.5 size-4 shrink-0 text-subtle" aria-hidden />
+                  <Phone className="mt-0.5 size-4 shrink-0 text-ink-subtle" aria-hidden />
                   <span className="tabular min-w-0 text-ink">{p.contactPhone}</span>
                 </li>
               )}
               <li className="flex items-start gap-2.5">
-                <Globe className="mt-0.5 size-4 shrink-0 text-subtle" aria-hidden />
+                <Globe className="mt-0.5 size-4 shrink-0 text-ink-subtle" aria-hidden />
                 <span className="min-w-0 break-all text-ink">{p.website ?? "—"}</span>
               </li>
             </ul>

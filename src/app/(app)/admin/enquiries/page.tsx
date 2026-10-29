@@ -44,23 +44,23 @@ export default async function EnquiriesPage({ searchParams }: { searchParams: Pr
         />
       ) : (
         <>
-          <ul className="divide-y divide-line-subtle overflow-hidden rounded-lg border border-line bg-white shadow-card">
+          <ul className="divide-y divide-line-subtle overflow-hidden rounded-lg border border-line bg-surface">
             {data.items.map((e) => (
-              <li key={e.id} className={cn("relative px-4 py-4 sm:px-5", e.status === "NEW" && "bg-warning-50/30")}>
-                {e.status === "NEW" && <span className="absolute inset-y-0 left-0 w-0.5 bg-warning" aria-hidden />}
+              <li key={e.id} className={cn("relative px-4 py-4 sm:px-5", e.status === "NEW" && "bg-warning-soft/40")}>
+                {e.status === "NEW" && <span className="absolute inset-y-0 left-0 w-[3px] bg-warning" aria-hidden />}
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
                   <div className="flex min-w-0 gap-3">
                     <Avatar name={e.name} size="sm" tone="neutral" />
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="text-sm font-semibold text-navy">{e.subject}</h2>
+                        <h2 className="font-display text-base font-medium text-ink">{e.subject}</h2>
                         <StatusBadge map={INQUIRY_STATUS} value={e.status} />
                         <Badge tone="outline">{e.inquiryType}</Badge>
                       </div>
-                      <p className="mt-0.5 break-words text-xs leading-5 text-muted">
+                      <p className="mt-0.5 break-words text-xs leading-5 text-ink-muted">
                         <span className="font-medium text-ink">{e.name}</span>
                         {e.company ? `, ${e.company}` : ""} ·{" "}
-                        <a href={`mailto:${e.email}`} className="break-all rounded-sm font-medium text-teal-700 underline-offset-4 hover:underline">
+                        <a href={`mailto:${e.email}`} className="break-all rounded-sm font-medium text-accent-strong underline-offset-4 hover:underline">
                           {e.email}
                         </a>{" "}
                         · <span className="tabular">{formatDateTime(e.createdAt)}</span>

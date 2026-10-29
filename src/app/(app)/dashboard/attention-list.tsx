@@ -13,18 +13,18 @@ export type AttentionItem = {
 };
 
 const tile: Record<AttentionItem["tone"], string> = {
-  neutral: "bg-neutral-100 text-neutral-600",
-  accent: "bg-teal-50 text-teal-700",
-  warning: "bg-warning-50 text-warning-700",
-  danger: "bg-danger-50 text-danger-700",
+  neutral: "border border-line bg-canvas text-ink-muted",
+  accent: "bg-accent-soft text-accent-strong",
+  warning: "bg-warning-soft text-warning-strong",
+  danger: "bg-danger-soft text-danger-strong",
 };
 
 /** "Needs your attention": one row per actionable thing, each linking to the filtered view that resolves it. */
 export function AttentionList({ items, clear }: { items: AttentionItem[]; clear: string }) {
   if (!items.length) {
     return (
-      <p className="flex items-center gap-3 px-4 py-4 text-sm text-muted sm:px-5">
-        <span className="grid size-8 shrink-0 place-items-center rounded-md bg-success-50 text-success-700">
+      <p className="flex items-center gap-3 px-4 py-4 text-sm text-ink-muted sm:px-5">
+        <span className="grid size-8 shrink-0 place-items-center rounded-md bg-success-soft text-success-strong">
           <CircleCheck className="size-4" aria-hidden />
         </span>
         {clear}
@@ -37,16 +37,16 @@ export function AttentionList({ items, clear }: { items: AttentionItem[]; clear:
         <li key={it.key}>
           <Link
             href={it.href}
-            className="group flex items-center gap-3 px-4 py-3.5 transition-colors duration-150 hover:bg-surface-muted sm:px-5"
+            className="group flex items-center gap-3 px-4 py-3.5 transition-colors duration-150 hover:bg-surface-hover sm:px-5"
           >
             <span className={cn("grid size-8 shrink-0 place-items-center rounded-md", tile[it.tone])}>
               <it.icon className="size-4" aria-hidden />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-medium leading-5 text-navy">{it.title}</span>
-              <span className="block text-[13px] leading-5 text-muted">{it.description}</span>
+              <span className="block text-sm font-medium leading-5 text-ink">{it.title}</span>
+              <span className="block text-[13px] leading-5 text-ink-muted">{it.description}</span>
             </span>
-            <ChevronRight className="size-4 shrink-0 text-subtle transition-colors duration-150 group-hover:text-navy" aria-hidden />
+            <ChevronRight className="size-4 shrink-0 text-ink-subtle transition-colors duration-150 group-hover:text-accent-strong" aria-hidden />
           </Link>
         </li>
       ))}

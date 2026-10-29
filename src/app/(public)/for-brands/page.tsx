@@ -24,7 +24,7 @@ export default function ForBrandsPage() {
       </PageHero>
 
       <Section labelledBy="brand-features">
-        <SectionHeading id="brand-features" eyebrow="Capabilities" title="What you can do as a brand" description="Everything from the first brief to the final inspection lives in one project record." />
+        <SectionHeading id="brand-features" index="01" eyebrow="Capabilities" title="What you can do as a brand" description="Everything from the first brief to the final inspection lives in one project record." split />
         <FeatureGrid>
           <FeatureCard icon={ClipboardList} title="Structured project briefs">
             Describe the garment, quantity, target price, deadline, fabric, sizes and colours, and attach a tech pack.
@@ -53,16 +53,17 @@ export default function ForBrandsPage() {
         </FeatureGrid>
       </Section>
 
-      <Section tone="white" labelledBy="brand-fit">
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-16">
+      <Section tone="surface" labelledBy="brand-fit">
+        <div className="grid gap-10 lg:grid-cols-12 lg:gap-10">
           <SectionHeading
             id="brand-fit"
+            index="02"
             eyebrow="Fit"
             title="Who it is for"
             description="Fashinza is designed for brands that need managed production without a full sourcing team."
-            className="lg:mb-0"
+            className="lg:col-span-5 lg:mb-0"
           />
-          <div className="rounded-lg border border-line bg-surface-muted p-6 sm:p-8">
+          <div className="lg:col-span-7 lg:pt-[3.75rem]">
             <CheckList
               items={[
                 "Startups planning a first or second production run who need manufacturers that accept their quantity.",

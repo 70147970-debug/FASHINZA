@@ -47,15 +47,15 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
                 </thead>
                 <tbody>
                   {d.events.map((e) => (
-                    <tr key={e.id} className={e.error && !e.processedAt ? "bg-danger-50/40" : undefined}>
+                    <tr key={e.id} className={e.error && !e.processedAt ? "bg-danger-soft/40" : undefined}>
                       <td>
-                        <p className="break-words font-mono text-[13px] font-medium text-navy">{e.type}</p>
-                        <p className="mt-0.5 break-all font-mono text-2xs text-muted">
+                        <p className="break-words font-mono text-[13px] font-medium text-ink">{e.type}</p>
+                        <p className="mt-0.5 break-all font-mono text-2xs text-ink-muted">
                           {e.provider} · {e.eventId}
                         </p>
-                        <p className="tabular mt-0.5 text-xs text-muted sm:hidden">{formatDateTime(e.createdAt)}</p>
+                        <p className="tabular mt-0.5 text-xs text-ink-muted sm:hidden">{formatDateTime(e.createdAt)}</p>
                       </td>
-                      <td className="tabular hidden whitespace-nowrap text-[13px] text-muted sm:table-cell">{formatDateTime(e.createdAt)}</td>
+                      <td className="tabular hidden whitespace-nowrap text-[13px] text-ink-muted sm:table-cell">{formatDateTime(e.createdAt)}</td>
                       <td>
                         {e.processedAt ? (
                           <Badge tone="success" dot>
@@ -70,7 +70,7 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
                             Pending
                           </Badge>
                         )}
-                        {e.error && <p className="mt-1 max-w-56 break-words text-xs text-danger-700">{e.error}</p>}
+                        {e.error && <p className="mt-1 max-w-56 break-words text-xs text-danger-strong">{e.error}</p>}
                       </td>
                     </tr>
                   ))}
@@ -90,15 +90,15 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
                 <li key={p.id} className="px-4 py-3.5 sm:px-5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <Link href={`/orders/${p.order.id}#payments`} className="rounded-sm text-sm font-medium text-navy underline-offset-4 hover:underline">
+                      <Link href={`/orders/${p.order.id}#payments`} className="rounded-sm text-sm font-medium text-ink underline-offset-4 hover:underline">
                         <span className="tabular">{p.order.reference}</span> · {p.label}
                       </Link>
-                      <p className="mt-0.5 text-xs text-muted">
+                      <p className="mt-0.5 text-xs text-ink-muted">
                         {p.transactions.length} transaction{p.transactions.length === 1 ? "" : "s"}
                       </p>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1">
-                      <span className="tabular text-sm font-semibold text-ink">{formatMoney(p.amount, p.currency)}</span>
+                      <span className="tabular text-sm font-medium text-ink">{formatMoney(p.amount, p.currency)}</span>
                       <StatusBadge map={PAYMENT_STATUS} value={p.status} />
                     </div>
                   </div>

@@ -38,12 +38,12 @@ export function Field({
     <div className={className ?? "space-y-1.5"}>
       <Label htmlFor={id}>
         {label}
-        {required ? <span className="text-danger" aria-hidden> *</span> : <span className="font-normal text-muted"> (optional)</span>}
+        {required ? <span className="text-accent-strong" aria-hidden> *</span> : <span className="font-normal text-ink-muted"> (optional)</span>}
       </Label>
       {control}
-      {hint && !message && <p id={`${id}-hint`} className="text-xs leading-4 text-muted">{hint}</p>}
+      {hint && !message && <p id={`${id}-hint`} className="text-xs leading-4 text-ink-muted">{hint}</p>}
       {message && (
-        <p id={`${id}-error`} className="flex items-start gap-1 text-xs font-medium leading-4 text-danger-700">
+        <p id={`${id}-error`} className="flex items-start gap-1 text-xs font-medium leading-4 text-danger-strong">
           <AlertCircle className="mt-px size-3.5 shrink-0" aria-hidden />
           {message}
         </p>
@@ -56,5 +56,5 @@ export function Field({
 export function FieldError({ name, className }: { name: string; className?: string }) {
   const message = React.useContext(FormErrorsContext)[name];
   if (!message) return null;
-  return <p className={className ?? "mt-1.5 text-xs font-medium leading-4 text-danger-700"}>{message}</p>;
+  return <p className={className ?? "mt-1.5 text-xs font-medium leading-4 text-danger-strong"}>{message}</p>;
 }

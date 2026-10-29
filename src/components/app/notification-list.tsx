@@ -7,8 +7,8 @@ import { cn } from "@/lib/utils";
 export function NotificationList({ items, compact = false }: { items: Notification[]; compact?: boolean }) {
   if (!items.length) {
     return (
-      <p className="flex items-center gap-2 py-2 text-sm text-muted">
-        <Bell className="size-4 text-subtle" aria-hidden /> No notifications yet.
+      <p className="flex items-center gap-2 py-2 text-sm text-ink-muted">
+        <Bell className="size-4 text-ink-subtle" strokeWidth={1.75} aria-hidden /> No notifications yet.
       </p>
     );
   }
@@ -18,15 +18,15 @@ export function NotificationList({ items, compact = false }: { items: Notificati
         const body = (
           <span className="flex gap-3">
             <span className="flex w-2 shrink-0 justify-center pt-[7px]">
-              {!n.readAt && <span className="size-2 rounded-full bg-teal" aria-hidden />}
+              {!n.readAt && <span className="size-2 rounded-full bg-accent" aria-hidden />}
             </span>
             <span className="min-w-0 flex-1">
-              <span className={cn("block break-words text-sm leading-5", n.readAt ? "text-ink" : "font-semibold text-navy")}>
+              <span className={cn("block break-words text-sm leading-5", n.readAt ? "text-ink" : "font-semibold text-ink")}>
                 {!n.readAt && <span className="sr-only">Unread: </span>}
                 {n.title}
               </span>
-              <span className={cn("mt-0.5 block break-words text-[13px] leading-5 text-muted", compact && "line-clamp-2")}>{n.message}</span>
-              <span className="mt-1 block text-xs leading-4 text-muted">{formatDateTime(n.createdAt)}</span>
+              <span className={cn("mt-0.5 block break-words text-[13px] leading-5 text-ink-muted", compact && "line-clamp-2")}>{n.message}</span>
+              <span className="mt-1 block text-xs leading-4 text-ink-muted">{formatDateTime(n.createdAt)}</span>
             </span>
           </span>
         );
@@ -36,7 +36,7 @@ export function NotificationList({ items, compact = false }: { items: Notificati
               <Link
                 href={`/notifications/${n.id}`}
                 prefetch={false}
-                className="-mx-2 block rounded-md px-2 py-2.5 transition-colors duration-150 hover:bg-surface-muted focus-visible:bg-surface-muted"
+                className="-mx-2 block rounded-md px-2 py-2.5 transition-colors duration-150 hover:bg-surface-hover focus-visible:bg-surface-hover"
               >
                 {body}
               </Link>

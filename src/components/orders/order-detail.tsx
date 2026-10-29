@@ -32,8 +32,8 @@ const ACTIVITY_PREVIEW = 6;
 /** A waiting/handover message in the current-stage action area. */
 function Waiting({ children }: { children: React.ReactNode }) {
   return (
-    <p className="flex items-start gap-2 text-sm text-muted">
-      <span className="mt-[7px] size-1.5 shrink-0 rounded-full bg-neutral-400" aria-hidden />
+    <p className="flex items-start gap-2 text-sm text-ink-muted">
+      <span className="mt-[7px] size-1.5 shrink-0 rounded-full bg-ink-subtle" aria-hidden />
       <span>{children}</span>
     </p>
   );
@@ -41,7 +41,7 @@ function Waiting({ children }: { children: React.ReactNode }) {
 
 function JumpLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <a href={href} className="inline-flex items-center gap-1 rounded-sm text-sm font-medium text-teal-700 hover:underline hover:underline-offset-4">
+    <a href={href} className="inline-flex items-center gap-1 rounded-sm text-sm font-medium text-accent-strong underline-offset-4 hover:underline">
       {children}
     </a>
   );
@@ -88,6 +88,7 @@ export function OrderDetail({ order, actor, sp }: { order: Order; actor: Actor; 
   });
 
   const due = order.paymentMilestones.filter((p) => p.status === "DUE" || p.status === "FAILED");
+  const firstPayable = isBrand ? order.paymentMilestones.find((p) => ["DUE", "FAILED", "PROCESSING"].includes(p.status))?.id : undefined;
   const paidTotal = order.paymentMilestones.filter((p) => p.status === "PAID").reduce((s, p) => s + Number(p.amount), 0);
   const scheduleTotal = order.paymentMilestones.reduce((s, p) => s + Number(p.amount), 0);
 
@@ -100,7 +101,7 @@ export function OrderDetail({ order, actor, sp }: { order: Order; actor: Actor; 
             <EvidenceForm orderId={order.id} stage={m.stage} requirement={def.requirement} />
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-line pt-4">
               <CompleteStageButton orderId={order.id} stage={m.stage} label={def.label} disabled={m.evidence.length === 0} />
-              {m.evidence.length === 0 && <p className="text-xs text-muted">Upload evidence to enable completion.</p>}
+              {m.evidence.length === 0 && <p className="text-xs text-ink-muted">Upload evidence to enable completion.</p>}
             </div>
           </>
         );
@@ -182,9 +183,9 @@ export function OrderDetail({ order, actor, sp }: { order: Order; actor: Actor; 
 
       <Panel className="mb-6" bodyClassName="p-4 sm:px-6 sm:py-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 md:mb-5">
-          <h2 className="type-heading text-navy">Production progress</h2>
+          <h2 className="type-heading text-ink">Production progress</h2>
           <div className="flex min-w-0 items-center gap-3">
-            <span className="tabular text-[13px] text-muted">
+            <span className="tabular text-[13px] text-ink-muted">
               <span className="font-medium text-ink">{doneCount}</span> of {steps.length} stages complete
             </span>
             <ProgressBar value={doneCount} max={steps.length} label={`${doneCount} of ${steps.length} stages complete`} className="hidden w-28 sm:block" />
@@ -207,7 +208,7 @@ export function OrderDetail({ order, actor, sp }: { order: Order; actor: Actor; 
           icon={CalendarDays}
           hint={
             slipped ? (
-              <span className="inline-flex items-center gap-1 font-medium text-danger-700"><AlertTriangle className="size-3" aria-hidden />Agreed {formatDate(order.expectedCompletionDate)}</span>
+              <span className="inline-flex items-center gap-1 font-medium text-danger-strong"><AlertTriangle className="size-3" aria-hidden />Agreed {formatDate(order.expectedCompletionDate)}</span>
             ) : (
               `Agreed ${formatDate(order.expectedCompletionDate)}`
             )
@@ -248,13 +249,13 @@ export function OrderDetail({ order, actor, sp }: { order: Order; actor: Actor; 
                   <li key={s.id} className="px-4 py-4 sm:px-5">
                     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-sm font-semibold text-navy">Round {s.round}</h3>
+                        <h3 className="font-display text-base font-medium text-ink">Round {s.round}</h3>
                         <StatusBadge map={SAMPLE_STATUS} value={s.status} />
                       </div>
-                      <span className="tabular text-xs text-muted">{formatDateTime(s.createdAt)}</span>
+                      <span className="tabular text-xs text-ink-muted">{formatDateTime(s.createdAt)}</span>
                     </div>
                     <p className="mt-2 text-sm leading-6 text-ink">{s.description}</p>
-                    {s.revisionNotes && <p className="mt-1 text-[13px] leading-5 text-muted"><span className="font-medium text-ink">Changes:</span> {s.revisionNotes}</p>}
+                    {s.revisionNotes && <p className="mt-1 text-[13px] leading-5 text-ink-muted"><span className="font-medium text-ink">Changes:</span> {s.revisionNotes}</p>}
                     {s.photos.length > 0 && (
                       <ul className="mt-3 flex flex-wrap gap-2">
                         {s.photos.map((p) => (
@@ -266,12 +267,12 @@ export function OrderDetail({ order, actor, sp }: { order: Order; actor: Actor; 
                     )}
                     {s.feedback && (
                       <blockquote className="mt-3 border-l-2 border-line-strong pl-3 text-[13px] leading-5 text-ink">
-                        <span className="font-medium text-navy">Brand feedback: </span>
+                        <span className="font-medium text-ink">Brand feedback: </span>
                         {s.feedback}
                       </blockquote>
                     )}
                     {s.status === "SUBMITTED" && isBrand && (
-                      <div className="mt-4 rounded-md border border-line bg-surface-muted/60 p-4">
+                      <div className="mt-4 rounded-md border border-line bg-surface-muted p-4 sm:p-5">
                         <SampleReviewForm orderId={order.id} sampleId={s.id} />
                       </div>
                     )}
@@ -303,40 +304,40 @@ export function OrderDetail({ order, actor, sp }: { order: Order; actor: Actor; 
                             <Badge tone={r.brandDecision === "ACCEPTED" ? "success" : r.brandDecision === "REJECTED" ? "danger" : "warning"}>Brand: {r.brandDecision.toLowerCase()}</Badge>
                           )}
                         </div>
-                        <span className="text-xs text-muted">Inspected {formatDate(r.inspectionDate)} by {r.inspector.name}</span>
+                        <span className="text-xs text-ink-muted">Inspected {formatDate(r.inspectionDate)} by {r.inspector.name}</span>
                       </div>
-                      <p className="tabular mt-2.5 text-[13px] text-muted">
+                      <p className="tabular mt-2.5 text-[13px] text-ink-muted">
                         Batch <span className="font-medium text-ink">{formatNumber(r.batchSize)}</span> · inspected <span className="font-medium text-ink">{formatNumber(r.sampleSize)}</span> units
                       </p>
-                      <div className="mt-3 overflow-x-auto rounded-md border border-line">
+                      <div className="mt-3 overflow-x-auto rounded-md border border-line bg-surface">
                         <table className="tabular w-full text-left text-[13px]">
                           <caption className="sr-only">Inspection figures by defect severity</caption>
-                          <thead className="bg-surface-muted">
+                          <thead className="border-b border-line-strong">
                             <tr>
-                              <th scope="col" className="label-caps px-2.5 py-2 sm:px-3 font-semibold text-muted"><span className="sr-only">Measure</span></th>
-                              <th scope="col" className="label-caps px-2.5 py-2 sm:px-3 text-right font-semibold text-muted">Critical</th>
-                              <th scope="col" className="label-caps px-2.5 py-2 sm:px-3 text-right font-semibold text-muted">Major</th>
-                              <th scope="col" className="label-caps px-2.5 py-2 sm:px-3 text-right font-semibold text-muted">Minor</th>
+                              <th scope="col" className="label-caps px-2.5 py-2 sm:px-3 font-semibold text-ink-muted"><span className="sr-only">Measure</span></th>
+                              <th scope="col" className="label-caps px-2.5 py-2 sm:px-3 text-right font-semibold text-ink-muted">Critical</th>
+                              <th scope="col" className="label-caps px-2.5 py-2 sm:px-3 text-right font-semibold text-ink-muted">Major</th>
+                              <th scope="col" className="label-caps px-2.5 py-2 sm:px-3 text-right font-semibold text-ink-muted">Minor</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-line-subtle">
                             <tr>
-                              <th scope="row" className="px-3 py-2 font-normal text-muted">AQL</th>
-                              <td className="px-3 py-2 text-right text-muted">—</td>
+                              <th scope="row" className="px-3 py-2 font-normal text-ink-muted">AQL</th>
+                              <td className="px-3 py-2 text-right text-ink-muted">—</td>
                               <td className="px-3 py-2 text-right text-ink">{r.aqlMajor?.toString() ?? "—"}</td>
                               <td className="px-3 py-2 text-right text-ink">{r.aqlMinor?.toString() ?? "—"}</td>
                             </tr>
                             <tr>
-                              <th scope="row" className="px-3 py-2 font-normal text-muted">Accept up to</th>
+                              <th scope="row" className="px-3 py-2 font-normal text-ink-muted">Accept up to</th>
                               <td className="px-3 py-2 text-right text-ink">0</td>
                               <td className="px-3 py-2 text-right text-ink">{r.acceptMajor ?? "—"}</td>
                               <td className="px-3 py-2 text-right text-ink">{r.acceptMinor ?? "—"}</td>
                             </tr>
                             <tr>
                               <th scope="row" className="px-3 py-2 font-medium text-ink">Found</th>
-                              <td className={cn("px-3 py-2 text-right font-semibold", r.criticalCount > 0 ? "text-danger-700" : "text-ink")}>{r.criticalCount}</td>
-                              <td className={cn("px-3 py-2 text-right font-semibold", majorOver ? "text-danger-700" : "text-ink")}>{r.majorCount}</td>
-                              <td className={cn("px-3 py-2 text-right font-semibold", minorOver ? "text-danger-700" : "text-ink")}>{r.minorCount}</td>
+                              <td className={cn("px-3 py-2 text-right font-semibold", r.criticalCount > 0 ? "text-danger-strong" : "text-ink")}>{r.criticalCount}</td>
+                              <td className={cn("px-3 py-2 text-right font-semibold", majorOver ? "text-danger-strong" : "text-ink")}>{r.majorCount}</td>
+                              <td className={cn("px-3 py-2 text-right font-semibold", minorOver ? "text-danger-strong" : "text-ink")}>{r.minorCount}</td>
                             </tr>
                           </tbody>
                         </table>
@@ -351,10 +352,10 @@ export function OrderDetail({ order, actor, sp }: { order: Order; actor: Actor; 
                         </ul>
                       )}
                       <div className="mt-3 space-y-1.5 text-[13px] leading-5">
-                        {r.defectDescriptions && <p className="text-danger-700">{r.defectDescriptions}</p>}
-                        {r.correctiveActions && <p className="text-ink"><span className="font-medium text-navy">Corrective actions: </span>{r.correctiveActions}</p>}
-                        {r.notes && <p className="text-muted">{r.notes}</p>}
-                        {r.brandDecisionNote && <p className="text-ink"><span className="font-medium text-navy">Brand note: </span>{r.brandDecisionNote}</p>}
+                        {r.defectDescriptions && <p className="text-danger-strong">{r.defectDescriptions}</p>}
+                        {r.correctiveActions && <p className="text-ink"><span className="font-medium text-ink">Corrective actions: </span>{r.correctiveActions}</p>}
+                        {r.notes && <p className="text-ink-muted">{r.notes}</p>}
+                        {r.brandDecisionNote && <p className="text-ink"><span className="font-medium text-ink">Brand note: </span>{r.brandDecisionNote}</p>}
                       </div>
                       {r.photos.length > 0 && (
                         <ul className="mt-3 flex flex-wrap gap-2">
@@ -366,14 +367,14 @@ export function OrderDetail({ order, actor, sp }: { order: Order; actor: Actor; 
                         </ul>
                       )}
                       {r.rework && (
-                        <p className="mt-3 flex items-center gap-1.5 text-xs text-muted">
+                        <p className="mt-3 flex items-center gap-1.5 text-xs text-ink-muted">
                           <Wrench className="size-3.5" aria-hidden />
                           Rework task {r.rework.status.toLowerCase()}{r.rework.resolvedAt ? ` on ${formatDate(r.rework.resolvedAt)}` : ""}
                         </p>
                       )}
                       {r.id === pendingQc?.id && isBrand && (
-                        <div className="mt-4 rounded-md border border-line bg-surface-muted/60 p-4">
-                          <p className="mb-3 text-[13px] text-muted">Accepting completes the quality check; rejecting returns production to stitching.</p>
+                        <div className="mt-4 rounded-md border border-line bg-surface-muted p-4 sm:p-5">
+                          <p className="mb-3 text-[13px] text-ink-muted">Accepting completes the quality check; rejecting returns production to stitching.</p>
                           <QcDecisionButtons orderId={order.id} reportId={r.id} />
                         </div>
                       )}
@@ -399,13 +400,13 @@ export function OrderDetail({ order, actor, sp }: { order: Order; actor: Actor; 
                   const milestone = order.milestones.find((x) => x.id === m.milestoneId);
                   return (
                     <li key={m.id} className={cn("flex max-w-[92%] gap-2.5", mine && "ml-auto flex-row-reverse")}>
-                      <Avatar name={m.author.name} size="sm" tone={mine ? "navy" : "teal"} />
+                      <Avatar name={m.author.name} size="sm" tone={mine ? "ink" : "accent"} />
                       <div className={cn("min-w-0", mine && "text-right")}>
-                        <p className="text-xs text-muted">
+                        <p className="text-xs text-ink-muted">
                           <span className="font-medium text-ink">{m.author.name}</span> · {ROLE_LABEL[m.author.role]} · {formatDateTime(m.createdAt)}
                           {milestone ? ` · ${stageLabel(milestone.stage)}` : ""}
                         </p>
-                        <p className={cn("mt-1 inline-block whitespace-pre-line break-words rounded-lg px-3 py-2 text-left text-sm leading-6", mine ? "bg-navy-50 text-ink" : "bg-surface-muted text-ink")}>{m.body}</p>
+                        <p className={cn("mt-1 inline-block whitespace-pre-line break-words rounded-lg px-3.5 py-2.5 text-left text-sm leading-6", mine ? "rounded-tr-xs bg-surface-muted text-ink" : "rounded-tl-xs border border-line bg-surface text-ink")}>{m.body}</p>
                       </div>
                     </li>
                   );
@@ -425,7 +426,7 @@ export function OrderDetail({ order, actor, sp }: { order: Order; actor: Actor; 
             footer={
               isBrand && !paymentsLocked && !closed ? (
                 <details className="group w-full">
-                  <summary className="flex min-h-8 cursor-pointer list-none items-center text-sm font-medium text-teal-700 hover:underline hover:underline-offset-4 [&::-webkit-details-marker]:hidden">
+                  <summary className="flex min-h-8 cursor-pointer list-none items-center text-sm font-medium text-accent-strong underline-offset-4 hover:underline [&::-webkit-details-marker]:hidden">
                     Change the payment split
                   </summary>
                   <div className="mt-4">
@@ -440,46 +441,45 @@ export function OrderDetail({ order, actor, sp }: { order: Order; actor: Actor; 
               ) : undefined
             }
           >
-            <div className="border-b border-line-subtle px-4 py-3.5 sm:px-5">
-              <div className="flex items-baseline justify-between gap-3 text-[13px]">
-                <span className="text-muted">Paid to date</span>
-                <span className="tabular text-muted">
-                  <span className="font-semibold text-navy">{formatMoney(paidTotal, order.currency)}</span> of {formatMoney(scheduleTotal, order.currency)}
-                </span>
-              </div>
-              <ProgressBar value={paidTotal} max={scheduleTotal || 1} label="Share of the order value paid" tone="success" className="mt-2" />
+            <div className="border-b border-line px-4 py-4 sm:px-5">
+              <p className="label-caps text-ink-muted">Paid to date</p>
+              <p className="tabular mt-1.5 flex flex-wrap items-baseline gap-x-2 text-[13px] text-ink-muted">
+                <span className="font-display text-[26px] font-normal leading-8 tracking-[-0.02em] text-ink">{formatMoney(paidTotal, order.currency)}</span>
+                <span>of {formatMoney(scheduleTotal, order.currency)}</span>
+              </p>
+              <ProgressBar value={paidTotal} max={scheduleTotal || 1} label="Share of the order value paid" tone="success" className="mt-3" />
             </div>
             <ul className="divide-y divide-line-subtle">
               {order.paymentMilestones.map((p) => {
                 const payable = isBrand && ["DUE", "FAILED", "PROCESSING"].includes(p.status);
                 return (
-                  <li key={p.id} className={cn("px-4 py-3.5 sm:px-5", p.status === "DUE" && "bg-warning-50/40")}>
+                  <li key={p.id} className={cn("px-4 py-3.5 sm:px-5", p.status === "DUE" && "bg-warning-soft/60")}>
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-navy">
+                        <p className="text-sm font-medium text-ink">
                           {p.label} · <span className="tabular">{p.percentage.toString()}%</span>
                         </p>
-                        <p className="mt-0.5 text-xs leading-5 text-muted">
+                        <p className="mt-0.5 text-xs leading-5 text-ink-muted">
                           Due after {stageLabel(p.triggerStage).toLowerCase()}
                           {p.dueAt && p.status === "DUE" ? ` · by ${formatDate(p.dueAt)}` : ""}
                           {p.paidAt ? ` · paid ${formatDate(p.paidAt)}` : ""}
                         </p>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1">
-                        <p className="tabular text-sm font-semibold text-ink">{formatMoney(p.amount, p.currency)}</p>
+                        <p className="tabular text-sm font-medium text-ink">{formatMoney(p.amount, p.currency)}</p>
                         <StatusBadge map={PAYMENT_STATUS} value={p.status} />
                       </div>
                     </div>
                     {payable && (
                       <div className="mt-3">
-                        <PayButton paymentMilestoneId={p.id} label={p.label} amount={formatMoney(p.amount, p.currency)} />
+                        <PayButton paymentMilestoneId={p.id} label={p.label} amount={formatMoney(p.amount, p.currency)} quiet={p.id !== firstPayable} />
                       </div>
                     )}
                     {p.transactions.length > 0 && (
-                      <ul className="mt-2 space-y-0.5 text-xs leading-5 text-muted">
+                      <ul className="mt-2 space-y-0.5 text-xs leading-5 text-ink-muted">
                         {p.transactions.map((t) => (
                           <li key={t.id} className="flex items-start gap-1.5">
-                            <CreditCard className="mt-[3px] size-3 shrink-0 text-subtle" aria-hidden />
+                            <CreditCard className="mt-[3px] size-3 shrink-0 text-ink-subtle" aria-hidden />
                             <span className="min-w-0">
                               {t.type === "REFUND" ? "Refund" : "Charge"} {t.status.toLowerCase()} · {formatDateTime(t.createdAt)}
                               {t.failureReason ? ` · ${t.failureReason}` : ""}
@@ -507,16 +507,16 @@ export function OrderDetail({ order, actor, sp }: { order: Order; actor: Actor; 
                 { label: "Sampling", value: <span className="tabular">{formatMoney(terms.samplingCost as string, order.currency)}</span> },
                 { label: "Logistics", value: <span className="tabular">{formatMoney(terms.logisticsCost as string, order.currency)}</span> },
                 { label: "Tax", value: <span className="tabular">{`${terms.taxPercent ?? 0}% · ${formatMoney(terms.taxAmount as string, order.currency)}`}</span> },
-                { label: "Total", value: <span className="tabular font-semibold text-navy">{formatMoney(terms.totalAmount as string, order.currency)}</span> },
+                { label: "Total", value: <span className="tabular font-display text-base font-medium text-ink">{formatMoney(terms.totalAmount as string, order.currency)}</span> },
               ]}
             />
-            {terms.notes && <p className="mt-4 border-t border-line-subtle pt-3 text-[13px] leading-5 text-muted">{String(terms.notes)}</p>}
+            {terms.notes && <p className="mt-4 border-t border-line-subtle pt-3 text-[13px] leading-5 text-ink-muted">{String(terms.notes)}</p>}
           </Panel>
 
           <Panel
             title="Tech pack"
             description="The highest version is the one to produce against."
-            actions={isBrand && !closed ? <Link href={`/projects/${order.projectId}#files`} className="rounded-sm text-[13px] font-medium text-teal-700 hover:underline hover:underline-offset-4">Upload a new version</Link> : undefined}
+            actions={isBrand && !closed ? <Link href={`/projects/${order.projectId}#files`} className="rounded-sm text-[13px] font-medium text-accent-strong underline-offset-4 hover:underline">Upload a new version</Link> : undefined}
           >
             <AttachmentList items={order.project.attachments} projectId={order.projectId} />
           </Panel>
@@ -524,16 +524,16 @@ export function OrderDetail({ order, actor, sp }: { order: Order; actor: Actor; 
           <Panel title="Parties">
             <ul className="space-y-4">
               <li className="flex items-center gap-3">
-                <Avatar name={brandName} shape="square" tone="navy" />
+                <Avatar name={brandName} shape="square" tone="ink" />
                 <div className="min-w-0">
-                  <p className="text-xs text-muted">Brand</p>
+                  <p className="text-xs text-ink-muted">Brand</p>
                   <p className="break-words text-sm font-medium text-ink">{brandName}</p>
                 </div>
               </li>
               <li className="flex items-center gap-3">
-                <Avatar name={factoryName} shape="square" tone="teal" />
+                <Avatar name={factoryName} shape="square" tone="accent" />
                 <div className="min-w-0">
-                  <p className="text-xs text-muted">Factory{location ? ` · ${location}` : ""}</p>
+                  <p className="text-xs text-ink-muted">Factory{location ? ` · ${location}` : ""}</p>
                   <p className="inline-flex items-center gap-1 break-words text-sm font-medium text-ink">
                     {factoryName}
                     <BadgeCheck className="size-4 shrink-0 text-success" aria-label="Verified" />
@@ -548,7 +548,7 @@ export function OrderDetail({ order, actor, sp }: { order: Order; actor: Actor; 
               <ul className="divide-y divide-line-subtle">
                 {order.issues.map((d) => (
                   <li key={d.id} className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
-                    <Link href={`/disputes/${d.id}`} className="min-w-0 truncate rounded-sm text-sm font-medium text-navy hover:underline hover:underline-offset-4">{d.subject}</Link>
+                    <Link href={`/disputes/${d.id}`} className="min-w-0 truncate rounded-sm text-sm font-medium text-ink hover:underline hover:underline-offset-4">{d.subject}</Link>
                     <StatusBadge map={DISPUTE_STATUS} value={d.status} />
                   </li>
                 ))}
@@ -560,7 +560,7 @@ export function OrderDetail({ order, actor, sp }: { order: Order; actor: Actor; 
             <ActivityTimeline items={order.activities.slice(0, ACTIVITY_PREVIEW)} />
             {order.activities.length > ACTIVITY_PREVIEW && (
               <details className="group mt-5">
-                <summary className="flex min-h-8 cursor-pointer list-none items-center text-[13px] font-medium text-teal-700 hover:underline hover:underline-offset-4 [&::-webkit-details-marker]:hidden">
+                <summary className="flex min-h-8 cursor-pointer list-none items-center text-[13px] font-medium text-accent-strong underline-offset-4 hover:underline [&::-webkit-details-marker]:hidden">
                   <span className="group-open:hidden">Show {order.activities.length - ACTIVITY_PREVIEW} earlier events</span>
                   <span className="hidden group-open:inline">Hide earlier events</span>
                 </summary>

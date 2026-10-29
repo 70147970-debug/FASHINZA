@@ -34,7 +34,7 @@ function delayed(o: Row) {
 
 function DelayedFlag() {
   return (
-    <span className="inline-flex items-center gap-1 text-xs font-medium text-danger-700">
+    <span className="inline-flex items-center gap-1 text-xs font-medium text-danger-strong">
       <AlertTriangle className="size-3.5" aria-hidden />
       Delayed
     </span>
@@ -47,8 +47,8 @@ function Stage({ o }: { o: Row }) {
     <span className="block min-w-0">
       <span className="block truncate text-[13px] text-ink">{o.status === "DELIVERED" ? "All stages complete" : isClosed(o) ? `Stopped at ${stageLabel(o.currentStage).toLowerCase()}` : stageLabel(o.currentStage)}</span>
       <span className="mt-1.5 flex items-center gap-2">
-        <ProgressBar value={done} max={STAGES.length} label={`${done} of ${STAGES.length} stages complete`} tone={delayed(o) ? "warning" : "accent"} className="w-24" />
-        <span className="tabular text-xs text-muted">
+        <ProgressBar value={done} max={STAGES.length} label={`${done} of ${STAGES.length} stages complete`} tone={delayed(o) ? "warning" : o.status === "DELIVERED" ? "success" : "ink"} className="w-24" />
+        <span className="tabular text-xs text-ink-muted">
           {done}/{STAGES.length}
         </span>
       </span>
@@ -84,7 +84,7 @@ export function OrderTable({ items, counterpart }: { items: Row[]; counterpart: 
         >
           <span className="flex items-end justify-between gap-3">
             <Stage o={o} />
-            <span className="shrink-0 text-right text-xs text-muted">
+            <span className="shrink-0 text-right text-xs text-ink-muted">
               <span className="block">Due {formatDate(o.expectedCompletionDate)}</span>
               {delayed(o) && <DelayedFlag />}
             </span>
@@ -110,19 +110,19 @@ export function OrderTable({ items, counterpart }: { items: Row[]; counterpart: 
           {items.map((o) => {
             const late = delayed(o);
             return (
-              <tr key={o.id} className={cn(late && "bg-danger-50/40")}>
+              <tr key={o.id} className={cn(late && "bg-danger-soft/40")}>
                 <td className={cn("relative", late && "shadow-[inset_2px_0_0_var(--color-danger)]")}>
                   <Link href={`/orders/${o.id}`} className="cell-primary rounded-sm">
                     {o.project.name}
                   </Link>
-                  <p className="tabular mt-0.5 text-xs text-muted">{o.reference}</p>
+                  <p className="tabular mt-0.5 text-xs text-ink-muted">{o.reference}</p>
                 </td>
                 <td className="max-w-56 text-[13px]">{party(o)}</td>
                 <td>
                   <Stage o={o} />
                 </td>
                 <td className="whitespace-nowrap">
-                  <p className={cn("tabular text-[13px]", late ? "font-medium text-danger-700" : "text-ink")}>{formatDate(o.expectedCompletionDate)}</p>
+                  <p className={cn("tabular text-[13px]", late ? "font-medium text-danger-strong" : "text-ink")}>{formatDate(o.expectedCompletionDate)}</p>
                   {late && <DelayedFlag />}
                 </td>
                 <td>

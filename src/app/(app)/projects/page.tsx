@@ -57,7 +57,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
                   aria-current={active ? "page" : undefined}
                   className={cn(
                     "-mb-px inline-flex h-10 items-center border-b-2 text-sm transition-colors duration-150",
-                    active ? "border-teal font-medium text-navy" : "border-transparent text-muted hover:border-line-strong hover:text-navy",
+                    active ? "border-accent font-medium text-ink" : "border-transparent text-ink-muted hover:border-line-strong hover:text-ink",
                   )}
                 >
                   {v.label}
@@ -126,15 +126,15 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
                   <tr key={p.id}>
                     <td className="max-w-72">
                       <Link href={href(p)} className="cell-primary block truncate">{p.name}</Link>
-                      <p className="text-xs leading-5 text-muted">{categoryLabel(p.category)}</p>
+                      <p className="text-xs leading-5 text-ink-muted">{categoryLabel(p.category)}</p>
                     </td>
                     <td><StatusBadge map={PROJECT_STATUS} value={p.status} /></td>
                     <td><ProjectProgress status={p.status} /></td>
                     <td className="num">{formatNumber(p.quantity)}</td>
                     <td className="tabular whitespace-nowrap">{formatDate(p.deadline)}</td>
-                    <td className={cn("num", !p._count.matchResults && "text-muted")}>{p._count.matchResults}</td>
-                    <td className={cn("num", p._count.quotations ? "font-semibold text-warning-700" : "text-muted")}>{p._count.quotations}</td>
-                    <td className="tabular whitespace-nowrap text-muted">{formatDate(p.updatedAt)}</td>
+                    <td className={cn("num", !p._count.matchResults && "text-ink-muted")}>{p._count.matchResults}</td>
+                    <td className={cn("num", p._count.quotations ? "font-semibold text-warning-strong" : "text-ink-muted")}>{p._count.quotations}</td>
+                    <td className="tabular whitespace-nowrap text-ink-muted">{formatDate(p.updatedAt)}</td>
                   </tr>
                 ))}
               </tbody>

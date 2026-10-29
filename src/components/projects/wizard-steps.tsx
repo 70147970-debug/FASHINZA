@@ -16,7 +16,7 @@ export const STEP_INFO: Record<number, string> = {
 /**
  * Step indicator for the project wizard: a vertical rail from lg (sticky beside the form), a compact
  * "Step x of y" summary plus a horizontally scrolling list of steps below that.
- * Completed = teal check, current = navy ring, upcoming = numbered grey.
+ * Completed = ink check, current = terracotta ring with a soft halo, upcoming = numbered hairline circle.
  */
 export function WizardSteps({ projectId, current, reached, submitted }: { projectId?: string; current: number; reached: number; submitted: boolean }) {
   const steps = submitted ? PROJECT_STEPS.filter((s) => s.fields.length > 0) : PROJECT_STEPS;
@@ -24,16 +24,16 @@ export function WizardSteps({ projectId, current, reached, submitted }: { projec
   return (
     <nav aria-label="Project steps" className="min-w-0 lg:sticky lg:top-20 lg:self-start">
       <div className="mb-3 lg:hidden">
-        <p className="tabular text-[13px] text-muted">
-          Step <span className="font-semibold text-navy">{index + 1}</span> of {steps.length}
+        <p className="tabular text-[13px] text-ink-muted">
+          Step <span className="font-semibold text-ink">{index + 1}</span> of {steps.length}
         </p>
         <div className="mt-2 flex gap-1" aria-hidden>
           {steps.map((s, i) => (
-            <span key={s.step} className={cn("h-1 flex-1 rounded-full", i < index ? "bg-teal" : i === index ? "bg-navy" : "bg-neutral-100")} />
+            <span key={s.step} className={cn("h-0.5 flex-1 rounded-xs", i < index ? "bg-primary" : i === index ? "bg-accent" : "bg-line-strong")} />
           ))}
         </div>
       </div>
-      <p className="label-caps mb-3 hidden text-muted lg:block">{submitted ? "Requirements" : "Steps"}</p>
+      <p className="label-caps mb-3 hidden text-ink-muted lg:block">{submitted ? "Requirements" : "Steps"}</p>
       <ol className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 lg:flex-col lg:gap-0 lg:overflow-visible lg:pb-0">
         {steps.map((s, i) => {
           const isCurrent = s.step === current;
@@ -45,37 +45,37 @@ export function WizardSteps({ projectId, current, reached, submitted }: { projec
               <span
                 className={cn(
                   "relative z-10 grid size-6 shrink-0 place-items-center rounded-full text-xs font-semibold tabular",
-                  isCurrent && "border-2 border-navy bg-white text-navy ring-4 ring-navy-50",
-                  done && "bg-teal text-white",
-                  !isCurrent && !done && "border border-line-strong bg-white text-muted",
+                  isCurrent && "border-2 border-accent bg-surface text-accent-strong ring-4 ring-accent-soft",
+                  done && "bg-primary text-primary-fg",
+                  !isCurrent && !done && "border border-line-strong bg-canvas text-ink-muted",
                 )}
                 aria-hidden
               >
                 {done ? <Check className="size-3.5" strokeWidth={3} /> : s.step}
               </span>
               <span className="min-w-0">
-                <span className={cn("block whitespace-nowrap text-sm leading-6", !isCurrent && "max-sm:sr-only", isCurrent ? "font-semibold text-navy" : done ? "font-medium text-ink" : "text-muted")}>
+                <span className={cn("block whitespace-nowrap text-sm leading-6", !isCurrent && "max-sm:sr-only", isCurrent ? "font-semibold text-ink" : done ? "text-ink" : "text-ink-muted")}>
                   {s.title}
                   {done && <span className="sr-only"> (completed)</span>}
                 </span>
-                <span className="hidden text-xs leading-4 text-muted lg:block">{STEP_INFO[s.step]}</span>
+                <span className="hidden text-xs leading-4 text-ink-muted lg:block">{STEP_INFO[s.step]}</span>
               </span>
             </>
           );
           const cls = cn(
             "relative flex items-start gap-2.5 rounded-md px-2.5 py-2 transition-colors duration-150 lg:px-2 lg:pb-5 lg:pt-1",
-            isCurrent ? "bg-white shadow-card max-lg:ring-1 max-lg:ring-line lg:bg-transparent lg:shadow-none" : "",
+            isCurrent ? "bg-surface max-lg:ring-1 max-lg:ring-line lg:bg-transparent" : "",
           );
           return (
             <li key={s.step} aria-current={isCurrent ? "step" : undefined} className="relative shrink-0">
               {!last && (
                 <span
-                  className={cn("absolute bottom-0 left-[19px] top-8 hidden w-px lg:block", done ? "bg-teal" : "bg-line-strong")}
+                  className={cn("absolute bottom-0 left-[19px] top-8 hidden w-px lg:block", done ? "bg-primary" : "bg-line-strong")}
                   aria-hidden
                 />
               )}
               {reachable && !isCurrent ? (
-                <Link href={`/projects/${projectId}/edit?step=${s.step}`} className={cn(cls, "hover:bg-neutral-100 lg:hover:bg-neutral-100/60")}>
+                <Link href={`/projects/${projectId}/edit?step=${s.step}`} className={cn(cls, "hover:bg-surface-hover")}>
                   {content}
                 </Link>
               ) : (

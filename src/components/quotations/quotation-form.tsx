@@ -115,14 +115,14 @@ export function QuotationForm({
       </Section>
 
       {/* Live breakdown: same calculation as the server, which recalculates and stores its own totals. */}
-      <section aria-label="Quotation preview" className="overflow-hidden rounded-lg border border-line bg-surface-muted" aria-live="polite">
-        <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
-          <p className="label-caps text-muted">Preview</p>
-          <p className="text-xs text-muted">Calculated as you type</p>
+      <section aria-label="Quotation preview" className="overflow-hidden rounded-lg border border-line-strong bg-surface-muted" aria-live="polite">
+        <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3 sm:px-5">
+          <p className="eyebrow text-accent-strong">Preview</p>
+          <p className="text-xs text-ink-muted">Calculated as you type</p>
         </div>
         {preview ? (
           <>
-            <dl className="divide-y divide-line-subtle px-4 text-sm">
+            <dl className="divide-y divide-line px-4 text-sm sm:px-5">
               <Line label="Cost per unit" value={money(preview.perUnitCost)} />
               <Line label={`Production · ${formatNumber(Number(v.quantity))} units`} value={production ? money(production) : "—"} />
               <Line label="Sampling charge" value={money(v.samplingCost)} />
@@ -130,16 +130,16 @@ export function QuotationForm({
               <Line label="Subtotal" value={money(preview.subtotal)} strong />
               <Line label={`Tax${Number(v.taxPercent) ? ` (${Number(v.taxPercent)}%)` : ""}`} value={money(preview.taxAmount)} />
             </dl>
-            <dl className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1 border-t border-line bg-white px-4 py-3.5">
+            <dl className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1 border-t border-line-strong bg-surface px-4 py-4 sm:px-5">
               <div>
-                <dt className="text-[13px] font-medium text-navy">Total</dt>
-                <dd className="tabular text-xs text-muted">{money(preview.effectiveUnitPrice)} effective per unit</dd>
+                <dt className="label-caps text-ink-muted">Total</dt>
+                <dd className="tabular mt-1 text-xs text-ink-muted">{money(preview.effectiveUnitPrice)} effective per unit</dd>
               </div>
-              <dd className="tabular font-display text-2xl font-semibold text-navy">{money(preview.totalAmount)}</dd>
+              <dd className="type-metric text-ink">{money(preview.totalAmount)}</dd>
             </dl>
           </>
         ) : (
-          <p className="px-4 py-4 text-sm text-muted">Enter a quantity and costs to see the total.</p>
+          <p className="px-4 py-4 text-sm text-ink-muted sm:px-5">Enter a quantity and costs to see the total.</p>
         )}
       </section>
 
@@ -155,7 +155,7 @@ export function QuotationForm({
       </Section>
 
       <div className="flex flex-col-reverse gap-2 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-end">
-        <p className="mr-auto hidden text-xs text-muted sm:block">The brand sees every line of your breakdown.</p>
+        <p className="mr-auto hidden text-xs text-ink-muted sm:block">The brand sees every line of your breakdown.</p>
         {!hasBeenSent && <SubmitButton variant="outline" name="intent" value="draft" pendingText="Saving…">Save draft</SubmitButton>}
         <SubmitButton variant="accent" name="intent" value="submit" pendingText="Sending…">
           <Send /> {hasBeenSent ? "Send revised quotation" : "Send quotation"}
@@ -169,8 +169,8 @@ function Section({ title, description, children }: { title: string; description?
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="type-heading text-navy">{title}</h3>
-        {description && <p className="mt-0.5 text-[13px] leading-5 text-muted">{description}</p>}
+        <h3 className="type-heading text-ink">{title}</h3>
+        {description && <p className="mt-0.5 text-[13px] leading-5 text-ink-muted">{description}</p>}
       </div>
       {children}
     </div>
@@ -179,9 +179,9 @@ function Section({ title, description, children }: { title: string; description?
 
 function Line({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 py-2">
-      <dt className={strong ? "font-medium text-ink" : "text-muted"}>{label}</dt>
-      <dd className={`tabular text-right ${strong ? "font-semibold text-navy" : "text-ink"}`}>{value}</dd>
+    <div className="flex items-baseline justify-between gap-4 py-2.5">
+      <dt className={strong ? "font-medium text-ink" : "text-ink-muted"}>{label}</dt>
+      <dd className={`tabular text-right ${strong ? "font-semibold text-ink" : "text-ink"}`}>{value}</dd>
     </div>
   );
 }

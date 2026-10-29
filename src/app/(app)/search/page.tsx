@@ -83,7 +83,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
               key={g.key}
               title={g.title}
               actions={
-                <span className="tabular text-xs text-muted">
+                <span className="tabular text-xs text-ink-muted">
                   {g.hits.length < g.total ? `Showing ${g.hits.length} of ${g.total}` : `${g.total} found`}
                 </span>
               }
@@ -92,16 +92,16 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
               <ul className="divide-y divide-line-subtle">
                 {g.hits.map((h) => (
                   <li key={h.id}>
-                    <Link href={h.href} className="group flex items-center gap-3 px-4 py-3 transition-colors duration-150 hover:bg-surface-muted sm:px-5">
-                      <span className="grid size-8 shrink-0 place-items-center rounded-md bg-surface-muted text-neutral-500">
+                    <Link href={h.href} className="group flex items-center gap-3 px-4 py-3 transition-colors duration-150 hover:bg-surface-hover sm:px-5">
+                      <span className="grid size-8 shrink-0 place-items-center rounded-md border border-line bg-canvas text-ink-muted">
                         <g.icon className="size-4" aria-hidden />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-medium text-navy">{h.title}</span>
-                        <span className="block truncate text-xs leading-5 text-muted">{h.meta}</span>
+                        <span className="block truncate text-sm font-medium text-ink">{h.title}</span>
+                        <span className="block truncate text-xs leading-5 text-ink-muted">{h.meta}</span>
                       </span>
                       <span className="shrink-0">{h.badge}</span>
-                      <ChevronRight className="size-4 shrink-0 text-subtle transition-colors duration-150 group-hover:text-navy max-sm:hidden" aria-hidden />
+                      <ChevronRight className="size-4 shrink-0 text-ink-subtle transition-colors duration-150 group-hover:text-accent-strong max-sm:hidden" aria-hidden />
                     </Link>
                   </li>
                 ))}

@@ -32,15 +32,15 @@ export function UploadDocumentForm() {
         )}
       </div>
       <div>
-        <label htmlFor="doc-file" className="mb-1.5 block text-sm font-medium text-ink">File <span className="text-danger" aria-hidden>*</span></label>
+        <label htmlFor="doc-file" className="mb-1.5 block text-sm font-medium text-ink">File <span className="text-accent-strong" aria-hidden>*</span></label>
         <input
           id="doc-file"
           name="file"
           type="file"
           accept={UPLOAD_LIMITS.allowedMime.join(",")}
-          className="block w-full min-w-0 rounded-md border border-dashed border-line-strong bg-surface p-2 text-sm text-muted transition-colors duration-150 file:mr-3 file:h-8 file:rounded-md file:border file:border-solid file:border-line-strong file:bg-surface file:px-3 file:text-sm file:font-medium file:text-navy hover:border-slate-blue hover:file:bg-neutral-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal"
+          className="block w-full min-w-0 cursor-pointer rounded-md border border-dashed border-line-control bg-surface p-2 text-sm text-ink-muted transition-colors duration-150 file:mr-3 file:h-8 file:cursor-pointer file:rounded-md file:border file:border-solid file:border-line-strong file:bg-surface file:px-3 file:text-sm file:font-medium file:text-ink file:transition-colors hover:border-accent hover:file:bg-surface-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
         />
-        <p className="mt-1.5 text-xs leading-5 text-muted">PDF, PNG, JPEG or WebP, up to {UPLOAD_LIMITS.maxBytes / 1024 / 1024} MB. Stored privately; only you and administrators can open it.</p>
+        <p className="mt-1.5 text-xs leading-5 text-ink-muted">PDF, PNG, JPEG or WebP, up to {UPLOAD_LIMITS.maxBytes / 1024 / 1024} MB. Stored privately; only you and administrators can open it.</p>
         <FieldError name="file" />
       </div>
       <SubmitButton variant="outline" pendingText="Uploading…" className="w-full sm:w-auto"><Upload /> Upload</SubmitButton>

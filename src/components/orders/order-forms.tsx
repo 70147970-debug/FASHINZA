@@ -19,7 +19,7 @@ import {
 } from "@/app/(app)/orders/actions";
 
 const fileInputCls =
-  "block w-full min-w-0 cursor-pointer rounded-md border border-dashed border-line-strong bg-white p-1.5 text-[13px] text-muted transition-colors duration-150 hover:border-teal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal file:mr-3 file:h-8 file:cursor-pointer file:rounded-md file:border file:border-solid file:border-line-strong file:bg-white file:px-3 file:text-[13px] file:font-medium file:text-navy hover:file:bg-neutral-50";
+  "block w-full min-w-0 cursor-pointer rounded-md border border-dashed border-line-control bg-surface p-1.5 text-[13px] text-ink-muted transition-colors duration-150 hover:border-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus file:mr-3 file:h-8 file:cursor-pointer file:rounded-md file:border file:border-solid file:border-line-strong file:bg-surface file:px-3 file:text-[13px] file:font-medium file:text-ink hover:file:bg-surface-hover";
 
 /** Re-fetches server data every 30 s while the tab is visible (polling instead of a socket server). */
 export function LiveRefresh({ seconds = 30 }: { seconds?: number }) {
@@ -39,7 +39,7 @@ export function EvidenceForm({ orderId, stage, requirement }: { orderId: string;
       <input type="hidden" name="orderId" value={orderId} />
       <input type="hidden" name="stage" value={stage} />
       <div>
-        <label htmlFor={`ev-${stage}`} className="mb-1.5 block text-sm font-medium text-ink">Evidence <span className="font-normal text-muted">— {requirement.toLowerCase()}</span></label>
+        <label htmlFor={`ev-${stage}`} className="mb-1.5 block text-sm font-medium text-ink">Evidence <span className="font-normal text-ink-muted">— {requirement.toLowerCase()}</span></label>
         <input id={`ev-${stage}`} name="file" type="file" multiple accept="image/png,image/jpeg,image/webp,application/pdf" className={fileInputCls} />
         <FieldError name="file" />
       </div>
@@ -82,9 +82,9 @@ export function SampleForm({ orderId, round }: { orderId: string; round: number 
         </Field>
       )}
       <div>
-        <label htmlFor="sample-photos" className="mb-1.5 block text-sm font-medium text-ink">Photos <span className="text-danger" aria-hidden>*</span></label>
+        <label htmlFor="sample-photos" className="mb-1.5 block text-sm font-medium text-ink">Photos <span className="text-accent-strong" aria-hidden>*</span></label>
         <input id="sample-photos" name="photos" type="file" multiple accept="image/png,image/jpeg,image/webp" className={fileInputCls} />
-        <p className="mt-1 text-xs text-muted">Up to 10 PNG, JPEG or WebP images, 10 MB each.</p>
+        <p className="mt-1 text-xs text-ink-muted">Up to 10 PNG, JPEG or WebP images, 10 MB each.</p>
         <FieldError name="photos" />
       </div>
       <SubmitButton variant="accent" pendingText="Submitting…"><Send /> Submit sample</SubmitButton>
@@ -106,10 +106,10 @@ export function SampleReviewForm({ orderId, sampleId }: { orderId: string; sampl
             { v: "REVISION_REQUESTED", l: "Request revision", d: "The factory sends a new round." },
             { v: "REJECTED", l: "Reject", d: "Sample unacceptable; a new round is needed." },
           ].map((o) => (
-            <label key={o.v} className={`cursor-pointer rounded-md border p-3 text-sm has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-teal ${decision === o.v ? "border-teal bg-teal-50" : "border-line"}`}>
+            <label key={o.v} className={`cursor-pointer rounded-md border p-3 text-sm transition-colors duration-150 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus ${decision === o.v ? "border-accent bg-accent-soft" : "border-line-strong bg-surface hover:border-line-control"}`}>
               <input type="radio" name="decision" value={o.v} checked={decision === o.v} onChange={() => setDecision(o.v)} className="sr-only" />
-              <span className="block font-medium text-navy">{o.l}</span>
-              <span className="text-xs text-muted">{o.d}</span>
+              <span className="block font-medium text-ink">{o.l}</span>
+              <span className="text-xs text-ink-muted">{o.d}</span>
             </label>
           ))}
         </div>
@@ -165,8 +165,8 @@ export function QcReportForm({ orderId, defaultBatch }: { orderId: string; defau
         </Field>
       </div>
       {plan && (
-        <div className="rounded-md border border-navy-100 bg-info-50 p-3.5 text-sm leading-6 text-ink">
-          <p className="text-xs text-muted">{SAMPLING_STANDARD}</p>
+        <div className="rounded-md border border-info-line bg-info-soft p-3.5 text-sm leading-6 text-ink">
+          <p className="text-xs font-medium text-info-strong">{SAMPLING_STANDARD}</p>
           <p className="mt-1">
             Inspect at least <strong className="tabular">{plan.sampleSize}</strong> units (code letter {plan.major.codeLetter}
             {plan.minor.codeLetter !== plan.major.codeLetter ? `/${plan.minor.codeLetter}` : ""}). Accept up to <strong>{plan.major.accept}</strong> major and <strong>{plan.minor.accept}</strong> minor defects; critical defects are not accepted.
@@ -179,7 +179,7 @@ export function QcReportForm({ orderId, defaultBatch }: { orderId: string; defau
 
       <fieldset>
         <legend className="mb-2 text-sm font-medium text-ink">Defects found</legend>
-        {defects.length === 0 && <p className="mb-2 text-sm text-muted">No defects recorded. Add a line for each defect type found.</p>}
+        {defects.length === 0 && <p className="mb-2 text-sm text-ink-muted">No defects recorded. Add a line for each defect type found.</p>}
         <ul className="space-y-2">
           {defects.map((d, i) => (
             <li key={i} className="grid grid-cols-[1fr_auto] gap-2 sm:grid-cols-[1fr_140px_100px_auto]">
@@ -219,7 +219,7 @@ export function QcReportForm({ orderId, defaultBatch }: { orderId: string; defau
         <Textarea name="notes" rows={2} />
       </Field>
       <div>
-        <label htmlFor="qc-photos" className="mb-1.5 block text-sm font-medium text-ink">Photos <span className="font-normal text-muted">(optional)</span></label>
+        <label htmlFor="qc-photos" className="mb-1.5 block text-sm font-medium text-ink">Photos <span className="font-normal text-ink-muted">(optional)</span></label>
         <input id="qc-photos" name="photos" type="file" multiple accept="image/png,image/jpeg,image/webp" className={fileInputCls} />
         <FieldError name="photos" />
       </div>
@@ -293,7 +293,7 @@ export function MessageForm({ orderId, milestones }: { orderId: string; mileston
       </Field>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="sm:w-64">
-          <label htmlFor="msg-milestone" className="mb-1.5 block text-sm font-medium text-ink">About <span className="font-normal text-muted">(optional)</span></label>
+          <label htmlFor="msg-milestone" className="mb-1.5 block text-sm font-medium text-ink">About <span className="font-normal text-ink-muted">(optional)</span></label>
           <Select id="msg-milestone" name="milestoneId" defaultValue="">
             <option value="">Whole order</option>
             {milestones.map((m) => <option key={m.id} value={m.id}>{STAGES.find((s) => s.stage === m.stage)?.label}</option>)}
@@ -305,11 +305,12 @@ export function MessageForm({ orderId, milestones }: { orderId: string; mileston
   );
 }
 
-export function PayButton({ paymentMilestoneId, label, amount }: { paymentMilestoneId: string; label: string; amount: string }) {
+/** `quiet` renders an outline button, so a list with several payable milestones keeps a single terracotta action. */
+export function PayButton({ paymentMilestoneId, label, amount, quiet }: { paymentMilestoneId: string; label: string; amount: string; quiet?: boolean }) {
   return (
     <ActionForm action={startPaymentAction}>
       <input type="hidden" name="paymentMilestoneId" value={paymentMilestoneId} />
-      <SubmitButton variant="accent" size="sm" pendingText="Opening checkout…" aria-label={`Pay ${label}, ${amount}`}><CreditCard /> Pay {amount}</SubmitButton>
+      <SubmitButton variant={quiet ? "outline" : "accent"} size="sm" pendingText="Opening checkout…" aria-label={`Pay ${label}, ${amount}`}><CreditCard /> Pay {amount}</SubmitButton>
     </ActionForm>
   );
 }
@@ -340,7 +341,7 @@ export function ScheduleEditor({ orderId, items, total, currency }: { orderId: s
       </ul>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Button type="button" variant="outline" size="sm" disabled={rows.length >= 8} onClick={() => setRows((x) => [...x, { label: "Additional payment", percentage: 0, triggerStage: "DELIVERY" }])}><Plus /> Add payment</Button>
-        <p className={`tabular text-sm font-medium ${Math.abs(sum - 100) < 1e-9 ? "text-success-700" : "text-danger-700"}`}>
+        <p className={`tabular text-sm font-medium ${Math.abs(sum - 100) < 1e-9 ? "text-success-strong" : "text-danger-strong"}`}>
           Total {sum.toFixed(2)}% {Math.abs(sum - 100) < 1e-9 ? `· ${formatMoney(total, currency)}` : "· must equal 100%"}
         </p>
       </div>

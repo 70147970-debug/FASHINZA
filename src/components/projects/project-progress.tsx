@@ -34,9 +34,9 @@ export function ProjectProgress({ status, className }: { status: string; classNa
         value={cancelled ? 0 : step}
         max={total}
         label={cancelled ? "Project cancelled" : `${phase}: lifecycle step ${step} of ${total}`}
-        tone={status === "DELIVERED" ? "success" : "accent"}
+        tone={status === "DELIVERED" ? "success" : "ink"}
       />
-      <p className="tabular mt-1.5 flex justify-between gap-2 text-xs leading-4 text-muted">
+      <p className="tabular mt-1.5 flex justify-between gap-2 text-xs leading-4 text-ink-muted">
         <span className="truncate">{phase}</span>
         {!cancelled && <span aria-hidden>{step}/{total}</span>}
       </p>

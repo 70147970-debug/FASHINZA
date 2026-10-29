@@ -1,86 +1,112 @@
 @import "tailwindcss";
+/* Fraunces (variable: weight + optical size, roman and italic). Inter is imported in app/layout.tsx. */
+@import "@fontsource-variable/fraunces/opsz.css";
+@import "@fontsource-variable/fraunces/opsz-italic.css";
 
 /*
- * Fashinza design tokens — "Atelier Ops". Full reference: docs/design-system.md.
+ * Fashinza design tokens — "Editorial Atelier". Full reference: docs/design-system.md.
  *
- * The brand palette (navy, slate blue, teal, canvas, ink, muted, line, success, warning, error) is fixed by
- * the project brief. Everything else here is derived from it. Components never hard-code hex values: they
- * use these tokens through Tailwind utilities (bg-navy, text-muted, border-line, bg-surface-muted, …).
+ * Fashion-magazine meets precise operations tool: ink on warm ivory, Fraunces display type, hairline rules,
+ * sharp tailored geometry and one disciplined terracotta accent.
  *
- * Contrast (WCAG 2.1 AA): teal #168C83 is 4.1:1 on white, so it is used for icons, borders, focus rings,
- * indicators and fills behind large text; text and small buttons use teal-700 (5.9:1). Warning amber
- * #C27A19 and success #16835D are likewise used for fills, dots and icons, with -700 shades for small text.
- * `subtle` (#8792A3, 3.1:1) is only for large text (muted zero metrics) and decorative glyphs.
+ * THEMING. Every colour is a SEMANTIC token (bg-surface, text-ink-muted, border-line, bg-accent-soft …). The
+ * light values live in @theme below; the dark values override the same CSS variables on
+ * html[data-theme="dark"] (set before first paint by the inline script in app/layout.tsx; see
+ * components/theme). Components never use hex values or raw palette classes, so dark mode works everywhere
+ * automatically. `dark:` targets [data-theme=dark] for the rare case a token cannot express.
+ *
+ * Contrast (WCAG 2.1 AA, verified with a script — ratios in docs/design-system.md):
+ *  - ink / ink-muted pass 4.5:1 on canvas, surface, surface-muted and every *-soft tint in both themes.
+ *  - ink-subtle is ≥3:1: decorative icons and glyphs only, never small text. Placeholders use ink-placeholder.
+ *  - accent (terracotta) is for fills, borders, indicators, focus; small accent TEXT uses accent-strong.
+ *  - status: {tone} = fills, dots, icons (≥3:1); {tone}-strong = text (≥4.5:1 on surface and on {tone}-soft).
+ *  - line-control (form-control borders) is ≥3:1 on surface and canvas.
  */
-@theme {
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme static {
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Manrope Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces Variable", ui-serif, Georgia, "Times New Roman", serif;
+  --font-serif: "Fraunces Variable", ui-serif, Georgia, "Times New Roman", serif;
 
-  /* Brand */
-  --color-navy: #14263d;
-  --color-navy-800: #1a304c;
-  --color-navy-700: #1c3352;
-  --color-navy-100: #dfe6ef;
-  --color-navy-50: #eef2f7;
-  --color-slate-blue: #456078;
-  --color-teal: #168c83;
-  --color-teal-700: #11706a;
-  --color-teal-800: #0d5b56;
-  --color-teal-100: #cdeae7;
-  --color-teal-50: #e8f5f4;
+  /* ---------------------------------------------------------------------------------------------
+   * SEMANTIC COLOUR TOKENS (light values; dark values below under [data-theme="dark"])
+   * -------------------------------------------------------------------------------------------*/
+  /* Surfaces */
+  --color-canvas: #f6f1ea; /* page background (warm ivory) */
+  --color-surface: #fffdf9; /* cards, panels, sidebar items, inputs */
+  --color-surface-muted: #efe8de; /* parchment: table header wells, footers, neutral badges, tracks */
+  --color-surface-sunken: #ebe3d7; /* inset wells, image boxes */
+  --color-surface-raised: #fffdf9; /* popovers, dialogs, toasts (lifts in dark) */
+  --color-surface-hover: #f3ede4; /* hover tint for rows, items, ghost buttons */
 
-  /* Surfaces and text (semantic) */
-  --color-canvas: #f7f8fa;
-  --color-card: #ffffff;
-  --color-surface: #ffffff;
-  --color-surface-muted: #f7f8fa;
-  --color-surface-sunken: #f1f4f7;
-  --color-ink: #202938;
-  --color-muted: #657286;
-  --color-subtle: #8792a3;
-  --color-line: #e2e7ee;
-  --color-line-subtle: #edf0f4;
-  --color-line-strong: #cfd7e1;
+  /* Text */
+  --color-ink: #1c1917; /* primary text, headings */
+  --color-ink-muted: #6b5e4f; /* secondary text (taupe) */
+  --color-ink-subtle: #8f8170; /* ≥3:1 only: large text, decorative icons */
+  --color-ink-placeholder: #7a6c5b; /* input placeholders (≥4.5:1 on surface) */
+  --color-ink-inverse: #f6f1ea; /* text on bg-inverse bands */
+  --color-ink-inverse-muted: #b3a898; /* secondary text on bg-inverse bands */
 
-  /* Tinted neutral scale (navy-tinted greys) */
-  --color-neutral-25: #fbfcfd;
-  --color-neutral-50: #f7f8fa;
-  --color-neutral-100: #eef1f5;
-  --color-neutral-200: #e2e7ee;
-  --color-neutral-300: #cfd7e1;
-  --color-neutral-400: #a9b4c2;
-  --color-neutral-500: #8792a3;
-  --color-neutral-600: #657286;
-  --color-neutral-700: #4a5668;
-  --color-neutral-800: #333e4f;
-  --color-neutral-900: #202938;
+  /* Lines */
+  --color-line: #e4dcd0; /* default hairline border / divider */
+  --color-line-subtle: #ece5da; /* row dividers inside cards and tables */
+  --color-line-strong: #cfc4b5; /* emphasised rules, outline buttons, upcoming steps */
+  --color-line-control: #968876; /* form-control borders, checkbox outlines (≥3:1) */
 
-  /* Status */
-  --color-info: #456078;
-  --color-info-50: #eef2f7;
-  --color-danger: #c43d4b;
-  --color-danger-700: #a3303d;
-  --color-danger-100: #f6d9dc;
-  --color-danger-50: #fcf1f2;
-  --color-success: #16835d;
-  --color-success-700: #0f6b4b;
-  --color-success-100: #cfe9de;
-  --color-success-50: #ebf6f1;
-  --color-warning: #c27a19;
-  --color-warning-700: #8a5510;
-  --color-warning-100: #f6e3c4;
-  --color-warning-50: #fdf5e8;
+  /* Primary action (ink) */
+  --color-primary: #1c1917;
+  --color-primary-hover: #3a322b;
+  --color-primary-fg: #fffdf9;
 
-  /* Radii: controls 6px, cards 10px, dialogs 12px */
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 10px;
-  --radius-xl: 12px;
+  /* Accent (terracotta) */
+  --color-accent: #b4532a; /* fills, indicators, focus, progress, accent button */
+  --color-accent-hover: #97431f;
+  --color-accent-strong: #97431f; /* accent TEXT and links */
+  --color-accent-soft: #f5e6dc; /* selected / active backgrounds */
+  --color-accent-line: #e5c3af; /* border around accent-soft areas */
+  --color-accent-fg: #fffdf9; /* text on bg-accent */
 
-  /* Elevation: cards barely lift; popovers and dialogs float */
-  --shadow-card: 0 1px 2px rgb(20 38 61 / 0.04);
-  --shadow-raised: 0 1px 2px rgb(20 38 61 / 0.04), 0 4px 12px -4px rgb(20 38 61 / 0.08);
-  --shadow-pop: 0 2px 6px rgb(20 38 61 / 0.06), 0 16px 40px -12px rgb(20 38 61 / 0.22);
+  /* Status: base = fill/dot/icon, -strong = text, -soft = tint, -line = border on tint */
+  --color-success: #4d7a35;
+  --color-success-strong: #3b6328;
+  --color-success-soft: #e9efdf;
+  --color-success-line: #c9d8b6;
+  --color-warning: #b98222;
+  --color-warning-strong: #82560d;
+  --color-warning-soft: #f7ecd6;
+  --color-warning-line: #e8d2a4;
+  --color-danger: #b23b2e;
+  --color-danger-strong: #9a2f24;
+  --color-danger-soft: #f7e3de;
+  --color-danger-line: #e9c1b8;
+  --color-danger-fg: #fffdf9; /* text on bg-danger (danger button) */
+  --color-info: #4a6684;
+  --color-info-strong: #3b5672;
+  --color-info-soft: #e5eaf0;
+  --color-info-line: #c5d0dc;
+
+  /* Inverse band (marketing CTA band, footer) */
+  --color-inverse: #1c1917;
+
+  /* Focus, overlay, shadow tint */
+  --color-focus: #b4532a;
+  --color-overlay: rgb(28 25 23 / 0.42);
+  --color-shadow: rgb(60 42 26 / 0.1);
+
+  /* Radii: tailored. Controls 4px (rounded-md), cards 6px (rounded-lg), dialogs 8px (rounded-xl). */
+  --radius-xs: 2px;
+  --radius-sm: 3px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+  --radius-2xl: 10px;
+
+  /* Elevation: borders define structure. Only popovers, menus, dialogs and toasts float (shadow-pop). */
+  --shadow-card: 0 0 #0000;
+  --shadow-raised: 0 1px 2px var(--color-shadow);
+  --shadow-pop: 0 1px 2px var(--color-shadow), 0 12px 32px -12px var(--color-shadow), 0 24px 48px -24px var(--color-shadow);
 
   /* Type scale: only t-shirt names here (tailwind-merge treats other text-* names as colours).
      Display / title / heading sizes are the type-* utilities below. */
@@ -88,14 +114,123 @@
   --text-2xs--line-height: 1rem;
 
   --container-app: 80rem;
-  --container-site: 75rem;
+  --container-site: 76rem;
   --spacing-sidebar: 15.5rem;
 }
 
+/* ---------------------------------------------------------------------------------------------
+ * DARK THEME — warm near-black. Keep the two blocks below identical (the second covers the moment
+ * before the theme script runs / no-JS visitors whose OS is dark).
+ * -------------------------------------------------------------------------------------------*/
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-canvas: #151210;
+  --color-surface: #1d1915;
+  --color-surface-muted: #231e19;
+  --color-surface-sunken: #181411;
+  --color-surface-raised: #241f1a;
+  --color-surface-hover: #2a241e;
+  --color-ink: #f1ebe3;
+  --color-ink-muted: #b3a898;
+  --color-ink-subtle: #857a6c;
+  --color-ink-placeholder: #958978;
+  --color-ink-inverse: #f1ebe3;
+  --color-ink-inverse-muted: #b3a898;
+  --color-line: #342d26;
+  --color-line-subtle: #2a241f;
+  --color-line-strong: #4a4138;
+  --color-line-control: #766a5a;
+  --color-primary: #f1ebe3;
+  --color-primary-hover: #dcd3c7;
+  --color-primary-fg: #1c1917;
+  --color-accent: #e0794a;
+  --color-accent-hover: #eb8d60;
+  --color-accent-strong: #ee9467;
+  --color-accent-soft: #3a2419;
+  --color-accent-line: #6a3b25;
+  --color-accent-fg: #1c1917;
+  --color-success: #86ae6e;
+  --color-success-strong: #a3c68c;
+  --color-success-soft: #1f2a1a;
+  --color-success-line: #3a4d2f;
+  --color-warning: #d9a441;
+  --color-warning-strong: #e8be6a;
+  --color-warning-soft: #2f2614;
+  --color-warning-line: #5a4620;
+  --color-danger: #e0705f;
+  --color-danger-strong: #f0907f;
+  --color-danger-soft: #36191a;
+  --color-danger-line: #663029;
+  --color-danger-fg: #1c1917;
+  --color-info: #8fa8c4;
+  --color-info-strong: #afc3da;
+  --color-info-soft: #1b2330;
+  --color-info-line: #34445a;
+  --color-inverse: #2a2420;
+  --color-focus: #e0794a;
+  --color-overlay: rgb(8 6 5 / 0.62);
+  --color-shadow: rgb(6 5 4 / 0.45);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --color-canvas: #151210;
+    --color-surface: #1d1915;
+    --color-surface-muted: #231e19;
+    --color-surface-sunken: #181411;
+    --color-surface-raised: #241f1a;
+    --color-surface-hover: #2a241e;
+    --color-ink: #f1ebe3;
+    --color-ink-muted: #b3a898;
+    --color-ink-subtle: #857a6c;
+  --color-ink-placeholder: #958978;
+    --color-ink-inverse: #f1ebe3;
+    --color-ink-inverse-muted: #b3a898;
+    --color-line: #342d26;
+    --color-line-subtle: #2a241f;
+    --color-line-strong: #4a4138;
+    --color-line-control: #766a5a;
+    --color-primary: #f1ebe3;
+    --color-primary-hover: #dcd3c7;
+    --color-primary-fg: #1c1917;
+    --color-accent: #e0794a;
+    --color-accent-hover: #eb8d60;
+    --color-accent-strong: #ee9467;
+    --color-accent-soft: #3a2419;
+    --color-accent-line: #6a3b25;
+    --color-accent-fg: #1c1917;
+    --color-success: #86ae6e;
+    --color-success-strong: #a3c68c;
+    --color-success-soft: #1f2a1a;
+    --color-success-line: #3a4d2f;
+    --color-warning: #d9a441;
+    --color-warning-strong: #e8be6a;
+    --color-warning-soft: #2f2614;
+    --color-warning-line: #5a4620;
+    --color-danger: #e0705f;
+    --color-danger-strong: #f0907f;
+    --color-danger-soft: #36191a;
+    --color-danger-line: #663029;
+    --color-danger-fg: #1c1917;
+    --color-info: #8fa8c4;
+    --color-info-strong: #afc3da;
+    --color-info-soft: #1b2330;
+    --color-info-line: #34445a;
+    --color-inverse: #2a2420;
+    --color-focus: #e0794a;
+    --color-overlay: rgb(8 6 5 / 0.62);
+    --color-shadow: rgb(6 5 4 / 0.45);
+  }
+}
+
 @layer base {
+  :root {
+    color-scheme: light;
+  }
   html {
     -webkit-text-size-adjust: 100%;
     text-rendering: optimizeLegibility;
+    scrollbar-color: var(--color-line-strong) transparent;
   }
   body {
     background: var(--color-canvas);
@@ -111,25 +246,27 @@
     border-color: var(--color-line);
   }
   ::selection {
-    background: var(--color-teal-100);
-    color: var(--color-navy);
+    background: var(--color-accent-soft);
+    color: var(--color-ink);
   }
   input[type="checkbox"],
   input[type="radio"] {
-    accent-color: var(--color-teal-700);
+    accent-color: var(--color-accent);
   }
   :focus-visible {
-    outline: 2px solid var(--color-teal);
+    outline: 2px solid var(--color-focus);
     outline-offset: 2px;
   }
+  /* Headings are Fraunces, regular-to-medium weight; add `font-sans` for tiny label-style headings. */
   h1,
   h2,
   h3,
   h4 {
-    color: var(--color-navy);
+    color: var(--color-ink);
     font-family: var(--font-display);
-    font-weight: 600;
+    font-weight: 500;
     letter-spacing: -0.01em;
+    font-optical-sizing: auto;
   }
   /* Grid items may shrink below their content's min-content width (long nowrap/truncated text would
      otherwise widen the track and cause page-level horizontal scroll on phones). Utilities still win. */
@@ -145,6 +282,13 @@
   .tabular {
     font-variant-numeric: tabular-nums;
   }
+  /* Set for one frame by the theme switcher so a theme change does not animate every element. */
+  .fz-theme-switching,
+  .fz-theme-switching *,
+  .fz-theme-switching *::before,
+  .fz-theme-switching *::after {
+    transition: none !important;
+  }
   @media (prefers-reduced-motion: reduce) {
     *,
     ::before,
@@ -157,97 +301,112 @@
 
 /*
  * Type utilities. They set size, line height, weight, tracking and family, but never colour, so pair them
- * with a text-* colour where needed (headings are navy by default).
+ * with a text-* colour where needed (headings are ink by default).
  */
-/* Marketing display: 36px on phones, 56px from lg. */
+/* Marketing display: Fraunces 40px on phones, 64px from lg. */
 @utility type-display {
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 2.25rem;
-  line-height: 1.12;
+  font-weight: 500;
+  font-size: 2.5rem;
+  line-height: 1.06;
   letter-spacing: -0.025em;
+  font-optical-sizing: auto;
   @media (min-width: 1024px) {
-    font-size: 3.5rem;
-    line-height: 1.07;
+    font-size: 4rem;
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+  }
+}
+/* Marketing section title: Fraunces 30px on phones, 44px from lg. */
+@utility type-section {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.875rem;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  font-optical-sizing: auto;
+  @media (min-width: 1024px) {
+    font-size: 2.75rem;
+    line-height: 1.08;
     letter-spacing: -0.03em;
   }
 }
-/* Marketing section title: 28px on phones, 40px from lg. */
-@utility type-section {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1.75rem;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
-  @media (min-width: 1024px) {
-    font-size: 2.5rem;
-    line-height: 1.15;
-  }
-}
-/* App page title: 22px on phones, 26px from sm. */
+/* App page title: Fraunces 26px on phones, 32px from sm. */
 @utility type-title {
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1.375rem;
-  line-height: 1.85rem;
-  letter-spacing: -0.02em;
-  @media (min-width: 640px) {
-    font-size: 1.625rem;
-    line-height: 2.125rem;
-  }
-}
-/* Card / section title: 15px semibold Manrope. */
-@utility type-heading {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 0.9375rem;
-  line-height: 1.375rem;
-  letter-spacing: -0.01em;
-}
-/* Metric value: 24px semibold Manrope, tabular. */
-@utility type-metric {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1.5rem;
+  font-weight: 500;
+  font-size: 1.625rem;
   line-height: 2rem;
   letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
+  font-optical-sizing: auto;
+  @media (min-width: 640px) {
+    font-size: 2rem;
+    line-height: 2.375rem;
+    letter-spacing: -0.025em;
+  }
 }
-/* 12px uppercase tracked eyebrow above titles and sections (pair with a colour, e.g. text-slate-blue). */
+/* Card / panel / section title: Fraunces 18px medium. */
+@utility type-heading {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1.125rem;
+  line-height: 1.5rem;
+  letter-spacing: -0.012em;
+  font-optical-sizing: auto;
+}
+/* Metric value: Fraunces 30px, tabular lining figures. */
+@utility type-metric {
+  font-family: var(--font-display);
+  font-weight: 450;
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  letter-spacing: -0.02em;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-optical-sizing: auto;
+}
+/* 11px Inter uppercase eyebrow with wide tracking, above titles and sections (pair with a colour). */
 @utility eyebrow {
   font-family: var(--font-sans);
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   line-height: 1rem;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
-/* 11px uppercase tracked label: table headers, nav group labels, small captions (pair with text-muted). */
+/* 11px uppercase tracked label: table headers, nav group labels, small captions (pair with text-ink-muted). */
 @utility label-caps {
+  font-family: var(--font-sans);
   font-size: var(--text-2xs);
   line-height: 1rem;
   font-weight: 600;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
-/* Very low-opacity dotted grid for the marketing hero only. */
+/* A whisper of a dotted grid (marketing hero only). */
 @utility bg-dot-grid {
-  background-image: radial-gradient(color-mix(in srgb, var(--color-navy) 11%, transparent) 1px, transparent 1.2px);
-  background-size: 22px 22px;
+  background-image: radial-gradient(color-mix(in srgb, var(--color-ink) 9%, transparent) 1px, transparent 1.2px);
+  background-size: 24px 24px;
 }
 
-/* Native select with a quiet chevron (used by <Select>). */
+/* Native select with a quiet chevron (used by <Select>). The chevron is drawn with a mask so it follows the
+   theme's text colour. */
 @utility select-chevron {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23657286' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--color-ink-muted) 50%),
+    linear-gradient(135deg, var(--color-ink-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 17px) 52%,
+    calc(100% - 12px) 52%;
+  background-size:
+    5px 5px,
+    5px 5px;
   background-repeat: no-repeat;
-  background-position: right 0.625rem center;
-  background-size: 1rem;
 }
 
 @layer components {
-  /* Marketing container: ~1200px with 16/24/32px gutters. */
+  /* Marketing container: ~1216px with 16/24/40px gutters. */
   .container-page {
     width: 100%;
     max-width: var(--container-site);
@@ -261,13 +420,14 @@
   }
   @media (min-width: 1024px) {
     .container-page {
-      padding-inline: 2rem;
+      padding-inline: 2.5rem;
     }
   }
 
   /*
    * Data tables. Put `data-table` on a real <table> inside <DataTable> (or any `overflow-x-auto` card).
    * Cells: add `num` for right-aligned tabular numbers, `cell-primary` for the record's main link/name.
+   * Editorial: no header fill — 11px tracked caps over a firm rule, hairline row dividers.
    */
   .data-table {
     width: 100%;
@@ -278,17 +438,17 @@
     line-height: 1.25rem;
   }
   .data-table thead th {
-    background: var(--color-surface-muted);
-    border-bottom: 1px solid var(--color-line);
-    padding: 0.625rem 1rem;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-line-strong);
+    padding: 0.75rem 1rem 0.625rem;
     font-size: var(--text-2xs);
     line-height: 1rem;
     font-weight: 600;
-    letter-spacing: 0.07em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--color-muted);
+    color: var(--color-ink-muted);
     white-space: nowrap;
-    vertical-align: middle;
+    vertical-align: bottom;
   }
   .data-table tbody td {
     border-bottom: 1px solid var(--color-line-subtle);
@@ -303,7 +463,7 @@
     transition: background-color 150ms ease;
   }
   .data-table tbody tr:hover {
-    background: color-mix(in srgb, var(--color-surface-muted) 70%, transparent);
+    background: var(--color-surface-hover);
   }
   .data-table th:first-child,
   .data-table td:first-child {
@@ -320,11 +480,17 @@
   }
   .data-table .cell-primary {
     font-weight: 500;
-    color: var(--color-navy);
+    color: var(--color-ink);
+  }
+  .data-table a.cell-primary,
+  .data-table .cell-primary a {
+    text-decoration-line: underline;
+    text-decoration-color: transparent;
+    text-underline-offset: 3px;
+    transition: text-decoration-color 150ms ease;
   }
   .data-table a.cell-primary:hover,
   .data-table .cell-primary a:hover {
-    text-decoration: underline;
-    text-underline-offset: 3px;
+    text-decoration-color: var(--color-accent);
   }
 }

@@ -24,7 +24,7 @@ export default function ForManufacturersPage() {
       </PageHero>
 
       <Section labelledBy="mfr-features">
-        <SectionHeading id="mfr-features" eyebrow="Capabilities" title="What you can do as a manufacturer" description="Quote, produce and report from one dashboard, with the same record the brand sees." />
+        <SectionHeading id="mfr-features" index="01" eyebrow="Capabilities" title="What you can do as a manufacturer" description="Quote, produce and report from one dashboard, with the same record the brand sees." split />
         <FeatureGrid>
           <FeatureCard icon={Factory} title="A detailed business profile">
             List your location, garment categories, minimum order quantity, monthly capacity, typical lead time, and
@@ -51,16 +51,18 @@ export default function ForManufacturersPage() {
         </FeatureGrid>
       </Section>
 
-      <Section tone="white" labelledBy="mfr-steps">
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-16">
+      <Section tone="surface" labelledBy="mfr-steps">
+        <div className="grid gap-10 lg:grid-cols-12 lg:gap-10">
           <SectionHeading
             id="mfr-steps"
+            index="02"
             eyebrow="Verification"
             title="Getting listed"
             description="Only verified factories are matched to brand projects. Verification is a manual review by a Fashinza administrator."
-            className="lg:mb-0"
+            className="lg:col-span-5 lg:mb-0"
           />
           <StepList
+            className="lg:col-span-7 lg:mt-[3.75rem]"
             items={[
               { title: "Register and build your profile", text: "Register as a manufacturer and complete your business profile." },
               { title: "Add capabilities and documents", text: "Add your capabilities and upload supporting documents, such as business registration or certificates." },

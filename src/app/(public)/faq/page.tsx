@@ -15,17 +15,17 @@ export default function FaqPage() {
     <>
       <PageHero eyebrow="FAQ" title="Frequently asked questions" description="How matching, quotations, production tracking, quality control and payments work on Fashinza." />
       <section className="bg-canvas py-12 lg:py-20">
-        <div className="container-page grid gap-10 lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-16">
-          <aside className="hidden lg:block">
+        <div className="container-page grid gap-10 lg:grid-cols-12 lg:gap-10">
+          <aside className="hidden lg:col-span-3 lg:block">
             <div className="sticky top-24 space-y-8">
               <nav aria-label="FAQ sections">
-                <p className="label-caps mb-3 text-muted">Sections</p>
-                <ul className="space-y-0.5 border-l border-line text-[13px]">
+                <p className="label-caps border-t border-line-strong py-4 text-ink-muted">Sections</p>
+                <ul className="border-t border-line text-sm">
                   {groups.map((g) => (
                     <li key={g}>
-                      <a href={`#faq-${g}`} className="-ml-px flex justify-between gap-2 border-l-2 border-transparent py-1.5 pl-3 text-muted transition-colors duration-150 hover:border-line-strong hover:text-navy">
+                      <a href={`#faq-${g}`} className="flex min-h-11 items-center justify-between gap-2 border-b border-line text-ink transition-colors duration-150 hover:text-accent-strong">
                         {title(g)}
-                        <span className="tabular text-subtle">{FAQ.filter((f) => f.group === g).length}</span>
+                        <span className="tabular font-display italic text-ink-muted">{FAQ.filter((f) => f.group === g).length}</span>
                       </a>
                     </li>
                   ))}
@@ -33,19 +33,22 @@ export default function FaqPage() {
               </nav>
             </div>
           </aside>
-          <div className="max-w-3xl space-y-12">
+          <div className="min-w-0 space-y-14 lg:col-span-8 lg:col-start-5">
             {groups.map((g) => (
               <section key={g} aria-labelledby={`faq-${g}`} className="scroll-mt-24">
-                <h2 id={`faq-${g}`} className="mb-4 scroll-mt-24 font-display text-xl font-semibold text-navy">{title(g)}</h2>
+                <h2 id={`faq-${g}`} className="mb-5 flex scroll-mt-24 items-baseline gap-3 font-display text-[1.75rem] font-medium tracking-[-0.02em] text-ink">
+                  <span className="font-display text-base italic text-accent-strong tabular" aria-hidden>{String(groups.indexOf(g) + 1).padStart(2, "0")}</span>
+                  {title(g)}
+                </h2>
                 <FaqList items={FAQ.filter((f) => f.group === g)} />
               </section>
             ))}
-            <div className="flex flex-col gap-4 rounded-lg border border-line bg-white p-5 shadow-card sm:flex-row sm:items-center sm:justify-between sm:p-6">
-              <div className="flex gap-3">
-                <span className="grid size-10 shrink-0 place-items-center rounded-md bg-teal-50 text-teal-700"><MessageSquare className="size-[18px]" aria-hidden /></span>
+            <div className="flex flex-col gap-4 rounded-lg border border-line bg-surface p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+              <div className="flex gap-3.5">
+                <MessageSquare className="mt-1 size-5 shrink-0 text-accent" strokeWidth={1.5} aria-hidden />
                 <div>
-                  <p className="font-display text-base font-semibold text-navy">Still have a question?</p>
-                  <p className="text-sm text-muted">The team replies by email.</p>
+                  <p className="font-display text-lg font-medium text-ink">Still have a question?</p>
+                  <p className="text-sm text-ink-muted">The team replies by email.</p>
                 </div>
               </div>
               <Button asChild variant="outline"><Link href="/contact">Contact the Fashinza team</Link></Button>

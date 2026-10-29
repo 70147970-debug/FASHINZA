@@ -130,8 +130,8 @@ export function FactoryProfileForm({ values, submitLabel = "Save factory profile
 function SectionHead({ id, title, description }: { id: string; title: string; description?: string }) {
   return (
     <div>
-      <h3 id={id} className="type-heading text-navy">{title}</h3>
-      {description && <p className="mt-0.5 text-[13px] leading-5 text-muted">{description}</p>}
+      <h3 id={id} className="type-heading text-ink">{title}</h3>
+      {description && <p className="mt-0.5 text-[13px] leading-5 text-ink-muted">{description}</p>}
     </div>
   );
 }

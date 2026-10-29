@@ -1,7 +1,7 @@
 /**
  * Captures screenshots of the main screens for design review (and for the project report).
  *
- *   SCREENSHOT_URL=http://localhost:3200 SCREENSHOT_DB=postgresql://…/fashinza_design \
+ *   SCREENSHOT_URL=http://localhost:3200 SCREENSHOT_DB=postgresql://…/fashinza_design [SCREENSHOT_THEME=dark] \
  *     npx tsx tests/support/ui-screenshots.ts [outDir] [filter]
  *
  * Signs in by creating short-lived sessions directly in the database, so no passwords are needed. It refuses
@@ -18,6 +18,8 @@ const BASE = process.env.SCREENSHOT_URL ?? "http://localhost:3200";
 const DB = process.env.SCREENSHOT_DB ?? "";
 const OUT = path.resolve(process.argv[2] ?? "screenshots");
 const FILTER = process.argv[3] ?? "";
+// Emulates the operating-system colour scheme; the app follows it while its theme setting is "system".
+const THEME = process.env.SCREENSHOT_THEME === "dark" ? "dark" : "light";
 
 if (!/design|e2e|test/i.test(new URL(DB.replace(/^postgresql:/, "http:")).pathname)) {
   throw new Error("SCREENSHOT_DB must point at a disposable database whose name contains design, e2e or test.");
@@ -40,13 +42,15 @@ async function main() {
   const factoryProfile = (await one(`select id from manufacturer_profile order by "createdAt" desc limit 1`)).id;
   const draft = (await one(`select id from project where status='DRAFT' limit 1`)).id;
 
+  // Tag this run's sessions so cleanup never signs out a concurrent run.
+  const tag = `ui-screenshots-${randomBytes(4).toString("hex")}`;
   const tokens: Record<string, string> = {};
   for (const [role, userId] of [["BRAND", brandId], ["MANUFACTURER", factoryId], ["ADMIN", adminId]] as const) {
     if (!userId) continue;
     const token = randomBytes(32).toString("hex");
     await db.query(
-      `insert into session (id, "expiresAt", token, "updatedAt", "userId", "userAgent") values ($1, now() + interval '1 hour', $2, now(), $3, 'ui-screenshots')`,
-      [randomUUID(), createHash("sha256").update(token).digest("hex"), userId],
+      `insert into session (id, "expiresAt", token, "updatedAt", "userId", "userAgent") values ($1, now() + interval '1 hour', $2, now(), $3, $4)`,
+      [randomUUID(), createHash("sha256").update(token).digest("hex"), userId, tag],
     );
     tokens[role] = token;
   }
@@ -97,7 +101,9 @@ async function main() {
   for (const s of screens.filter((x) => x.name.includes(FILTER))) {
     for (const viewport of s.mobile ? ["desktop", "mobile"] : ["desktop"]) {
       const ctx = await browser.newContext(
-        viewport === "mobile" ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true } : { viewport: { width: 1440, height: 900 } },
+        viewport === "mobile"
+          ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, colorScheme: THEME }
+          : { viewport: { width: 1440, height: 900 }, colorScheme: THEME },
       );
       if (s.role && tokens[s.role]) await ctx.addCookies([{ name: "fz_session", value: tokens[s.role], url: BASE }]);
       const page = await ctx.newPage();
@@ -114,7 +120,7 @@ async function main() {
     }
   }
   await browser.close();
-  await db.query(`delete from session where "userAgent" = 'ui-screenshots'`);
+  await db.query(`delete from session where "userAgent" = $1`, [tag]);
   await db.end();
   if (failures.length) {
     console.error(`Failed:\n${failures.join("\n")}`);

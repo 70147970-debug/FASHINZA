@@ -23,7 +23,7 @@ export function SheetContent({
   const close = (
     <Dialog.Close
       className={cn(
-        "grid size-10 shrink-0 place-items-center rounded-md text-muted transition-colors hover:bg-neutral-100 hover:text-navy",
+        "grid size-10 shrink-0 place-items-center rounded-md text-ink-muted transition-colors hover:bg-surface-hover hover:text-ink",
         hideTitle && "absolute right-2 top-2 z-10",
       )}
       aria-label="Close menu"
@@ -33,10 +33,10 @@ export function SheetContent({
   );
   return (
     <Dialog.Portal>
-      <Dialog.Overlay className="fixed inset-0 z-50 bg-navy/35" />
+      <Dialog.Overlay className="fixed inset-0 z-50 bg-overlay" />
       <Dialog.Content
         className={cn(
-          "fixed inset-y-0 z-50 flex w-[85vw] max-w-sm flex-col overflow-y-auto bg-white p-5 shadow-pop focus:outline-none",
+          "fixed inset-y-0 z-50 flex w-[85vw] max-w-sm flex-col overflow-y-auto bg-surface-raised p-5 text-ink shadow-pop focus:outline-none",
           side === "right" ? "right-0 border-l border-line" : "left-0 border-r border-line",
           className,
         )}
@@ -49,7 +49,7 @@ export function SheetContent({
           </>
         ) : (
           <div className="mb-4 flex items-center justify-between gap-3">
-            <Dialog.Title className="font-display text-base font-semibold text-navy">{title}</Dialog.Title>
+            <Dialog.Title className="font-display text-lg font-medium text-ink">{title}</Dialog.Title>
             <span className="-mr-2">{close}</span>
           </div>
         )}

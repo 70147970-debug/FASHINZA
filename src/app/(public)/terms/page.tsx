@@ -55,7 +55,7 @@ export default function TermsPage() {
           body: (
             <p>
               You keep ownership of the designs and documents you upload. You allow Fashinza to store them and show them to the parties described in the{" "}
-              <Link href="/privacy" className="text-teal-700 underline">Privacy Policy</Link> so the workflow can operate. Do not upload content you do not have the right to share.
+              <Link href="/privacy" className="font-medium text-accent-strong underline decoration-accent-line underline-offset-4 hover:decoration-accent-strong">Privacy Policy</Link> so the workflow can operate. Do not upload content you do not have the right to share.
             </p>
           ),
         },
@@ -65,7 +65,7 @@ export default function TermsPage() {
         },
         {
           heading: "Contact",
-          body: <p>Questions about these terms can be sent through the <Link href="/contact" className="text-teal-700 underline">contact page</Link>.</p>,
+          body: <p>Questions about these terms can be sent through the <Link href="/contact" className="font-medium text-accent-strong underline decoration-accent-line underline-offset-4 hover:decoration-accent-strong">contact page</Link>.</p>,
         },
       ]}
     />

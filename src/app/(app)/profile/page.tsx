@@ -22,29 +22,29 @@ export default async function BrandProfilePage() {
         <div className="space-y-6">
           <Panel title="What factories see" description="Shown with each project you submit for matching.">
             <div className="flex items-start gap-3">
-              <Avatar name={p.companyName} shape="square" tone="navy" size="lg" />
+              <Avatar name={p.companyName} shape="square" tone="ink" size="lg" />
               <div className="min-w-0">
-                <p className="truncate font-display text-base font-semibold text-navy">{p.companyName}</p>
+                <p className="truncate font-display text-lg font-medium leading-6 text-ink">{p.companyName}</p>
                 {p.country && (
-                  <p className="mt-0.5 flex items-center gap-1.5 text-[13px] text-muted">
-                    <MapPin className="size-3.5 shrink-0 text-subtle" aria-hidden /> {p.country}
+                  <p className="mt-0.5 flex items-center gap-1.5 text-[13px] text-ink-muted">
+                    <MapPin className="size-3.5 shrink-0 text-ink-subtle" aria-hidden /> {p.country}
                   </p>
                 )}
               </div>
             </div>
             <p className="mt-4 border-t border-line-subtle pt-4 text-sm leading-6 text-ink">
-              {p.description || <span className="text-muted">No description yet. A short introduction helps factories decide how to quote.</span>}
+              {p.description || <span className="text-ink-muted">No description yet. A short introduction helps factories decide how to quote.</span>}
             </p>
           </Panel>
 
           <Panel title="Privacy">
-            <ul className="space-y-3 text-[13px] leading-5 text-muted">
+            <ul className="space-y-3 text-[13px] leading-5 text-ink-muted">
               <li className="flex gap-2.5">
-                <Eye className="mt-0.5 size-4 shrink-0 text-teal" aria-hidden />
+                <Eye className="mt-0.5 size-4 shrink-0 text-ink-subtle" aria-hidden />
                 Factories see it only once they are matched to one of your submitted projects.
               </li>
               <li className="flex gap-2.5">
-                <Lock className="mt-0.5 size-4 shrink-0 text-teal" aria-hidden />
+                <Lock className="mt-0.5 size-4 shrink-0 text-ink-subtle" aria-hidden />
                 Your website, city, phone number and draft projects are not shown to factories.
               </li>
             </ul>

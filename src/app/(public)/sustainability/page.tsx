@@ -35,7 +35,7 @@ export default function SustainabilityPage() {
       </PageHero>
 
       <Section labelledBy="sus-how">
-        <SectionHeading id="sus-how" eyebrow="Today" title="What the platform does today" description="Practical controls that work inside the production workflow, not a separate report." />
+        <SectionHeading id="sus-how" index="01" eyebrow="Today" title="What the platform does today" description="Practical controls that work inside the production workflow, not a separate report." split />
         <FeatureGrid>
           <FeatureCard icon={FileCheck2} title="Certifications as hard requirements">
             Brands can require certifications such as GOTS or OEKO-TEX. Factories without that certification are excluded
@@ -64,23 +64,24 @@ export default function SustainabilityPage() {
         </FeatureGrid>
       </Section>
 
-      <Section tone="white" labelledBy="sus-certs">
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-16">
+      <Section tone="surface" labelledBy="sus-certs">
+        <div className="grid gap-10 lg:grid-cols-12 lg:gap-10">
           <SectionHeading
             id="sus-certs"
+            index="02"
             eyebrow="Standards"
             title="Certifications brands can require"
             description="These are the certifications factories can upload for verification and brands can make mandatory in a project."
-            className="lg:mb-0"
+            className="lg:col-span-5 lg:mb-0"
           />
-          <ul className="divide-y divide-line-subtle overflow-hidden rounded-lg border border-line bg-white shadow-card">
+          <ul className="border-t border-line-strong lg:col-span-7 lg:mt-[3.75rem]">
             {CERTIFICATIONS.map((c) => (
-              <li key={c} className="flex flex-col gap-1 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
-                <span className="flex items-center gap-2.5 font-display text-[0.9375rem] font-semibold text-navy">
-                  <BadgeCheck className="size-4 shrink-0 text-teal" aria-hidden />
+              <li key={c} className="flex flex-col gap-1 border-b border-line py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                <span className="flex items-center gap-3 font-display text-lg font-medium tracking-[-0.01em] text-ink">
+                  <BadgeCheck className="size-4 shrink-0 text-accent" strokeWidth={1.75} aria-hidden />
                   {c}
                 </span>
-                <span className="text-sm text-muted sm:text-right">{CERT_NOTES[c]}</span>
+                <span className="pl-7 text-sm text-ink-muted sm:pl-0 sm:text-right">{CERT_NOTES[c]}</span>
               </li>
             ))}
           </ul>
@@ -88,22 +89,23 @@ export default function SustainabilityPage() {
       </Section>
 
       <Section labelledBy="sus-limits">
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-16">
+        <div className="grid gap-10 lg:grid-cols-12 lg:gap-10">
           <SectionHeading
             id="sus-limits"
+            index="03"
             eyebrow="Honesty"
             title="Limits you should know about"
             description="What verification on Fashinza does not cover."
-            className="lg:mb-0"
+            className="lg:col-span-5 lg:mb-0"
           />
-          <ul className="space-y-3">
+          <ul className="border-t border-line-strong lg:col-span-7 lg:mt-[3.75rem]">
             {[
               "Certificates can expire. Administrators can revoke a verification, but brands should still check validity for high-stakes orders.",
               "Fashinza does not run on-site social or environmental audits.",
               "Demand forecasting to size orders to expected sales is a planned extension, not part of this build.",
             ].map((t) => (
-              <li key={t} className="flex gap-3 rounded-lg border border-line bg-white px-5 py-4 text-[0.9375rem] leading-7 text-ink shadow-card">
-                <AlertTriangle className="mt-1.5 size-4 shrink-0 text-warning" aria-hidden />
+              <li key={t} className="flex gap-3.5 border-b border-line py-4 text-[0.9375rem] leading-7 text-ink">
+                <AlertTriangle className="mt-1.5 size-4 shrink-0 text-warning" strokeWidth={1.75} aria-hidden />
                 {t}
               </li>
             ))}

@@ -31,8 +31,8 @@ export function auditTimelineItem(a: { id: string; action: string; targetType: s
     id: a.id,
     title: (
       <>
-        <span className="font-medium text-navy">{auditActionLabel(a.action)}</span>
-        <span className="text-muted"> · {targetLabel(a.targetType)}</span>
+        <span className="font-medium text-ink">{auditActionLabel(a.action)}</span>
+        <span className="text-ink-muted"> · {targetLabel(a.targetType)}</span>
       </>
     ),
     description: a.reason ?? undefined,

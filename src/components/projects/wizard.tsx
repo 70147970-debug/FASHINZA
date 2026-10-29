@@ -40,8 +40,8 @@ function Group({ title, description, children, first = false }: { title: string;
   return (
     <div className={cn("space-y-5", !first && "border-t border-line-subtle pt-6")}>
       <div>
-        <h3 className="type-heading text-navy">{title}</h3>
-        {description && <p className="mt-0.5 text-[13px] leading-5 text-muted">{description}</p>}
+        <h3 className="type-heading text-ink">{title}</h3>
+        {description && <p className="mt-0.5 text-[13px] leading-5 text-ink-muted">{description}</p>}
       </div>
       {children}
     </div>
@@ -57,8 +57,8 @@ function StepForm({ project, step, children, isLast = false }: { project: Wizard
       {submitted && <input type="hidden" name="submitted" value="1" />}
       {children}
       {/* Action bar: sticks to the bottom of the screen on phones so the next step is always in reach. */}
-      <div className="sticky bottom-0 z-20 -mx-4 -mb-4 flex gap-2 border-t max-sm:[&>*:not(p)]:flex-1 border-line bg-white/95 px-4 py-3 backdrop-blur-sm sm:static sm:mx-0 sm:mb-0 sm:items-center sm:justify-end sm:bg-transparent sm:px-0 sm:pb-0 sm:pt-5 sm:backdrop-blur-none">
-        <p className="mr-auto hidden text-xs text-muted sm:block">{submitted ? "Quoting factories are notified of changes." : "Drafts are private until you submit."}</p>
+      <div className="sticky bottom-0 z-20 -mx-4 -mb-4 flex gap-2 border-t max-sm:[&>*:not(p)]:flex-1 border-line bg-surface/95 px-4 py-3 backdrop-blur-sm sm:static sm:mx-0 sm:mb-0 sm:items-center sm:justify-end sm:bg-transparent sm:px-0 sm:pb-0 sm:pt-5 sm:backdrop-blur-none">
+        <p className="mr-auto hidden text-xs text-ink-muted sm:block">{submitted ? "Quoting factories are notified of changes." : "Drafts are private until you submit."}</p>
         {submitted ? (
           <>
             <Link href={`/projects/${project!.id}`} className={buttonVariants({ variant: "ghost" })}>Cancel</Link>

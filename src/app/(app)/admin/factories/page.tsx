@@ -81,11 +81,11 @@ export default async function AdminFactoriesPage({ searchParams }: { searchParam
                       </>
                     }
                   >
-                    <span className="tabular flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
+                    <span className="tabular flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
                       <span>MOQ {formatNumber(f.minOrderQuantity)}</span>
                       <span>{formatNumber(f.maxMonthlyCapacity)} / mo</span>
                       <span>{f._count.documents} document{f._count.documents === 1 ? "" : "s"}</span>
-                      {waiting(f) && <span className="font-medium text-warning-700">{waiting(f)}</span>}
+                      {waiting(f) && <span className="font-medium text-warning-strong">{waiting(f)}</span>}
                     </span>
                   </MobileCard>
                 ))}
@@ -111,7 +111,7 @@ export default async function AdminFactoriesPage({ searchParams }: { searchParam
                       <Link href={`/admin/factories/${f.id}`} className="cell-primary rounded-sm">
                         {f.businessName}
                       </Link>
-                      <p className="mt-0.5 text-xs text-muted">{f.user.email}</p>
+                      <p className="mt-0.5 text-xs text-ink-muted">{f.user.email}</p>
                     </td>
                     <td className="text-[13px]">
                       {f.city}, {f.country}
@@ -120,13 +120,13 @@ export default async function AdminFactoriesPage({ searchParams }: { searchParam
                     <td className="num">{formatNumber(f.maxMonthlyCapacity)}</td>
                     <td className="num">
                       <span className="inline-flex items-center justify-end gap-1.5">
-                        <FileText className="size-3.5 text-subtle" aria-hidden />
+                        <FileText className="size-3.5 text-ink-subtle" aria-hidden />
                         {f._count.documents}
                       </span>
                     </td>
                     <td className="whitespace-nowrap">
                       <p className="tabular text-[13px] text-ink">{formatDate(f.verificationRequestedAt)}</p>
-                      {waiting(f) && <p className="text-xs font-medium text-warning-700">{waiting(f)}</p>}
+                      {waiting(f) && <p className="text-xs font-medium text-warning-strong">{waiting(f)}</p>}
                     </td>
                     <td>
                       <StatusBadge map={VERIFICATION_STATUS} value={f.verificationStatus} />

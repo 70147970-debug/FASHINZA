@@ -13,30 +13,35 @@ function initialsOf(name: string) {
 }
 
 /**
- * Initials avatar for people (round) and organisations (square). Decorative by default: the name should
- * also appear as text next to it.
+ * Initials avatar for people (round) and organisations (square), set in Fraunces. Decorative by default:
+ * the name should also appear as text next to it.
+ * Tones: `accent` (terracotta tint), `ink` (solid), `neutral`.
  */
 export function Avatar({
   name,
   shape = "circle",
   size = "md",
-  tone = "teal",
+  tone = "accent",
   className,
 }: {
   name: string;
   shape?: "circle" | "square";
   size?: "sm" | "md" | "lg";
-  tone?: "teal" | "navy" | "neutral";
+  tone?: "accent" | "ink" | "neutral";
   className?: string;
 }) {
   return (
     <span
       aria-hidden
       className={cn(
-        "inline-grid shrink-0 select-none place-items-center font-display font-semibold",
+        "inline-grid shrink-0 select-none place-items-center font-display font-medium tracking-[0.01em]",
         shape === "circle" ? "rounded-full" : "rounded-md",
         { sm: "size-7 text-[11px]", md: "size-8 text-xs", lg: "size-10 text-sm" }[size],
-        { teal: "bg-teal-50 text-teal-700", navy: "bg-navy text-white", neutral: "bg-neutral-100 text-neutral-700" }[tone],
+        {
+          accent: "bg-accent-soft text-accent-strong",
+          ink: "bg-primary text-primary-fg",
+          neutral: "bg-surface-muted text-ink-muted",
+        }[tone],
         className,
       )}
     >

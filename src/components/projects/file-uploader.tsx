@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UploadCloud, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/input";
+import { Input, Select } from "@/components/ui/input";
 import { toast } from "@/components/ui/toaster";
 import { UPLOAD_LIMITS } from "@/lib/constants";
 import { formatBytes } from "@/lib/format";
@@ -87,48 +87,47 @@ export function FileUploader({ projectId, defaultKind = "TECH_PACK" }: { project
           </Select>
         </div>
         <div>
-          <label htmlFor="upload-notes" className="mb-1.5 block text-sm font-medium text-ink">Version note <span className="font-normal text-muted">(optional)</span></label>
-          <input
+          <label htmlFor="upload-notes" className="mb-1.5 block text-sm font-medium text-ink">Version note <span className="font-normal text-ink-muted">(optional)</span></label>
+          <Input
             id="upload-notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             maxLength={300}
             placeholder={kind === "TECH_PACK" ? "What changed in this version?" : "Short description"}
             disabled={busy}
-            className="h-10 w-full rounded-md border border-line bg-white px-3 text-sm focus:border-teal focus:outline-none focus:ring-2 focus:ring-teal/20"
           />
         </div>
       </div>
       <label
-        className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed border-line bg-canvas px-4 py-8 text-center hover:border-teal/60 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-teal"
+        className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed border-line-control bg-surface-muted/60 px-4 py-9 text-center transition-colors duration-150 hover:border-accent hover:bg-accent-soft/40 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus"
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => {
           e.preventDefault();
           if (!busy) void onFiles(e.dataTransfer.files);
         }}
       >
-        <UploadCloud className="size-7 text-teal" aria-hidden />
-        <span className="text-sm font-medium text-navy">Drop files here or choose files</span>
-        <span className="text-xs text-muted">{kind === "SKETCH" ? "PNG, JPEG or WebP" : "PDF, PNG, JPEG or WebP"} · up to {UPLOAD_LIMITS.maxBytes / 1024 / 1024} MB each · stored privately</span>
+        <UploadCloud className="size-6 text-accent" strokeWidth={1.5} aria-hidden />
+        <span className="text-sm font-medium text-ink">Drop files here or choose files</span>
+        <span className="text-xs text-ink-muted">{kind === "SKETCH" ? "PNG, JPEG or WebP" : "PDF, PNG, JPEG or WebP"} · up to {UPLOAD_LIMITS.maxBytes / 1024 / 1024} MB each · stored privately</span>
         <input ref={input} type="file" multiple accept={accept.join(",")} className="sr-only" disabled={busy} onChange={(e) => void onFiles(e.target.files)} />
       </label>
       {uploads.length > 0 && (
         <ul className="space-y-2" aria-live="polite">
           {uploads.map((u, i) => (
-            <li key={`${u.name}-${i}`} className="rounded-md border border-line bg-white px-3 py-2">
+            <li key={`${u.name}-${i}`} className="rounded-md border border-line bg-surface px-3 py-2.5">
               <div className="flex items-center justify-between gap-2 text-sm">
-                <span className="min-w-0 truncate">{u.name} <span className="text-xs text-muted">· {formatBytes(u.size)}</span></span>
+                <span className="min-w-0 truncate">{u.name} <span className="text-xs text-ink-muted">· {formatBytes(u.size)}</span></span>
                 {u.error ? (
                   <Button variant="ghost" size="sm" onClick={() => setUploads((x) => x.filter((_, j) => j !== i))} aria-label={`Dismiss ${u.name}`}><X /></Button>
                 ) : (
-                  <span className="tabular text-xs text-muted">{u.progress === 100 ? "Uploaded" : `${u.progress}%`}</span>
+                  <span className="tabular text-xs text-ink-muted">{u.progress === 100 ? "Uploaded" : `${u.progress}%`}</span>
                 )}
               </div>
               {u.error ? (
-                <p className="mt-1 text-xs text-danger" role="alert">{u.error}</p>
+                <p className="mt-1 text-xs text-danger-strong" role="alert">{u.error}</p>
               ) : (
-                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-navy-50" role="progressbar" aria-valuenow={u.progress} aria-valuemin={0} aria-valuemax={100} aria-label={`Uploading ${u.name}`}>
-                  <div className="h-full rounded-full bg-teal transition-[width]" style={{ width: `${u.progress}%` }} />
+                <div className="mt-2 h-1 overflow-hidden rounded-xs bg-line" role="progressbar" aria-valuenow={u.progress} aria-valuemin={0} aria-valuemax={100} aria-label={`Uploading ${u.name}`}>
+                  <div className="h-full rounded-xs bg-accent transition-[width] motion-reduce:transition-none" style={{ width: `${u.progress}%` }} />
                 </div>
               )}
             </li>

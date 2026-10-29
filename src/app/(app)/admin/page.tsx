@@ -18,20 +18,19 @@ type QueueTone = "warning" | "danger";
 /** Horizontal bar breakdown of records by status (counts straight from the database). */
 function Breakdown({ rows, map }: { rows: { key: string; count: number }[]; map: Record<string, { label: string }> }) {
   const total = rows.reduce((s, r) => s + r.count, 0);
-  if (!total) return <p className="text-sm text-muted">No records yet.</p>;
-  const max = Math.max(...rows.map((r) => r.count));
+  if (!total) return <p className="text-sm text-ink-muted">No records yet.</p>;
   return (
     <ul className="space-y-3">
       {[...rows].sort((a, b) => b.count - a.count).map((r) => (
         <li key={r.key}>
           <div className="flex items-baseline justify-between gap-3 text-[13px]">
             <span className="min-w-0 truncate text-ink">{map[r.key]?.label ?? r.key}</span>
-            <span className="tabular shrink-0 text-muted">
+            <span className="tabular shrink-0 text-ink-muted">
               <span className="font-medium text-ink">{formatNumber(r.count)}</span> · {Math.round((r.count / total) * 100)}%
             </span>
           </div>
-          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-neutral-100" aria-hidden>
-            <div className="h-full rounded-full bg-slate-blue" style={{ width: `${Math.max((r.count / max) * 100, 2)}%` }} />
+          <div className="mt-2 h-1 overflow-hidden rounded-xs bg-line" aria-hidden>
+            <div className="h-full rounded-xs bg-ink" style={{ width: `${Math.max((r.count / total) * 100, 2)}%` }} />
           </div>
         </li>
       ))}
@@ -44,11 +43,11 @@ function QueueRow({ href, icon: Icon, label, description, count, tone }: { href:
   const open = count > 0;
   return (
     <li>
-      <Link href={href} className="group flex items-center gap-3.5 px-4 py-3.5 transition-colors duration-150 hover:bg-surface-muted sm:px-5">
+      <Link href={href} className="group flex items-center gap-4 px-4 py-4 transition-colors duration-150 hover:bg-surface-hover sm:px-5">
         <span
           className={cn(
-            "grid size-9 shrink-0 place-items-center rounded-md",
-            !open ? "bg-surface-muted text-neutral-500" : tone === "danger" ? "bg-danger-50 text-danger-700" : "bg-warning-50 text-warning-700",
+            "grid size-9 shrink-0 place-items-center rounded-md border",
+            !open ? "border-line bg-canvas text-ink-subtle" : tone === "danger" ? "border-danger-line bg-danger-soft text-danger-strong" : "border-warning-line bg-warning-soft text-warning-strong",
           )}
           aria-hidden
         >
@@ -56,20 +55,20 @@ function QueueRow({ href, icon: Icon, label, description, count, tone }: { href:
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-medium text-ink">{label}</span>
-          <span className="block text-xs leading-5 text-muted">{description}</span>
+          <span className="block text-xs leading-5 text-ink-muted">{description}</span>
         </span>
         {open ? (
-          <span className={cn("tabular shrink-0 font-display text-lg font-semibold", tone === "danger" ? "text-danger-700" : "text-warning-700")}>
+          <span className={cn("tabular shrink-0 font-display text-2xl font-normal leading-none tracking-[-0.02em]", tone === "danger" ? "text-danger-strong" : "text-warning-strong")}>
             {formatNumber(count)}
             <span className="sr-only"> waiting</span>
           </span>
         ) : (
-          <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-muted">
+          <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-ink-muted">
             <CheckCircle2 className="size-3.5 text-success" aria-hidden />
             <span className="max-sm:sr-only">Clear</span>
           </span>
         )}
-        <ChevronRight className="size-4 shrink-0 text-subtle transition-colors duration-150 group-hover:text-neutral-600" aria-hidden />
+        <ChevronRight className="size-4 shrink-0 text-ink-subtle transition-colors duration-150 group-hover:text-ink-muted" aria-hidden />
       </Link>
     </li>
   );
@@ -166,7 +165,7 @@ export default async function AdminOverviewPage() {
                 {
                   label: "Suspended accounts",
                   value: (
-                    <Link href="/admin/users?status=SUSPENDED" className={cn("tabular rounded-sm hover:underline hover:underline-offset-4", d.suspended ? "text-danger-700" : "text-muted")}>
+                    <Link href="/admin/users?status=SUSPENDED" className={cn("tabular rounded-sm hover:underline hover:underline-offset-4", d.suspended ? "text-danger-strong" : "text-ink-muted")}>
                       {formatNumber(d.suspended)}
                     </Link>
                   ),

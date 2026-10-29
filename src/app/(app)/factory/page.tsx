@@ -66,7 +66,7 @@ export default async function FactoryPage({ searchParams }: { searchParams: Prom
             )}
             {canRequest && (
               <div className={cn("space-y-4 text-sm", p.verificationStatus === "REJECTED" && "mt-4")}>
-                <p className="text-muted">Only verified factories are matched to brand projects. To request verification:</p>
+                <p className="text-ink-muted">Only verified factories are matched to brand projects. To request verification:</p>
                 <ol className="space-y-3">
                   <ChecklistItem n={1} done={hasRegistration}>Upload your business registration document</ChecklistItem>
                   <ChecklistItem n={2}>Optionally upload certifications (GOTS, OEKO-TEX…). Each is checked individually.</ChecklistItem>
@@ -81,8 +81,8 @@ export default async function FactoryPage({ searchParams }: { searchParams: Prom
 
           <Panel id="documents" title="Documents" description="Certifications count in matching only after an administrator verifies them." bodyClassName="p-0 sm:p-0">
             {p.documents.length === 0 ? (
-              <p className="flex items-center gap-3 px-4 py-4 text-sm text-muted sm:px-5">
-                <span className="grid size-8 shrink-0 place-items-center rounded-md bg-teal-50 text-teal-700">
+              <p className="flex items-center gap-3 px-4 py-4 text-sm text-ink-muted sm:px-5">
+                <span className="grid size-8 shrink-0 place-items-center rounded-md border border-line bg-canvas text-ink-muted">
                   <FileText className="size-4" aria-hidden />
                 </span>
                 No documents uploaded yet.
@@ -91,19 +91,19 @@ export default async function FactoryPage({ searchParams }: { searchParams: Prom
               <ul className="divide-y divide-line-subtle">
                 {p.documents.map((d) => (
                   <li key={d.id} className="flex items-start gap-3 px-4 py-3 sm:px-5">
-                    <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-md border border-line bg-surface-muted text-neutral-500">
+                    <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-md border border-line bg-surface-sunken text-ink-subtle">
                       <FileText className="size-4" aria-hidden />
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
-                        <a href={`/api/files/${d.fileKey}`} target="_blank" rel="noopener" className="min-w-0 truncate text-sm font-medium text-navy hover:underline">
+                        <a href={`/api/files/${d.fileKey}`} target="_blank" rel="noopener" className="min-w-0 truncate text-sm font-medium text-ink underline-offset-4 transition-colors duration-150 hover:text-accent-strong hover:underline">
                           {d.certificationName ?? DOCUMENT_TYPE[d.type]}
                         </a>
                         <StatusBadge map={DOCUMENT_STATUS} value={d.status} />
                       </div>
-                      <p className="truncate text-xs leading-5 text-muted">{d.fileName} · {formatBytes(d.size)} · {formatDate(d.createdAt)}</p>
+                      <p className="truncate text-xs leading-5 text-ink-muted">{d.fileName} · {formatBytes(d.size)} · {formatDate(d.createdAt)}</p>
                       {d.status === "REJECTED" && d.reviewNote && (
-                        <p className="mt-1 flex gap-1 text-xs text-danger-700"><ShieldAlert className="size-3.5 shrink-0" aria-hidden />{d.reviewNote}</p>
+                        <p className="mt-1 flex gap-1 text-xs text-danger-strong"><ShieldAlert className="size-3.5 shrink-0" aria-hidden />{d.reviewNote}</p>
                       )}
                     </div>
                     {d.status !== "VERIFIED" && <DeleteDocumentButton id={d.id} name={d.fileName} />}
@@ -112,7 +112,7 @@ export default async function FactoryPage({ searchParams }: { searchParams: Prom
               </ul>
             )}
             <div className="border-t border-line bg-surface-muted px-4 py-4 sm:px-5">
-              <h3 className="mb-3 text-sm font-semibold text-navy">Add a document</h3>
+              <h3 className="label-caps mb-3 text-ink-muted">Add a document</h3>
               <UploadDocumentForm />
             </div>
           </Panel>
@@ -128,13 +128,13 @@ function ChecklistItem({ n, done, children }: { n: number; done?: boolean; child
       <span
         className={cn(
           "tabular grid size-6 shrink-0 place-items-center rounded-full text-xs font-semibold",
-          done ? "bg-teal text-white" : "border border-line-strong bg-surface text-muted",
+          done ? "bg-primary text-primary-fg" : "border border-line-strong bg-canvas text-ink-muted",
         )}
         aria-hidden
       >
-        {done ? <Check className="size-3.5" /> : n}
+        {done ? <Check className="size-3.5" strokeWidth={2.5} /> : n}
       </span>
-      <span className={cn("pt-0.5 leading-5", done ? "text-muted" : "text-ink")}>
+      <span className={cn("pt-0.5 leading-5", done ? "text-ink-muted" : "text-ink")}>
         {children}
         {done && <span className="sr-only"> (done)</span>}
       </span>

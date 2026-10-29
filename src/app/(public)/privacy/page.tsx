@@ -63,7 +63,7 @@ export default function PrivacyPage() {
           body: (
             <p>
               Business records are kept so that orders, payments and disputes have a complete history. You can ask for your account details to be corrected or
-              your account to be closed by <Link href="/contact" className="text-teal-700 underline">contacting us</Link> or emailing {SITE.contactEmail}.
+              your account to be closed by <Link href="/contact" className="font-medium text-accent-strong underline decoration-accent-line underline-offset-4 hover:decoration-accent-strong">contacting us</Link> or emailing {SITE.contactEmail}.
             </p>
           ),
         },

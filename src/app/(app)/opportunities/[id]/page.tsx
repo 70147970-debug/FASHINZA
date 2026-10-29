@@ -50,8 +50,8 @@ export default async function OpportunityPage({ params }: { params: Promise<{ id
       {(project.description || project.sustainabilityNotes || project.additionalInstructions) && (
         <div className="mt-5 space-y-3 border-t border-line-subtle pt-4 text-sm leading-6">
           {project.description && <p className="whitespace-pre-line text-ink">{project.description}</p>}
-          {project.sustainabilityNotes && <p><span className="font-medium text-navy">Sustainability: </span>{project.sustainabilityNotes}</p>}
-          {project.additionalInstructions && <p><span className="font-medium text-navy">Instructions: </span>{project.additionalInstructions}</p>}
+          {project.sustainabilityNotes && <p><span className="font-medium text-ink">Sustainability: </span>{project.sustainabilityNotes}</p>}
+          {project.additionalInstructions && <p><span className="font-medium text-ink">Instructions: </span>{project.additionalInstructions}</p>}
         </div>
       )}
     </Panel>
@@ -118,7 +118,7 @@ export default async function OpportunityPage({ params }: { params: Promise<{ id
               <DescriptionList
                 columns={3}
                 items={[
-                  { label: "Total", value: <span className="tabular font-display text-lg font-semibold text-navy">{formatMoney(quotation.totalAmount, quotation.currency)}</span> },
+                  { label: "Total", value: <span className="tabular font-display text-xl font-medium text-ink">{formatMoney(quotation.totalAmount, quotation.currency)}</span> },
                   { label: "Quantity", value: formatNumber(quotation.quantity) },
                   { label: "Production", value: `${quotation.productionDays} days` },
                   { label: "Sent", value: formatDateTime(quotation.submittedAt) },
@@ -138,7 +138,7 @@ export default async function OpportunityPage({ params }: { params: Promise<{ id
           <Panel title="Why you were matched" description={`Score ${score.toFixed(0)}/100 · ${match.algorithm}`}>
             <div className="mb-5 flex items-center gap-4 border-b border-line-subtle pb-5">
               <ScoreRing score={score} size="lg" />
-              <p className="text-[13px] leading-5 text-muted">Each criterion adds points up to its weight. Only factories that meet every mandatory requirement are matched.</p>
+              <p className="text-[13px] leading-5 text-ink-muted">Each criterion adds points up to its weight. Only factories that meet every mandatory requirement are matched.</p>
             </div>
             <ScoreBreakdownView breakdown={match.breakdown as unknown as ScoreBreakdown} />
           </Panel>
@@ -164,7 +164,7 @@ export default async function OpportunityPage({ params }: { params: Promise<{ id
                   const snap = (r.snapshot ?? {}) as { totalAmount?: string };
                   return (
                     <li key={r.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm sm:px-5">
-                      <span><span className="font-medium text-navy">v{r.version}</span> <span className="text-muted">· {formatDate(r.createdAt)}</span></span>
+                      <span><span className="font-medium text-ink">v{r.version}</span> <span className="text-ink-muted">· {formatDate(r.createdAt)}</span></span>
                       <span className="tabular text-ink">{snap.totalAmount ? formatMoney(snap.totalAmount, quotation.currency) : "—"}</span>
                     </li>
                   );

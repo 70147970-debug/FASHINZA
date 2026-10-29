@@ -80,12 +80,12 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
                       }
                     >
                       <span className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-                        <span className="tabular text-xs text-muted">
+                        <span className="tabular text-xs text-ink-muted">
                           Joined {formatDate(u.createdAt)} · last sign-in {formatDate(u.lastLoginAt)}
                         </span>
                         {canChange(u) && <UserStatusButton userId={u.id} name={u.name} suspended={u.status === "SUSPENDED"} />}
                       </span>
-                      {u.statusReason && <span className="mt-2 block text-xs leading-5 text-muted">Reason: {u.statusReason}</span>}
+                      {u.statusReason && <span className="mt-2 block text-xs leading-5 text-ink-muted">Reason: {u.statusReason}</span>}
                     </MobileCard>
                   );
                 })}
@@ -113,10 +113,10 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
                     <tr key={u.id}>
                       <td>
                         <span className="flex items-center gap-3">
-                          <Avatar name={u.name} size="sm" tone={u.role === "ADMIN" ? "navy" : "neutral"} />
+                          <Avatar name={u.name} size="sm" tone={u.role === "ADMIN" ? "ink" : "neutral"} />
                           <span className="min-w-0">
-                            <span className="block font-medium text-navy">{u.name}</span>
-                            <span className="block text-xs text-muted">{u.email}</span>
+                            <span className="block font-medium text-ink">{u.name}</span>
+                            <span className="block whitespace-nowrap text-xs text-ink-muted">{u.email}</span>
                           </span>
                         </span>
                       </td>
@@ -127,17 +127,17 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
                             <StatusBadge map={VERIFICATION_STATUS} value={u.manufacturerProfile.verificationStatus} />
                           </span>
                         ) : (
-                          (org ?? <span className="text-muted">—</span>)
+                          (org ?? <span className="text-ink-muted">—</span>)
                         )}
-                        {!u.profileCompleted && u.role !== "ADMIN" && <p className="mt-0.5 text-xs text-warning-700">Profile incomplete</p>}
+                        {!u.profileCompleted && u.role !== "ADMIN" && <p className="mt-0.5 text-xs text-warning-strong">Profile incomplete</p>}
                       </td>
                       <td className="text-[13px]">{ROLE_LABEL[u.role]}</td>
-                      <td className="tabular whitespace-nowrap text-[13px] text-muted">{formatDate(u.createdAt)}</td>
-                      <td className="tabular whitespace-nowrap text-[13px] text-muted">{formatDate(u.lastLoginAt)}</td>
+                      <td className="tabular whitespace-nowrap text-[13px] text-ink-muted">{formatDate(u.createdAt)}</td>
+                      <td className="tabular whitespace-nowrap text-[13px] text-ink-muted">{formatDate(u.lastLoginAt)}</td>
                       <td>
                         <StatusBadge map={USER_STATUS} value={u.status} />
                         {u.statusReason && (
-                          <p className="mt-1 max-w-48 truncate text-xs text-muted" title={u.statusReason}>
+                          <p className="mt-1 max-w-48 truncate text-xs text-ink-muted" title={u.statusReason}>
                             {u.statusReason}
                           </p>
                         )}

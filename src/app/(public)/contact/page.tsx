@@ -18,37 +18,37 @@ export default function ContactPage() {
         description="Questions about briefing a project, registering your factory or verification? Send us a message and the team will reply by email."
       />
       <section className="bg-canvas py-12 lg:py-20">
-        <div className="container-page grid gap-8 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:gap-12">
-          <div className="lg:pt-2">
-            <h2 className="label-caps mb-4 font-sans text-muted">Other ways to reach us</h2>
-            <ul className="divide-y divide-line overflow-hidden rounded-lg border border-line bg-white shadow-card">
-              <li className="flex gap-4 p-5">
-                <span className="grid size-9 shrink-0 place-items-center rounded-md bg-teal-50 text-teal-700"><Mail className="size-[18px]" aria-hidden /></span>
+        <div className="container-page grid gap-12 lg:grid-cols-12 lg:gap-10">
+          <div className="lg:col-span-4">
+            <h2 className="label-caps border-t border-line-strong py-4 font-sans text-ink-muted">Other ways to reach us</h2>
+            <ul className="border-t border-line">
+              <li className="flex gap-4 border-b border-line py-5">
+                <span className="grid size-9 shrink-0 place-items-center rounded-md border border-line text-accent"><Mail className="size-[18px]" strokeWidth={1.5} aria-hidden /></span>
                 <div className="min-w-0">
-                  <p className="font-display text-[0.9375rem] font-semibold text-navy">Email</p>
-                  <a className="break-all text-sm text-teal-700 hover:underline" href={`mailto:${SITE.contactEmail}`}>{SITE.contactEmail}</a>
+                  <p className="font-display text-lg font-medium leading-6 text-ink">Email</p>
+                  <a className="break-all text-sm text-accent-strong underline decoration-accent-line underline-offset-4 transition-colors duration-150 hover:decoration-accent-strong" href={`mailto:${SITE.contactEmail}`}>{SITE.contactEmail}</a>
                 </div>
               </li>
-              <li className="flex gap-4 p-5">
-                <span className="grid size-9 shrink-0 place-items-center rounded-md bg-teal-50 text-teal-700"><MapPin className="size-[18px]" aria-hidden /></span>
+              <li className="flex gap-4 border-b border-line py-5">
+                <span className="grid size-9 shrink-0 place-items-center rounded-md border border-line text-accent"><MapPin className="size-[18px]" strokeWidth={1.5} aria-hidden /></span>
                 <div>
-                  <p className="font-display text-[0.9375rem] font-semibold text-navy">Location</p>
-                  <p className="text-sm text-muted">{SITE.location}</p>
+                  <p className="font-display text-lg font-medium leading-6 text-ink">Location</p>
+                  <p className="text-sm text-ink-muted">{SITE.location}</p>
                 </div>
               </li>
-              <li className="flex gap-4 p-5">
-                <span className="grid size-9 shrink-0 place-items-center rounded-md bg-teal-50 text-teal-700"><MessageSquare className="size-[18px]" aria-hidden /></span>
+              <li className="flex gap-4 border-b border-line py-5">
+                <span className="grid size-9 shrink-0 place-items-center rounded-md border border-line text-accent"><MessageSquare className="size-[18px]" strokeWidth={1.5} aria-hidden /></span>
                 <div>
-                  <p className="font-display text-[0.9375rem] font-semibold text-navy">Already registered?</p>
-                  <p className="text-sm leading-6 text-muted">Report a problem with a project or order from your dashboard.</p>
+                  <p className="font-display text-lg font-medium leading-6 text-ink">Already registered?</p>
+                  <p className="text-sm leading-6 text-ink-muted">Report a problem with a project or order from your dashboard.</p>
                 </div>
               </li>
             </ul>
           </div>
-          <div className="rounded-lg border border-line bg-white shadow-card">
-            <div className="border-b border-line-subtle px-5 py-4 sm:px-8 sm:py-5">
-              <h2 className="font-display text-lg font-semibold text-navy">Send a message</h2>
-              <p className="mt-0.5 text-sm text-muted">Fields marked with an asterisk are required.</p>
+          <div className="rounded-lg border border-line bg-surface lg:col-span-8">
+            <div className="border-b border-line px-5 py-5 sm:px-8 sm:py-6">
+              <h2 className="font-display text-[1.625rem] font-medium tracking-[-0.02em] text-ink">Send a message</h2>
+              <p className="mt-1 text-sm text-ink-muted">Fields marked with an asterisk are required.</p>
             </div>
             <div className="p-5 sm:p-8">
               <ContactForm />

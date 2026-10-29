@@ -17,8 +17,8 @@ const STATUS_TONE: Record<string, BadgeTone> = {
   "Quotation accepted": "success",
   "In production": "info",
   "Quality check": "warning",
-  "Ready to ship": "accent",
-  Shipped: "accent",
+  "Ready to ship": "info",
+  Shipped: "info",
   Delivered: "success",
 };
 
@@ -80,23 +80,23 @@ export default function HowItWorksPage() {
         title="A clear process from first brief to delivered order"
         description="Brands, manufacturers and administrators work in the same workflow, and every important change is recorded in the project history."
         aside={
-          <nav aria-label="On this page" className="rounded-lg border border-line bg-surface-muted p-5 sm:p-6">
-            <p className="label-caps mb-3 text-muted">On this page</p>
-            <ol className="divide-y divide-line">
+          <nav aria-label="On this page" className="border-t border-line-strong lg:ml-auto lg:max-w-md">
+            <p className="label-caps py-4 text-ink-muted">On this page</p>
+            <ol className="border-t border-line">
               {DETAIL.map((d, i) => (
-                <li key={d.title}>
-                  <a href={`#step-${i + 1}`} className="group flex min-h-12 items-center gap-4 py-3 text-[0.9375rem] font-medium text-navy">
-                    <span className="tabular grid size-8 shrink-0 place-items-center rounded-full border border-line-strong bg-white font-display text-sm font-semibold">{i + 1}</span>
-                    <span className="flex-1">{d.title.replace(/^\d+\.\s*/, "")}</span>
-                    <ArrowRight className="size-4 text-subtle transition-colors duration-150 group-hover:text-teal-700" aria-hidden />
+                <li key={d.title} className="border-b border-line">
+                  <a href={`#step-${i + 1}`} className="group flex min-h-14 items-center gap-5 py-3 text-ink transition-colors duration-150 hover:text-accent-strong">
+                    <span className="tabular w-7 font-display text-lg italic text-ink-muted" aria-hidden>{String(i + 1).padStart(2, "0")}</span>
+                    <span className="flex-1 font-display text-lg font-medium tracking-[-0.01em]">{d.title.replace(/^\d+\.\s*/, "")}</span>
+                    <ArrowRight className="size-4 text-ink-subtle transition-colors duration-150 group-hover:text-accent" aria-hidden />
                   </a>
                 </li>
               ))}
-              <li>
-                <a href="#status-title" className="group flex min-h-12 items-center gap-4 py-3 text-[0.9375rem] font-medium text-navy">
-                  <span className="grid size-8 shrink-0 place-items-center rounded-full border border-dashed border-line-strong bg-white text-xs text-muted" aria-hidden>…</span>
-                  <span className="flex-1">Project statuses</span>
-                  <ArrowRight className="size-4 text-subtle transition-colors duration-150 group-hover:text-teal-700" aria-hidden />
+              <li className="border-b border-line">
+                <a href="#status-title" className="group flex min-h-14 items-center gap-5 py-3 text-ink transition-colors duration-150 hover:text-accent-strong">
+                  <span className="w-7 font-display text-lg italic text-ink-muted" aria-hidden>—</span>
+                  <span className="flex-1 font-display text-lg font-medium tracking-[-0.01em]">Project statuses</span>
+                  <ArrowRight className="size-4 text-ink-subtle transition-colors duration-150 group-hover:text-accent" aria-hidden />
                 </a>
               </li>
             </ol>
@@ -108,33 +108,35 @@ export default function HowItWorksPage() {
       </PageHero>
 
       <Section labelledBy="flow-title">
-        <SectionHeading id="flow-title" eyebrow="Overview" title="The production workflow at a glance" />
+        <SectionHeading id="flow-title" index="01" eyebrow="Overview" title="The production workflow at a glance" />
         <WorkflowDiagram />
       </Section>
 
-      <Section tone="white" labelledBy="detail-title">
+      <Section tone="surface" labelledBy="detail-title">
         <SectionHeading
           id="detail-title"
+          index="02"
           eyebrow="In detail"
           title="What happens at each step"
           description="The rules below are enforced by the platform, not left to convention."
+          split
         />
-        <ol className="border-t border-line">
+        <ol className="border-t border-line-strong">
           {DETAIL.map((d, i) => (
             <li
               key={d.title}
               id={`step-${i + 1}`}
-              className="grid scroll-mt-24 gap-4 border-b border-line py-8 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:gap-16 lg:py-10"
+              className="grid scroll-mt-24 gap-5 border-b border-line py-8 lg:grid-cols-12 lg:gap-10 lg:py-12"
             >
-              <div className="flex items-start gap-4">
-                <span className="tabular font-display text-[2rem] font-semibold leading-none text-teal-700" aria-hidden>
+              <div className="flex items-start gap-5 lg:col-span-5">
+                <span className="tabular font-display text-[2.5rem] font-light leading-none tracking-[-0.03em] text-accent-strong lg:text-[3.25rem]" aria-hidden>
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                <h3 className="pt-1 font-display text-xl font-semibold text-navy">{d.title.replace(/^\d+\.\s*/, "")}</h3>
+                <h3 className="max-w-xs pt-1.5 font-display text-[1.375rem] font-medium leading-7 tracking-[-0.015em] text-ink lg:pt-2.5 lg:text-[1.625rem] lg:leading-8">{d.title.replace(/^\d+\.\s*/, "")}</h3>
               </div>
-              <ul className="space-y-3">
+              <ul className="space-y-3 lg:col-span-7">
                 {d.points.map((p) => (
-                  <li key={p} className="relative pl-5 text-[0.9375rem] leading-7 text-ink before:absolute before:left-0.5 before:top-[0.7rem] before:size-1.5 before:rounded-full before:bg-teal">
+                  <li key={p} className="relative pl-5 text-[0.9375rem] leading-7 text-ink before:absolute before:left-0.5 before:top-[0.7rem] before:h-px before:w-2.5 before:bg-accent">
                     {p}
                   </li>
                 ))}
@@ -145,20 +147,21 @@ export default function HowItWorksPage() {
       </Section>
 
       <Section labelledBy="status-title">
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:gap-16">
+        <div className="grid gap-10 lg:grid-cols-12 lg:gap-10">
           <SectionHeading
             id="status-title"
+            index="03"
             eyebrow="Statuses"
             title="Project statuses"
             description="Statuses only move forward through permitted steps, checked on the server. A project can also be cancelled before production starts."
-            className="lg:sticky lg:top-24 lg:self-start"
+            className="lg:sticky lg:top-24 lg:col-span-5 lg:mb-0 lg:self-start"
           />
-          <ol className="overflow-hidden rounded-lg border border-line bg-white shadow-card">
+          <ol className="border-t border-line-strong lg:col-span-7">
             {STATUSES.map(([s, m], i) => (
-              <li key={s} className="grid gap-2 border-b border-line-subtle px-5 py-4 last:border-b-0 sm:grid-cols-[2rem_11rem_minmax(0,1fr)] sm:items-start sm:gap-4">
-                <span className="tabular hidden pt-0.5 text-xs text-subtle sm:block" aria-hidden>{String(i + 1).padStart(2, "0")}</span>
+              <li key={s} className="grid gap-2 border-b border-line py-4 sm:grid-cols-[2.25rem_10.5rem_minmax(0,1fr)] sm:items-start sm:gap-4">
+                <span className="tabular hidden font-display text-[0.9375rem] italic text-ink-muted sm:block" aria-hidden>{String(i + 1).padStart(2, "0")}</span>
                 <span><Badge tone={STATUS_TONE[s]} dot>{s}</Badge></span>
-                <span className="text-sm leading-6 text-muted">{m}</span>
+                <span className="text-sm leading-6 text-ink-muted">{m}</span>
               </li>
             ))}
           </ol>

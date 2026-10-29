@@ -23,7 +23,7 @@ export function FilterBar({
       {Object.entries(hidden).map(([k, v]) => v && <input key={k} type="hidden" name={k} value={v} />)}
       <div className="relative min-w-0 flex-1 sm:max-w-xs">
         <label htmlFor="filter-q" className="sr-only">{searchLabel}</label>
-        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-subtle" aria-hidden />
+        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-muted" strokeWidth={1.75} aria-hidden />
         <Input id="filter-q" name="q" type="search" defaultValue={q} placeholder={searchLabel} className="pl-9" />
       </div>
       {selects.map((s) => (
@@ -38,7 +38,7 @@ export function FilterBar({
       <div className="flex gap-2">
         <Button type="submit" variant="outline" className="max-sm:flex-1">Apply</Button>
         {active && (
-          <Button asChild variant="ghost" className="text-muted hover:text-navy max-sm:flex-1">
+          <Button asChild variant="ghost" className="text-ink-muted hover:text-ink max-sm:flex-1">
             <Link href={basePath}><X aria-hidden /> Clear</Link>
           </Button>
         )}

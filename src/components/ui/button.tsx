@@ -5,35 +5,35 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
- * Buttons. Sizes: sm 32px, md 36px, lg 44px (marketing); below `sm` every size grows to at least 40px so it
- * is a comfortable touch target. Variants:
- *  - primary  navy, the default action on a page
- *  - accent   teal-700, create / advance actions ("Create production project", "Submit quotation")
- *  - outline  secondary actions
+ * Crisp rectangular buttons (4px radius, no pills, no shadows). Sizes: sm 32px, md 36px, lg 44px (marketing);
+ * below `sm` every size grows to at least 40px so it is a comfortable touch target. Variants:
+ *  - primary  ink (ivory in dark), the default action on a page
+ *  - accent   terracotta: the single most important action on a screen ("Create production project")
+ *  - outline  secondary actions (hairline border on surface)
  *  - ghost    tertiary / toolbar actions
+ *  - subtle   quiet filled secondary (parchment)
  *  - danger   destructive confirmations
- *  - link     inline text action (no padding, no fixed height)
- *  - subtle   quiet filled secondary (neutral tint)
- *  - inverse  white button on navy bands
+ *  - inverse  light button on bg-inverse bands
+ *  - link     inline text action in accent-strong (no padding, no fixed height)
  */
 const buttonVariants = cva(
-  "relative inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-colors duration-150 disabled:pointer-events-none disabled:opacity-50 aria-busy:cursor-progress [&_svg]:size-4 [&_svg]:shrink-0",
+  "relative inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium transition-colors duration-150 disabled:pointer-events-none disabled:opacity-45 aria-busy:cursor-progress [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        primary: "bg-navy text-white shadow-card hover:bg-navy-800 active:bg-navy-700",
-        accent: "bg-teal-700 text-white shadow-card hover:bg-teal-800 active:bg-teal-800",
-        outline: "border border-line-strong bg-white text-navy shadow-card hover:border-neutral-400 hover:bg-surface-muted",
-        ghost: "text-navy hover:bg-neutral-100",
-        subtle: "bg-neutral-100 text-navy hover:bg-navy-100",
-        danger: "bg-danger text-white shadow-card hover:bg-danger-700",
-        inverse: "bg-white text-navy hover:bg-navy-50",
-        link: "rounded-sm text-teal-700 underline-offset-4 hover:text-teal-800 hover:underline",
+        primary: "bg-primary text-primary-fg hover:bg-primary-hover",
+        accent: "bg-accent text-accent-fg hover:bg-accent-hover",
+        outline: "border border-line-strong bg-surface text-ink hover:border-line-control hover:bg-surface-hover",
+        ghost: "text-ink hover:bg-surface-hover",
+        subtle: "bg-surface-muted text-ink hover:bg-line",
+        danger: "bg-danger text-danger-fg hover:bg-danger-strong",
+        inverse: "bg-ink-inverse text-inverse hover:bg-ink-inverse/85",
+        link: "rounded-xs text-accent-strong underline-offset-4 hover:underline hover:decoration-accent",
       },
       size: {
         sm: "h-8 px-3 text-[13px] max-sm:h-10",
         md: "h-9 px-4 text-sm max-sm:h-10",
-        lg: "h-11 px-5 text-[0.9375rem]",
+        lg: "h-11 px-6 text-[0.9375rem]",
         icon: "size-9 max-sm:size-10",
       },
     },

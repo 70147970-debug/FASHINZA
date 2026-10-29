@@ -41,7 +41,7 @@ export default async function DisputesPage({ searchParams }: { searchParams: Pro
                   aria-current={active ? "page" : undefined}
                   className={cn(
                     "-mb-px inline-flex h-10 items-center border-b-2 text-sm transition-colors duration-150",
-                    active ? "border-teal font-medium text-navy" : "border-transparent text-muted hover:border-line-strong hover:text-navy",
+                    active ? "border-accent font-medium text-ink" : "border-transparent text-ink-muted hover:border-line-strong hover:text-ink",
                   )}
                 >
                   {v.label}
@@ -97,18 +97,18 @@ export default async function DisputesPage({ searchParams }: { searchParams: Pro
                     <td>{DISPUTE_CATEGORY[d.category]}</td>
                     <td className="tabular whitespace-nowrap">
                       {d.order ? (
-                        <Link href={`/orders/${d.order.id}`} className="text-teal-700 hover:underline">{d.order.reference}</Link>
+                        <Link href={`/orders/${d.order.id}`} className="text-accent-strong underline-offset-4 hover:underline">{d.order.reference}</Link>
                       ) : d.project ? (
-                        <Link href={`${actor.role === "MANUFACTURER" ? "/opportunities" : "/projects"}/${d.project.id}`} className="text-teal-700 hover:underline">{d.project.name}</Link>
+                        <Link href={`${actor.role === "MANUFACTURER" ? "/opportunities" : "/projects"}/${d.project.id}`} className="text-accent-strong underline-offset-4 hover:underline">{d.project.name}</Link>
                       ) : (
-                        <span className="text-muted">—</span>
+                        <span className="text-ink-muted">—</span>
                       )}
                     </td>
                     <td>
                       <span className="block">{d.reporter.name}</span>
-                      <span className="block text-xs leading-5 text-muted">{ROLE_LABEL[d.reporter.role]}</span>
+                      <span className="block text-xs leading-5 text-ink-muted">{ROLE_LABEL[d.reporter.role]}</span>
                     </td>
-                    <td className="tabular whitespace-nowrap text-muted">{formatDate(d.createdAt)}</td>
+                    <td className="tabular whitespace-nowrap text-ink-muted">{formatDate(d.createdAt)}</td>
                     <td><StatusBadge map={DISPUTE_STATUS} value={d.status} /></td>
                   </tr>
                 ))}

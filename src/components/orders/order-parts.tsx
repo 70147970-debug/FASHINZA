@@ -51,9 +51,9 @@ export function FileThumb({
         target="_blank"
         rel="noopener"
         title={title ?? fileName}
-        className="flex h-12 w-36 min-w-0 items-center gap-2 rounded-md border border-line bg-white px-2.5 text-xs font-medium text-navy transition-colors duration-150 hover:border-line-strong hover:bg-surface-muted"
+        className="flex h-12 w-36 min-w-0 items-center gap-2 rounded-md border border-line bg-surface px-2.5 text-xs font-medium text-ink transition-colors duration-150 hover:border-line-strong hover:bg-surface-hover"
       >
-        <FileText className="size-4 shrink-0 text-slate-blue" aria-hidden />
+        <FileText className="size-4 shrink-0 text-ink-muted" aria-hidden />
         <span className="truncate">{fileName}</span>
       </a>
     );
@@ -65,11 +65,11 @@ export function FileThumb({
       rel="noopener"
       title={title ?? fileName}
       className={cn(
-        "relative block shrink-0 overflow-hidden rounded-md border border-line bg-surface-muted transition-colors duration-150 hover:border-line-strong",
+        "relative block shrink-0 overflow-hidden rounded-md border border-line bg-surface-sunken transition-colors duration-150 hover:border-line-strong",
         box,
       )}
     >
-      <ImageIcon className="absolute left-1/2 top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 text-subtle" aria-hidden />
+      <ImageIcon className="absolute left-1/2 top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 text-ink-subtle" aria-hidden />
       {/* eslint-disable-next-line @next/next/no-img-element -- private, authorised file route; not optimisable by next/image */}
       <img src={href} alt={alt} loading="lazy" className="relative size-full object-cover text-[0px]" />
     </a>
@@ -79,8 +79,8 @@ export function FileThumb({
 /** Quiet one-line empty state for use inside a Panel (the full EmptyState is for whole pages). */
 export function InlineEmpty({ icon: Icon, children, className }: { icon: LucideIcon; children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("flex items-center gap-3 text-sm text-muted", className)}>
-      <span className="grid size-8 shrink-0 place-items-center rounded-md bg-surface-muted text-neutral-500">
+    <div className={cn("flex items-center gap-3 text-sm text-ink-muted", className)}>
+      <span className="grid size-9 shrink-0 place-items-center rounded-md border border-line bg-canvas text-ink-muted">
         <Icon className="size-4" aria-hidden />
       </span>
       <span className="min-w-0">{children}</span>
@@ -90,7 +90,7 @@ export function InlineEmpty({ icon: Icon, children, className }: { icon: LucideI
 
 /** Small uppercase label used for sub-sections inside a Panel. */
 export function SubHeading({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <h3 className={cn("label-caps mb-3 text-muted", className)}>{children}</h3>;
+  return <h3 className={cn("label-caps mb-3 text-ink-muted", className)}>{children}</h3>;
 }
 
 /**
@@ -127,7 +127,7 @@ export function StatusTabs({
   const tabs = [{ value: allValue, label: allLabel }, ...options];
   return (
     <nav aria-label={label} className="mb-4 overflow-x-auto border-b border-line">
-      <ul className="flex min-w-max gap-5">
+      <ul className="flex min-w-max gap-6">
         {tabs.map((t) => {
           const active = (t.value ?? undefined) === (value ?? allValue ?? undefined);
           return (
@@ -137,7 +137,7 @@ export function StatusTabs({
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "-mb-px inline-flex h-10 items-center border-b-2 text-[13px] font-medium transition-colors duration-150",
-                  active ? "border-teal text-navy" : "border-transparent text-muted hover:border-line-strong hover:text-navy",
+                  active ? "border-accent text-ink" : "border-transparent text-ink-muted hover:border-line-strong hover:text-ink",
                 )}
               >
                 {t.label}

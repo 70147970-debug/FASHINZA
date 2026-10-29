@@ -26,6 +26,8 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
   const dueText = (p: (typeof data.items)[number]) =>
     p.paidAt ? `Paid ${formatDate(p.paidAt)}` : p.dueAt && p.status === "DUE" ? `Due by ${formatDate(p.dueAt)}` : `After ${stageLabel(p.triggerStage).toLowerCase()}`;
   const payable = (s: string) => isBrand && ["DUE", "FAILED", "PROCESSING"].includes(s);
+  // Only the first payable milestone gets the terracotta button; the rest are outline, so the screen keeps one key action.
+  const firstPayable = data.items.find((p) => payable(p.status))?.id;
 
   const totals = (key: string) => {
     const rows = sum(key);
@@ -66,7 +68,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
           icon={CreditCard}
           title={status ? "No payments with this status" : "No payments yet"}
           description="Each order gets a milestone payment schedule (by default 30% after sample approval, 40% after the QC report is accepted and 30% on delivery)."
-          action={status ? <Link href="/payments" className="text-sm font-medium text-teal-700 hover:underline">Show all payments</Link> : undefined}
+          action={status ? <Link href="/payments" className="rounded-sm text-sm font-medium text-accent-strong underline-offset-4 hover:underline">Show all payments</Link> : undefined}
         />
       ) : (
         <div className="space-y-8">
@@ -86,17 +88,17 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
                       badge={<StatusBadge map={PAYMENT_STATUS} value={p.status} />}
                       meta={
                         <>
-                          <Link href={`/orders/${p.order.id}#payments`} className="font-medium text-teal-700 hover:underline">{p.order.reference}</Link> · {p.order.project.name} · {counterparty(p)}
+                          <Link href={`/orders/${p.order.id}#payments`} className="rounded-sm font-medium text-accent-strong underline-offset-4 hover:underline">{p.order.reference}</Link> · {p.order.project.name} · {counterparty(p)}
                         </>
                       }
                     >
                       <span className="flex items-center justify-between gap-3">
-                        <span className="text-xs text-muted">{dueText(p)}</span>
-                        <span className="tabular text-sm font-semibold text-navy">{formatMoney(p.amount, p.currency)}</span>
+                        <span className="text-xs text-ink-muted">{dueText(p)}</span>
+                        <span className="tabular text-sm font-medium text-ink">{formatMoney(p.amount, p.currency)}</span>
                       </span>
                       {payable(p.status) && (
                         <span className="mt-3 block">
-                          <PayButton paymentMilestoneId={p.id} label={p.label} amount={formatMoney(p.amount, p.currency)} />
+                          <PayButton paymentMilestoneId={p.id} label={p.label} amount={formatMoney(p.amount, p.currency)} quiet={p.id !== firstPayable} />
                         </span>
                       )}
                     </MobileCard>
@@ -117,27 +119,27 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
                 </thead>
                 <tbody>
                   {data.items.map((p) => (
-                    <tr key={p.id} className={p.status === "DUE" ? "bg-warning-50/40" : undefined}>
+                    <tr key={p.id} className={p.status === "DUE" ? "bg-warning-soft/60" : undefined}>
                       <td>
                         <p className="cell-primary">
                           {p.label} · <span className="tabular">{p.percentage.toString()}%</span>
                         </p>
-                        <p className="mt-0.5 text-xs text-muted">Due after {stageLabel(p.triggerStage).toLowerCase()}</p>
+                        <p className="mt-0.5 text-xs text-ink-muted">Due after {stageLabel(p.triggerStage).toLowerCase()}</p>
                       </td>
                       <td>
-                        <Link href={`/orders/${p.order.id}#payments`} className="rounded-sm text-[13px] font-medium text-navy hover:underline hover:underline-offset-4">
+                        <Link href={`/orders/${p.order.id}#payments`} className="rounded-sm text-[13px] font-medium text-ink hover:underline hover:underline-offset-4">
                           {p.order.project.name}
                         </Link>
-                        <p className="mt-0.5 text-xs text-muted">
+                        <p className="mt-0.5 text-xs text-ink-muted">
                           <span className="tabular">{p.order.reference}</span> · {counterparty(p)}
                         </p>
                       </td>
-                      <td className="whitespace-nowrap text-[13px] text-muted">{dueText(p)}</td>
-                      <td className="num font-semibold text-navy">{formatMoney(p.amount, p.currency)}</td>
+                      <td className="whitespace-nowrap text-[13px] text-ink-muted">{dueText(p)}</td>
+                      <td className="num font-medium text-ink">{formatMoney(p.amount, p.currency)}</td>
                       <td>
                         <StatusBadge map={PAYMENT_STATUS} value={p.status} />
                       </td>
-                      {isBrand && <td className="text-right">{payable(p.status) && <PayButton paymentMilestoneId={p.id} label={p.label} amount={formatMoney(p.amount, p.currency)} />}</td>}
+                      {isBrand && <td className="text-right">{payable(p.status) && <PayButton paymentMilestoneId={p.id} label={p.label} amount={formatMoney(p.amount, p.currency)} quiet={p.id !== firstPayable} />}</td>}
                     </tr>
                   ))}
                 </tbody>
@@ -167,7 +169,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
                           <>
                             {t.milestone.order.reference} · {t.milestone.label} · {formatDateTime(t.createdAt)}
                             <span className="block break-all font-mono text-2xs">ref {t.providerRef}</span>
-                            {t.failureReason && <span className="block text-danger-700">{t.failureReason}</span>}
+                            {t.failureReason && <span className="block text-danger-strong">{t.failureReason}</span>}
                           </>
                         }
                       />
@@ -189,7 +191,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
                   <tbody>
                     {transactions.map((t) => (
                       <tr key={t.id}>
-                        <td className="tabular whitespace-nowrap text-[13px] text-muted">{formatDateTime(t.createdAt)}</td>
+                        <td className="tabular whitespace-nowrap text-[13px] text-ink-muted">{formatDateTime(t.createdAt)}</td>
                         <td className="text-[13px]">{t.type === "REFUND" ? "Refund" : "Charge"}</td>
                         <td className="text-[13px]">
                           <span className="tabular">{t.milestone.order.reference}</span> · {t.milestone.label}
@@ -197,9 +199,9 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
                         <td className="num">{formatMoney(t.amount, t.currency)}</td>
                         <td>
                           <Badge tone={TX_TONE[t.status] ?? "neutral"} dot>{t.status.toLowerCase()}</Badge>
-                          {t.failureReason && <p className="mt-1 max-w-56 text-xs text-danger-700">{t.failureReason}</p>}
+                          {t.failureReason && <p className="mt-1 max-w-56 text-xs text-danger-strong">{t.failureReason}</p>}
                         </td>
-                        <td className="max-w-48 break-all font-mono text-2xs text-muted">{t.providerRef}</td>
+                        <td className="max-w-48 break-all font-mono text-2xs text-ink-muted">{t.providerRef}</td>
                       </tr>
                     ))}
                   </tbody>

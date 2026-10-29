@@ -8,8 +8,8 @@ import { cn } from "@/lib/utils";
 export function RecentNotifications({ items }: { items: Notification[] }) {
   if (!items.length) {
     return (
-      <p className="flex items-center gap-2 px-4 py-4 text-sm text-muted sm:px-5">
-        <Bell className="size-4 text-subtle" aria-hidden /> No notifications yet.
+      <p className="flex items-center gap-2 px-4 py-4 text-sm text-ink-muted sm:px-5">
+        <Bell className="size-4 text-ink-subtle" aria-hidden /> No notifications yet.
       </p>
     );
   }
@@ -19,17 +19,17 @@ export function RecentNotifications({ items }: { items: Notification[] }) {
         const body = (
           <>
             <span className="flex w-2 shrink-0 justify-center pt-[7px]">
-              {!n.readAt && <span className="size-2 rounded-full bg-teal" aria-hidden />}
+              {!n.readAt && <span className="size-2 rounded-full bg-accent" aria-hidden />}
             </span>
             <span className="min-w-0 flex-1">
               <span className="flex items-baseline justify-between gap-3">
-                <span className={cn("min-w-0 truncate text-sm leading-5", n.readAt ? "text-ink" : "font-medium text-navy")}>
+                <span className={cn("min-w-0 truncate text-sm leading-5", n.readAt ? "text-ink" : "font-medium text-ink")}>
                   {!n.readAt && <span className="sr-only">Unread: </span>}
                   {n.title}
                 </span>
-                <span className="tabular shrink-0 text-xs text-muted">{formatDate(n.createdAt)}</span>
+                <span className="tabular shrink-0 text-xs text-ink-muted">{formatDate(n.createdAt)}</span>
               </span>
-              <span className="mt-0.5 block truncate text-[13px] leading-5 text-muted">{n.message}</span>
+              <span className="mt-0.5 block truncate text-[13px] leading-5 text-ink-muted">{n.message}</span>
             </span>
           </>
         );
@@ -37,7 +37,7 @@ export function RecentNotifications({ items }: { items: Notification[] }) {
         return (
           <li key={n.id}>
             {n.link ? (
-              <Link href={`/notifications/${n.id}`} prefetch={false} className={cn(row, "transition-colors duration-150 hover:bg-surface-muted")}>
+              <Link href={`/notifications/${n.id}`} prefetch={false} className={cn(row, "transition-colors duration-150 hover:bg-surface-hover")}>
                 {body}
               </Link>
             ) : (

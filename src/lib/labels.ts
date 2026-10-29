@@ -3,14 +3,14 @@ import { GARMENT_CATEGORIES } from "./constants";
 /**
  * Status tones, one mapping used everywhere (see docs/design-system.md#status):
  *  neutral  not started, draft, closed, withdrawn
- *  info     moving normally / in progress
- *  accent   open in the marketplace or in transit (submitted, receiving quotes, shipped)
+ *  info     moving normally: in progress, in production, in transit
+ *  accent   open in the marketplace, waiting for factories (submitted, receiving quotes) — terracotta is
+ *           used sparingly, so only these statuses get it
  *  success  complete, approved, paid, verified
  *  warning  waiting on a decision or due
  *  danger   failed, rejected, blocked, cancelled, suspended
- * "teal" and "navy" are legacy values still accepted by <Badge>.
  */
-export type Tone = "neutral" | "info" | "accent" | "success" | "warning" | "danger" | "teal" | "navy";
+export type Tone = "neutral" | "info" | "accent" | "success" | "warning" | "danger" | "ink";
 
 type StatusMap = Record<string, { label: string; tone: Tone }>;
 
@@ -21,8 +21,8 @@ export const PROJECT_STATUS: StatusMap = {
   QUOTATION_ACCEPTED: { label: "Quote accepted", tone: "success" },
   IN_PRODUCTION: { label: "In production", tone: "info" },
   QUALITY_CHECK: { label: "Quality check", tone: "warning" },
-  READY_TO_SHIP: { label: "Ready to ship", tone: "accent" },
-  SHIPPED: { label: "Shipped", tone: "accent" },
+  READY_TO_SHIP: { label: "Ready to ship", tone: "info" },
+  SHIPPED: { label: "Shipped", tone: "info" },
   DELIVERED: { label: "Delivered", tone: "success" },
   CANCELLED: { label: "Cancelled", tone: "danger" },
 };
@@ -30,8 +30,8 @@ export const PROJECT_STATUS: StatusMap = {
 export const ORDER_STATUS: StatusMap = {
   IN_PRODUCTION: { label: "In production", tone: "info" },
   QUALITY_CHECK: { label: "Quality check", tone: "warning" },
-  READY_TO_SHIP: { label: "Ready to ship", tone: "accent" },
-  SHIPPED: { label: "Shipped", tone: "accent" },
+  READY_TO_SHIP: { label: "Ready to ship", tone: "info" },
+  SHIPPED: { label: "Shipped", tone: "info" },
   DELIVERED: { label: "Delivered", tone: "success" },
   CANCELLED: { label: "Cancelled", tone: "danger" },
 };

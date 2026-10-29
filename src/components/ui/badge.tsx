@@ -3,23 +3,23 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 /**
- * Pill label. Tones: neutral, info, accent, success, warning, danger (plus `navy`, a solid navy pill).
- * `teal` is a legacy alias of `accent`. Status badges (see StatusBadge) show a small leading dot.
+ * Small, quiet label: a 3px-radius soft tint with optional leading dot (never a loud pill).
+ * Tones: neutral, info, accent, success, warning, danger, plus `ink` (solid) and `outline`.
+ * Status badges (see StatusBadge) show the dot.
  */
 const badgeVariants = cva(
-  "inline-flex h-[1.375rem] max-w-full shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2 text-xs font-medium leading-none",
+  "inline-flex h-[1.375rem] max-w-full shrink-0 items-center gap-1.5 whitespace-nowrap rounded-sm px-2 text-xs font-medium leading-none",
   {
     variants: {
       tone: {
-        neutral: "bg-neutral-100 text-neutral-700",
-        info: "bg-info-50 text-slate-blue",
-        accent: "bg-teal-50 text-teal-700",
-        teal: "bg-teal-50 text-teal-700",
-        success: "bg-success-50 text-success-700",
-        warning: "bg-warning-50 text-warning-700",
-        danger: "bg-danger-50 text-danger-700",
-        navy: "bg-navy text-white",
-        outline: "border border-line-strong bg-white text-neutral-700",
+        neutral: "bg-surface-muted text-ink-muted",
+        info: "bg-info-soft text-info-strong",
+        accent: "bg-accent-soft text-accent-strong",
+        success: "bg-success-soft text-success-strong",
+        warning: "bg-warning-soft text-warning-strong",
+        danger: "bg-danger-soft text-danger-strong",
+        ink: "bg-primary text-primary-fg",
+        outline: "border border-line-strong bg-transparent text-ink-muted",
       },
     },
     defaultVariants: { tone: "neutral" },
@@ -27,15 +27,14 @@ const badgeVariants = cva(
 );
 
 const dotTone: Record<string, string> = {
-  neutral: "bg-neutral-400",
-  info: "bg-slate-blue",
-  accent: "bg-teal",
-  teal: "bg-teal",
+  neutral: "bg-ink-subtle",
+  info: "bg-info",
+  accent: "bg-accent",
   success: "bg-success",
   warning: "bg-warning",
   danger: "bg-danger",
-  navy: "bg-white",
-  outline: "bg-neutral-400",
+  ink: "bg-primary-fg",
+  outline: "bg-ink-subtle",
 };
 
 export type BadgeTone = NonNullable<VariantProps<typeof badgeVariants>["tone"]>;

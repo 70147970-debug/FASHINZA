@@ -19,23 +19,23 @@ export default function NotFound() {
         <Logo />
       </div>
       <main id="main" className="grid flex-1 place-items-center px-4 pb-16">
-        <div className="w-full max-w-lg text-center">
-          <span className="mx-auto grid size-10 place-items-center rounded-md bg-teal-50 text-teal-700">
-            <Compass className="size-5" aria-hidden />
+        <div className="w-full max-w-xl text-center">
+          <span className="mx-auto grid size-11 place-items-center rounded-md border border-line bg-surface text-ink-muted">
+            <Compass className="size-5" strokeWidth={1.5} aria-hidden />
           </span>
-          <p className="eyebrow mt-6 text-teal-700">Error 404</p>
-          <h1 className="mt-2 font-display text-[1.75rem] font-semibold leading-tight tracking-[-0.02em] text-navy sm:text-[2rem]">We could not find that page</h1>
-          <p className="mt-3 text-base leading-7 text-muted">The link may be out of date, or the page may have moved.</p>
+          <p className="eyebrow mt-7 text-accent-strong">Error 404</p>
+          <h1 className="mt-3 text-balance font-display text-[2rem] font-medium leading-[1.1] tracking-[-0.025em] text-ink sm:text-[2.75rem]">We could not find that page</h1>
+          <p className="mt-4 text-base leading-7 text-ink-muted">The link may be out of date, or the page may have moved.</p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Button asChild size="lg"><Link href="/"><ArrowLeft /> Go to home page</Link></Button>
             <Button asChild variant="outline" size="lg"><Link href="/contact">Contact us</Link></Button>
           </div>
           <nav aria-label="Popular pages" className="mt-12 border-t border-line pt-6">
-            <p className="label-caps mb-3 text-muted">Popular pages</p>
+            <p className="label-caps mb-3 text-ink-muted">Popular pages</p>
             <ul className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
               {LINKS.map((l) => (
                 <li key={l.href}>
-                  <Link href={l.href} className="inline-flex min-h-10 items-center font-medium text-teal-700 hover:underline">{l.label}</Link>
+                  <Link href={l.href} className="inline-flex min-h-10 items-center font-medium text-accent-strong underline-offset-4 hover:underline">{l.label}</Link>
                 </li>
               ))}
             </ul>

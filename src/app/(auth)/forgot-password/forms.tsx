@@ -13,7 +13,7 @@ export function ForgotPasswordForm() {
       </Field>
       <SubmitButton size="lg" className="w-full" pendingText="Sending…">Send reset link</SubmitButton>
       {process.env.NODE_ENV !== "production" && (
-        <p className="text-xs text-muted">Development build: no email service is configured, so the reset link is written to the server log.</p>
+        <p className="text-xs leading-5 text-ink-muted">Development build: no email service is configured, so the reset link is written to the server log.</p>
       )}
     </ActionForm>
   );

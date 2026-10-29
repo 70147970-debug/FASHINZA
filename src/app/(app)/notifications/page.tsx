@@ -74,12 +74,12 @@ export default async function NotificationsPage({ searchParams }: { searchParams
                 aria-current={v.active ? "page" : undefined}
                 className={cn(
                   "-mb-px inline-flex h-10 items-center gap-2 border-b-2 text-sm transition-colors duration-150",
-                  v.active ? "border-teal font-medium text-navy" : "border-transparent text-muted hover:border-line-strong hover:text-navy",
+                  v.active ? "border-accent font-medium text-ink" : "border-transparent text-ink-muted hover:border-line-strong hover:text-ink",
                 )}
               >
                 {v.label}
                 {!!v.count && (
-                  <span className="tabular rounded-full bg-teal-50 px-1.5 text-xs font-medium leading-5 text-teal-700">
+                  <span className="tabular rounded-sm bg-accent-soft px-1.5 text-xs font-medium leading-5 text-accent-strong">
                     {v.count}
                     <span className="sr-only"> unread</span>
                   </span>
@@ -99,12 +99,12 @@ export default async function NotificationsPage({ searchParams }: { searchParams
         />
       ) : (
         <>
-          <div className="overflow-hidden rounded-lg border border-line bg-surface shadow-card">
+          <div className="overflow-hidden rounded-lg border border-line bg-surface">
             {groupByDay(data.items).map((g, gi) => (
               <section key={g.key} aria-labelledby={`day-${g.key}`}>
                 <h2
                   id={`day-${g.key}`}
-                  className={cn("label-caps bg-surface-muted px-4 py-2 text-muted sm:px-5", gi > 0 && "border-t border-line")}
+                  className={cn("label-caps bg-surface-muted px-4 py-2 text-ink-muted sm:px-5", gi > 0 && "border-t border-line")}
                 >
                   {dayLabel(g.key)}
                 </h2>
@@ -129,16 +129,16 @@ function NotificationRow({ n }: { n: Notification }) {
   const body = (
     <>
       <span className="flex w-2 shrink-0 justify-center pt-[7px]">
-        {!n.readAt && <span className="size-2 rounded-full bg-teal" aria-hidden />}
+        {!n.readAt && <span className="size-2 rounded-full bg-accent" aria-hidden />}
       </span>
       <span className="min-w-0 flex-1">
-        <span className={cn("block break-words text-sm leading-5", n.readAt ? "text-ink" : "font-semibold text-navy")}>
+        <span className={cn("block break-words text-sm leading-5", n.readAt ? "text-ink" : "font-semibold text-ink")}>
           {!n.readAt && <span className="sr-only">Unread: </span>}
           {n.title}
         </span>
-        <span className="mt-0.5 block break-words text-[13px] leading-5 text-muted">{n.message}</span>
+        <span className="mt-0.5 block break-words text-[13px] leading-5 text-ink-muted">{n.message}</span>
       </span>
-      <time dateTime={new Date(n.createdAt).toISOString()} className="tabular shrink-0 pt-px text-xs leading-5 text-muted">
+      <time dateTime={new Date(n.createdAt).toISOString()} className="tabular shrink-0 pt-px text-xs leading-5 text-ink-muted">
         {timeFmt.format(new Date(n.createdAt))}
         <span className="sr-only"> UTC</span>
       </time>
@@ -146,7 +146,7 @@ function NotificationRow({ n }: { n: Notification }) {
   );
   const row = "flex gap-3 px-4 py-3.5 sm:px-5";
   return n.link ? (
-    <Link href={`/notifications/${n.id}`} prefetch={false} className={cn(row, "transition-colors duration-150 hover:bg-surface-muted")}>
+    <Link href={`/notifications/${n.id}`} prefetch={false} className={cn(row, "transition-colors duration-150 hover:bg-surface-hover")}>
       {body}
     </Link>
   ) : (

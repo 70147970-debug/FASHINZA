@@ -2,7 +2,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Card: white surface, 1px line border, 10px radius, barely-there shadow, 20px padding.
+ * Card: surface, 1px hairline border, 6px radius, no shadow, 20px padding.
  *
  *   <Card>
  *     <CardHeader>
@@ -15,10 +15,10 @@ import { cn } from "@/lib/utils";
  * For app pages prefer <Panel> from components/app/primitives, which wires the heading id for you.
  */
 export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("rounded-lg border border-line bg-surface shadow-card", className)} {...props} />;
+  return <div className={cn("rounded-lg border border-line bg-surface", className)} {...props} />;
 }
 
-/** Title row. Add `divided` for a bottom border (use when the body is a list or table). */
+/** Title row. Add `divided` for a bottom hairline (use when the body is a list or table). */
 export function CardHeader({ className, divided = false, ...props }: React.HTMLAttributes<HTMLDivElement> & { divided?: boolean }) {
   return (
     <div
@@ -29,11 +29,11 @@ export function CardHeader({ className, divided = false, ...props }: React.HTMLA
 }
 
 export function CardTitle({ className, as: Tag = "h3", ...props }: React.HTMLAttributes<HTMLHeadingElement> & { as?: "h2" | "h3" | "h4" }) {
-  return <Tag className={cn("type-heading text-navy", className)} {...props} />;
+  return <Tag className={cn("type-heading text-ink", className)} {...props} />;
 }
 
 export function CardDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn("mt-0.5 text-[13px] leading-5 text-muted", className)} {...props} />;
+  return <p className={cn("mt-0.5 text-[13px] leading-5 text-ink-muted", className)} {...props} />;
 }
 
 /** Right-aligned header action (usually a small link or button). */
@@ -51,5 +51,5 @@ export function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDi
 }
 
 export function CardFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("flex items-center gap-2 border-t border-line bg-surface-muted/60 px-5 py-3 rounded-b-lg", className)} {...props} />;
+  return <div className={cn("flex items-center gap-2 rounded-b-lg border-t border-line bg-surface-muted/50 px-5 py-3", className)} {...props} />;
 }

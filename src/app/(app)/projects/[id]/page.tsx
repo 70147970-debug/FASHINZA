@@ -148,7 +148,7 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
               description={summary ? `Last run ${formatDateTime(matchData!.lastRun!.at)}: ${summary.reviewed} factories reviewed, ${summary.eligible} eligible.` : undefined}
               actions={isOwner && preOrder ? <RerunMatchingButton projectId={id} /> : undefined}
               footer={
-                <p className="flex items-start gap-1.5 text-xs leading-5 text-muted">
+                <p className="flex items-start gap-1.5 text-xs leading-5 text-ink-muted">
                   <FileSearch className="mt-0.5 size-3.5 shrink-0" aria-hidden /> Rule-based matching (deterministic). Scores show compatibility, not a guarantee of quality.
                 </p>
               }
@@ -176,7 +176,7 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
               )}
               {summary && Object.keys(summary.exclusionReasons).length > 0 && (
                 <div className="mt-4 rounded-md border border-line-subtle bg-surface-muted p-3.5">
-                  <p className="label-caps text-muted">Why other factories were not matched</p>
+                  <p className="label-caps text-ink-muted">Why other factories were not matched</p>
                   <ul className="mt-2 grid gap-x-6 gap-y-1 text-[13px] text-ink sm:grid-cols-2">
                     {Object.entries(summary.exclusionReasons).map(([reason, n]) => <li key={reason} className="tabular">{reason}: {n}</li>)}
                   </ul>
@@ -206,8 +206,8 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
               {(project.description || project.sustainabilityNotes || project.additionalInstructions) && (
                 <div className="mt-4 space-y-3 border-t border-line-subtle pt-4 text-sm leading-6">
                   {project.description && <p className="whitespace-pre-line text-ink">{project.description}</p>}
-                  {project.sustainabilityNotes && <p><span className="font-medium text-navy">Sustainability: </span>{project.sustainabilityNotes}</p>}
-                  {project.additionalInstructions && <p><span className="font-medium text-navy">Instructions: </span>{project.additionalInstructions}</p>}
+                  {project.sustainabilityNotes && <p><span className="font-medium text-ink">Sustainability: </span>{project.sustainabilityNotes}</p>}
+                  {project.additionalInstructions && <p><span className="font-medium text-ink">Instructions: </span>{project.additionalInstructions}</p>}
                 </div>
               )}
             </Panel>
@@ -215,7 +215,7 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
               <AttachmentList items={project.attachments} projectId={id} />
               {isOwner && !["CANCELLED", "DELIVERED"].includes(project.status) && (
                 <details className="group mt-4 border-t border-line-subtle pt-4">
-                  <summary className="cursor-pointer text-sm font-medium text-teal-700 hover:underline hover:underline-offset-4">Upload a new version or file</summary>
+                  <summary className="cursor-pointer text-sm font-medium text-accent-strong hover:underline hover:underline-offset-4">Upload a new version or file</summary>
                   <div className="mt-4"><FileUploader projectId={id} /></div>
                 </details>
               )}
@@ -225,10 +225,10 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
                 <ul className="space-y-4 text-sm">
                   {project.revisions.map((r) => (
                     <li key={r.id}>
-                      <p className="text-xs text-muted">{formatDateTime(r.createdAt)}</p>
+                      <p className="text-xs text-ink-muted">{formatDateTime(r.createdAt)}</p>
                       <ul className="mt-1 space-y-0.5">
                         {Object.entries(r.changes as Record<string, { from: string | null; to: string | null }>).map(([field, c]) => (
-                          <li key={field} className="break-words"><span className="font-medium text-navy">{field}</span>: <span className="text-muted line-through">{c.from ?? "empty"}</span> → {c.to ?? "empty"}</li>
+                          <li key={field} className="break-words"><span className="font-medium text-ink">{field}</span>: <span className="text-ink-muted line-through">{c.from ?? "empty"}</span> → {c.to ?? "empty"}</li>
                         ))}
                       </ul>
                     </li>

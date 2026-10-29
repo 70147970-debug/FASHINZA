@@ -43,7 +43,7 @@ export default async function QuotationsPage({ searchParams }: { searchParams: P
                     badge={<StatusBadge map={QUOTATION_STATUS} value={q.status} />}
                     meta={`${categoryLabel(q.project.category)} · v${q.version} · valid until ${formatDate(q.validUntil)}`}
                   >
-                    <span className="tabular font-display text-base font-semibold text-navy">{formatMoney(q.totalAmount, q.currency)}</span>
+                    <span className="tabular font-display text-lg font-medium text-ink">{formatMoney(q.totalAmount, q.currency)}</span>
                   </MobileCard>
                 ))}
               </MobileCardList>
@@ -64,11 +64,11 @@ export default async function QuotationsPage({ searchParams }: { searchParams: P
                   <tr key={q.id}>
                     <td className="max-w-80">
                       <Link href={href(q)} className="cell-primary block truncate">{q.project.name}</Link>
-                      <p className="text-xs leading-5 text-muted">{categoryLabel(q.project.category)}</p>
+                      <p className="text-xs leading-5 text-ink-muted">{categoryLabel(q.project.category)}</p>
                     </td>
                     <td><StatusBadge map={QUOTATION_STATUS} value={q.status} /></td>
-                    <td className="num font-medium text-navy">{formatMoney(q.totalAmount, q.currency)}</td>
-                    <td className="tabular text-muted">v{q.version}</td>
+                    <td className="num font-medium text-ink">{formatMoney(q.totalAmount, q.currency)}</td>
+                    <td className="tabular text-ink-muted">v{q.version}</td>
                     <td className="tabular whitespace-nowrap">{formatDate(q.validUntil)}</td>
                   </tr>
                 ))}

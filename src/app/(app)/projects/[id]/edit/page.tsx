@@ -89,7 +89,7 @@ export default async function EditProjectPage({ params, searchParams }: { params
               description="Upload your tech pack (required to submit) plus any sketches. Every new tech pack upload becomes the next version; earlier versions are kept."
               footer={
                 <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-xs text-muted">{techPacks ? `${techPacks} tech pack version${techPacks === 1 ? "" : "s"} uploaded` : "A tech pack is required before you can submit."}</p>
+                  <p className="text-xs text-ink-muted">{techPacks ? `${techPacks} tech pack version${techPacks === 1 ? "" : "s"} uploaded` : "A tech pack is required before you can submit."}</p>
                   <Button asChild variant="accent"><Link href={`/projects/${id}/edit?step=6`}>Continue to review <ArrowRight /></Link></Button>
                 </div>
               }
@@ -159,7 +159,10 @@ export default async function EditProjectPage({ params, searchParams }: { params
                   ].map((g) => (
                     <div key={g.n} className="grid gap-3 px-4 py-5 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-6 sm:px-5">
                       <div className="flex items-start justify-between gap-3 sm:block">
-                        <p className="label-caps text-muted">{stepTitle(g.n)}</p>
+                        <p className="flex items-baseline gap-2">
+                          <span className="tabular font-display text-base leading-none text-accent-strong" aria-hidden>{String(g.n).padStart(2, "0")}</span>
+                          <span className="label-caps text-ink-muted">{stepTitle(g.n)}</span>
+                        </p>
                         <div className="sm:mt-1.5">{editLink(g.n, g.label)}</div>
                       </div>
                       <DescriptionList items={g.items} columns={2} />
@@ -167,11 +170,11 @@ export default async function EditProjectPage({ params, searchParams }: { params
                   ))}
                 </div>
               </Panel>
-              <section aria-label="Submit project" className="rounded-lg border border-line bg-white p-4 shadow-card sm:p-5">
+              <section aria-label="Submit project" className="rounded-lg border border-accent-line bg-accent-soft/40 p-4 sm:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex max-w-xl gap-3">
-                    <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-teal-50 text-teal-700"><Send className="size-5" aria-hidden /></span>
-                    <p className="text-sm leading-6 text-muted">
+                    <span className="grid size-10 shrink-0 place-items-center rounded-md border border-accent-line bg-surface text-accent-strong"><Send className="size-[18px]" strokeWidth={1.75} aria-hidden /></span>
+                    <p className="text-sm leading-6 text-ink">
                       Submitting runs factory matching. Verified factories that meet every requirement are invited to quote and can see this project and its files.
                     </p>
                   </div>

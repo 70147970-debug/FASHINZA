@@ -63,21 +63,21 @@ export default async function DisputePage({ params, searchParams }: { params: Pr
               <dl className="space-y-4 text-sm">
                 {d.adminNote && (
                   <div>
-                    <dt className="label-caps text-muted">Note</dt>
+                    <dt className="label-caps text-ink-muted">Note</dt>
                     <dd className="mt-1 whitespace-pre-line break-words leading-6 text-ink">{d.adminNote}</dd>
                   </div>
                 )}
                 {d.resolution && (
-                  <div className="rounded-md border border-success-100 bg-success-50 p-3">
-                    <dt className="label-caps text-success-700">Resolution</dt>
+                  <div className="rounded-md border border-success-line bg-success-soft p-3">
+                    <dt className="label-caps text-success-strong">Resolution</dt>
                     <dd className="mt-1 whitespace-pre-line break-words leading-6 text-ink">{d.resolution}</dd>
-                    {d.resolvedAt && <p className="mt-2 text-xs text-muted">Resolved {formatDateTime(d.resolvedAt)}</p>}
+                    {d.resolvedAt && <p className="mt-2 text-xs text-ink-muted">Resolved {formatDateTime(d.resolvedAt)}</p>}
                   </div>
                 )}
               </dl>
             ) : (
-              <p className="flex items-start gap-3 text-sm leading-6 text-muted">
-                <span className="grid size-8 shrink-0 place-items-center rounded-md bg-teal-50 text-teal-700">
+              <p className="flex items-start gap-3 text-sm leading-6 text-ink-muted">
+                <span className="grid size-8 shrink-0 place-items-center rounded-md border border-line bg-canvas text-ink-muted">
                   <MessageSquareText className="size-4" aria-hidden />
                 </span>
                 The Fashinza team reviews the dispute with the full order history. Their notes and the resolution will appear here, and both parties are notified.
@@ -99,8 +99,8 @@ export default async function DisputePage({ params, searchParams }: { params: Pr
               items={[
                 { label: "Category", value: DISPUTE_CATEGORY[d.category] },
                 { label: "Raised by", value: `${d.reporter.name} (${ROLE_LABEL[d.reporter.role]})` },
-                { label: "Order", value: d.order ? <Link href={`/orders/${d.order.id}`} className="tabular text-teal-700 hover:underline">{d.order.reference}</Link> : "—" },
-                { label: "Project", value: d.project && projectHref ? <Link href={projectHref} className="text-teal-700 hover:underline">{d.project.name}</Link> : "—" },
+                { label: "Order", value: d.order ? <Link href={`/orders/${d.order.id}`} className="tabular text-accent-strong underline-offset-4 hover:underline">{d.order.reference}</Link> : "—" },
+                { label: "Project", value: d.project && projectHref ? <Link href={projectHref} className="text-accent-strong underline-offset-4 hover:underline">{d.project.name}</Link> : "—" },
                 { label: "Opened", value: formatDateTime(d.createdAt) },
                 { label: "Last update", value: formatDateTime(d.updatedAt) },
               ]}

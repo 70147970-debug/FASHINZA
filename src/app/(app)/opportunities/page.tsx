@@ -53,7 +53,7 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
                 aria-current={filter === f.value ? "page" : undefined}
                 className={cn(
                   "-mb-px inline-flex h-10 items-center border-b-2 text-sm transition-colors duration-150",
-                  filter === f.value ? "border-teal font-medium text-navy" : "border-transparent text-muted hover:border-line-strong hover:text-navy",
+                  filter === f.value ? "border-accent font-medium text-ink" : "border-transparent text-ink-muted hover:border-line-strong hover:text-ink",
                 )}
               >
                 {f.label}
@@ -95,9 +95,9 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
                     badge={status(m)}
                     meta={`${m.project.brand.brandProfile?.companyName ?? "Brand"} · ${categoryLabel(m.project.category)} · ${formatNumber(m.project.quantity)} units · deliver by ${formatDate(m.project.deadline)}`}
                   >
-                    <span className="flex items-center justify-between gap-3 text-xs text-muted">
-                      <span className="tabular">Match score <span className="font-semibold text-navy">{Number(m.score).toFixed(0)}</span>/100</span>
-                      {isNew(m) && <Badge tone="warning" dot>New</Badge>}
+                    <span className="flex items-center justify-between gap-3 text-xs text-ink-muted">
+                      <span className="tabular">Match score <span className="font-semibold text-ink">{Number(m.score).toFixed(0)}</span>/100</span>
+                      {isNew(m) && <Badge tone="ink">New</Badge>}
                     </span>
                   </MobileCard>
                 ))}
@@ -121,9 +121,9 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
                     <td className="max-w-80">
                       <span className="flex items-center gap-2">
                         <Link href={`/opportunities/${m.project.id}`} className="cell-primary truncate">{m.project.name}</Link>
-                        {isNew(m) && <Badge tone="warning">New</Badge>}
+                        {isNew(m) && <Badge tone="ink">New</Badge>}
                       </span>
-                      <p className="truncate text-xs leading-5 text-muted">
+                      <p className="truncate text-xs leading-5 text-ink-muted">
                         {m.project.brand.brandProfile?.companyName ?? "Brand"}{m.project.brand.brandProfile?.country ? ` · ${m.project.brand.brandProfile.country}` : ""}
                       </p>
                     </td>
@@ -131,7 +131,7 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
                     <td className="num">{formatNumber(m.project.quantity)}</td>
                     <td className="tabular whitespace-nowrap">
                       {formatDate(m.project.deadline)}
-                      {m.project.deadline && ["SUBMITTED", "QUOTING"].includes(m.project.status) && <p className="text-xs text-muted">{relativeDays(m.project.deadline)}</p>}
+                      {m.project.deadline && ["SUBMITTED", "QUOTING"].includes(m.project.status) && <p className="text-xs text-ink-muted">{relativeDays(m.project.deadline)}</p>}
                     </td>
                     <td><ScoreRing score={Number(m.score)} size="sm" /></td>
                     <td>{status(m)}</td>

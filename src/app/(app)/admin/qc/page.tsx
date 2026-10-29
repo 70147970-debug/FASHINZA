@@ -16,16 +16,16 @@ const capped = (n: number) => (n >= CAP ? `${CAP}+` : n);
 
 function OrderLink({ order }: { order: { id: string; reference: string; project: { name: string } } }) {
   return (
-    <Link href={`/orders/${order.id}#quality`} className="rounded-sm text-sm font-medium text-navy underline-offset-4 hover:underline">
+    <Link href={`/orders/${order.id}#quality`} className="rounded-sm text-sm font-medium text-ink underline-offset-4 hover:underline">
       {order.project.name}
-      <span className="tabular font-normal text-muted"> · {order.reference}</span>
+      <span className="tabular font-normal text-ink-muted"> · {order.reference}</span>
     </Link>
   );
 }
 
 function Count({ n, label, bad }: { n: number; label: string; bad: boolean }) {
   return (
-    <span className={cn("tabular", n > 0 && bad ? "font-semibold text-danger-700" : n > 0 ? "font-medium text-ink" : "text-muted")}>
+    <span className={cn("tabular", n > 0 && bad ? "font-semibold text-danger-strong" : n > 0 ? "font-medium text-ink" : "text-ink-muted")}>
       {n} {label}
     </span>
   );
@@ -61,7 +61,7 @@ export default async function AdminQcPage() {
                     <OrderLink order={r.order} />
                     <p className="mt-1 line-clamp-3 text-[13px] leading-5 text-ink">{r.description}</p>
                   </div>
-                  <p className="tabular shrink-0 text-xs text-muted">Opened {formatDate(r.createdAt)}</p>
+                  <p className="tabular shrink-0 text-xs text-ink-muted">Opened {formatDate(r.createdAt)}</p>
                 </li>
               ))}
             </ul>
@@ -78,13 +78,13 @@ export default async function AdminQcPage() {
                   <li key={r.id} className="px-4 py-3.5 sm:px-5">
                     <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                       <OrderLink order={r.order} />
-                      <span className="tabular text-xs text-muted">{formatDate(r.inspectionDate)}</span>
+                      <span className="tabular text-xs text-ink-muted">{formatDate(r.inspectionDate)}</span>
                     </div>
                     <p className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
                       <Count n={r.criticalCount} label="critical" bad />
                       <Count n={r.majorCount} label="major" bad />
                       <Count n={r.minorCount} label="minor" bad={false} />
-                      <span className="tabular text-muted">in {formatNumber(r.sampleSize)} units inspected</span>
+                      <span className="tabular text-ink-muted">in {formatNumber(r.sampleSize)} units inspected</span>
                     </p>
                   </li>
                 ))}
@@ -101,7 +101,7 @@ export default async function AdminQcPage() {
                   <li key={r.id} className="px-4 py-3.5 sm:px-5">
                     <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                       <OrderLink order={r.order} />
-                      <span className="tabular text-xs text-muted">{formatDate(r.decidedAt)}</span>
+                      <span className="tabular text-xs text-ink-muted">{formatDate(r.decidedAt)}</span>
                     </div>
                     {r.brandDecisionNote && (
                       <blockquote className="mt-1.5 border-l-2 border-line-strong pl-3 text-[13px] leading-5 text-ink">{r.brandDecisionNote}</blockquote>

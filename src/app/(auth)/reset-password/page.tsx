@@ -9,13 +9,14 @@ export default async function ResetPasswordPage({ searchParams }: { searchParams
   const { token } = await searchParams;
   return (
     <>
-      <h1 className="type-title text-navy">Choose a new password</h1>
-      <p className="mb-7 mt-1.5 text-sm leading-6 text-muted">Setting a new password signs you out on every other device.</p>
+      <p className="eyebrow mb-4 text-accent-strong">Account recovery</p>
+      <h1 className="font-display text-[2rem] font-[450] leading-[1.1] tracking-[-0.025em] text-ink sm:text-[2.375rem]">Choose a new password</h1>
+      <p className="mb-8 mt-3 text-[0.9375rem] leading-6 text-ink-muted">Setting a new password signs you out on every other device.</p>
       {token ? (
         <ResetPasswordForm token={token} />
       ) : (
         <Alert tone="error">
-          This page needs the link from your reset email. <Link href="/forgot-password" className="font-medium underline">Request a new link</Link>.
+          This page needs the link from your reset email. <Link href="/forgot-password" className="font-medium underline underline-offset-4">Request a new link</Link>.
         </Alert>
       )}
     </>

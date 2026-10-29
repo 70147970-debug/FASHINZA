@@ -39,7 +39,7 @@ export function LoginForm({ next }: { next?: string }) {
         <Field id="password" label="Password" required error={errors.password}>
           <Input name="password" type="password" autoComplete="current-password" />
         </Field>
-        <Link href="/forgot-password" className="absolute right-0 top-0 rounded-sm text-[13px] font-medium leading-5 text-teal-700 hover:underline">Forgot password?</Link>
+        <Link href="/forgot-password" className="absolute right-0 top-0 rounded-sm text-[13px] font-medium leading-5 text-accent-strong underline-offset-4 hover:underline">Forgot password?</Link>
       </div>
       <Button type="submit" size="lg" className="w-full" disabled={pending}>
         {pending && <Loader2 className="animate-spin" />} {pending ? "Signing in…" : "Sign in"}

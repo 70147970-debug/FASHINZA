@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Mail, MapPin } from "lucide-react";
 import { Logo } from "./logo";
 import { SITE } from "@/lib/constants";
 
@@ -38,39 +37,52 @@ const columns = [
   },
 ];
 
+/** Ivory colophon: wordmark and contact, four link columns over hairlines, and an oversized serif masthead. */
 export function SiteFooter() {
   return (
-    <footer className="border-t border-white/10 bg-navy text-white/75">
-      <div className="container-page grid grid-cols-2 gap-x-6 gap-y-10 py-14 sm:grid-cols-4 lg:grid-cols-[1.5fr_repeat(4,minmax(0,1fr))] lg:gap-8 lg:py-16">
-        <div className="col-span-2 space-y-5 sm:col-span-4 lg:col-span-1">
-          <Logo inverted />
-          <p className="max-w-xs text-sm leading-6">{SITE.tagline} Connecting fashion brands with clothing manufacturers.</p>
-          <ul className="space-y-2.5 text-sm">
-            <li className="flex items-center gap-2.5">
-              <Mail className="size-4 shrink-0 text-white/50" aria-hidden />
-              <a href={`mailto:${SITE.contactEmail}`} className="break-all rounded-sm transition-colors duration-150 hover:text-white">{SITE.contactEmail}</a>
-            </li>
-            <li className="flex items-center gap-2.5">
-              <MapPin className="size-4 shrink-0 text-white/50" aria-hidden />
-              {SITE.location}
-            </li>
-          </ul>
+    <footer className="border-t border-line bg-canvas text-ink-muted">
+      <div className="container-page grid grid-cols-2 gap-x-6 gap-y-10 pb-12 pt-14 sm:grid-cols-4 lg:grid-cols-12 lg:gap-8 lg:pt-20">
+        <div className="col-span-2 space-y-4 sm:col-span-4 lg:col-span-4 lg:pr-8">
+          <Logo />
+          <p className="max-w-xs font-display text-lg leading-7 text-ink">{SITE.tagline}</p>
+          <p className="max-w-xs text-sm leading-6">Connecting fashion brands with clothing manufacturers.</p>
+          <dl className="space-y-1 pt-2 text-sm">
+            <div className="flex gap-3">
+              <dt className="w-[4.5rem] shrink-0 text-ink-muted">Email</dt>
+              <dd className="min-w-0">
+                <a href={`mailto:${SITE.contactEmail}`} className="break-all text-ink underline decoration-line-strong underline-offset-4 transition-colors duration-150 hover:decoration-accent">
+                  {SITE.contactEmail}
+                </a>
+              </dd>
+            </div>
+            <div className="flex gap-3">
+              <dt className="w-[4.5rem] shrink-0 text-ink-muted">Location</dt>
+              <dd className="text-ink">{SITE.location}</dd>
+            </div>
+          </dl>
         </div>
         {columns.map((col) => (
-          <div key={col.title}>
-            <h2 className="label-caps mb-4 font-sans text-white/60">{col.title}</h2>
-            <ul className="space-y-1 text-sm">
+          <div key={col.title} className="lg:col-span-2">
+            <h2 className="label-caps mb-3 border-b border-line pb-3 font-sans text-ink-muted">{col.title}</h2>
+            <ul className="text-sm">
               {col.links.map((l) => (
                 <li key={l.href}>
-                  <Link href={l.href} className="inline-flex min-h-10 items-center rounded-sm transition-colors lg:min-h-8 duration-150 hover:text-white">{l.label}</Link>
+                  <Link href={l.href} className="inline-flex min-h-10 items-center text-ink transition-colors duration-150 hover:text-accent-strong lg:min-h-9">
+                    {l.label}
+                  </Link>
                 </li>
               ))}
             </ul>
           </div>
         ))}
       </div>
-      <div className="border-t border-white/10">
-        <div className="container-page flex flex-col gap-2 py-6 text-xs leading-5 text-white/60 sm:flex-row sm:justify-between sm:gap-6">
+      <div className="container-page overflow-hidden" aria-hidden>
+        <p className="select-none border-t border-line pt-4 font-display text-[3.75rem] font-[350] leading-[0.85] tracking-[-0.045em] text-ink sm:text-[7rem] lg:text-[11.5rem]">
+          Fashinza<span className="text-accent">.</span>
+        </p>
+      </div>
+      <div className="container-page">
+        <div className="flex flex-col gap-2 border-t border-line py-6 text-xs leading-5 sm:flex-row sm:justify-between sm:gap-6">
           <p>© {new Date().getFullYear()} Fashinza. Final Year Project, Department of Software Engineering, The University of Lahore.</p>
           <p className="shrink-0">Demo platform — sample data is clearly labelled.</p>
         </div>

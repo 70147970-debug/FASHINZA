@@ -41,7 +41,7 @@ export function ActionDialog({
             <input key={k} type="hidden" name={k} value={v} />
           ))}
           {children}
-          <div className="-mx-5 -mb-5 mt-6 flex flex-col-reverse gap-2 border-t border-line bg-surface-muted/70 px-5 py-3.5 sm:flex-row sm:justify-end">
+          <div className="-mx-6 -mb-6 mt-6 flex flex-col-reverse gap-2 border-t border-line bg-surface-muted/60 px-6 py-4 max-sm:-mx-5 max-sm:-mb-5 max-sm:px-5 sm:flex-row sm:justify-end">
             <DialogClose asChild>
               <Button type="button" variant="outline">Cancel</Button>
             </DialogClose>

@@ -72,7 +72,7 @@ function OnboardingLayout({
 }) {
   return (
     <div className="mx-auto max-w-6xl">
-      <ol aria-label="Setup progress" className="mb-6 flex items-center gap-3 text-[13px]">
+      <ol aria-label="Setup progress" className="mb-8 flex items-center gap-3 text-[13px]">
         {steps.map((s, i) => (
           <li key={s} className="flex items-center gap-3">
             {i > 0 && <span className="h-px w-6 bg-line-strong sm:w-10" aria-hidden />}
@@ -80,13 +80,13 @@ function OnboardingLayout({
               <span
                 className={cn(
                   "tabular grid size-6 place-items-center rounded-full text-xs font-semibold",
-                  i === 0 ? "bg-navy text-white" : "border border-line-strong bg-surface text-muted",
+                  i === 0 ? "border-2 border-accent bg-surface text-accent-strong ring-4 ring-accent-soft" : "border border-line-strong bg-canvas text-ink-muted",
                 )}
                 aria-hidden
               >
                 {i + 1}
               </span>
-              <span className={i === 0 ? "font-medium text-navy" : "text-muted max-sm:sr-only"}>
+              <span className={i === 0 ? "font-medium text-ink" : "text-ink-muted max-sm:sr-only"}>
                 <span className="sr-only">Step {i + 1} of 2{i === 0 ? " (current)" : ""}: </span>
                 {s}
               </span>
@@ -100,16 +100,19 @@ function OnboardingLayout({
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <Panel>{children}</Panel>
         <aside aria-label="What happens next" className="lg:sticky lg:top-20 lg:self-start lg:pt-1">
-          <p className="label-caps text-muted">What happens next</p>
-          <ul className="mt-3 space-y-4">
-            {aside.map((a) => (
-              <li key={a.title} className="flex gap-3">
-                <span className="grid size-8 shrink-0 place-items-center rounded-md bg-teal-50 text-teal-700">
-                  <a.icon className="size-4" aria-hidden />
+          <p className="eyebrow border-b border-line-strong pb-3 text-ink-muted">What happens next</p>
+          <ul className="divide-y divide-line">
+            {aside.map((a, i) => (
+              <li key={a.title} className="flex gap-3.5 py-4">
+                <span className="tabular w-6 shrink-0 font-display text-lg leading-6 text-accent-strong" aria-hidden>
+                  {String(i + 1).padStart(2, "0")}
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-sm font-medium text-navy">{a.title}</span>
-                  <span className="mt-0.5 block text-[13px] leading-5 text-muted">{a.text}</span>
+                  <span className="flex items-center gap-2 text-sm font-semibold text-ink">
+                    <a.icon className="size-3.5 shrink-0 text-ink-subtle" aria-hidden />
+                    {a.title}
+                  </span>
+                  <span className="mt-1 block text-[13px] leading-5 text-ink-muted">{a.text}</span>
                 </span>
               </li>
             ))}

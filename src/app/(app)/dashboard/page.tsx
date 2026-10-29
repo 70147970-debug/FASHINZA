@@ -156,11 +156,11 @@ async function BrandHome({ actor, welcome }: { actor: Actor; welcome: boolean })
                   <li key={p.id}>
                     <Link
                       href={p.status === "DRAFT" ? `/projects/${p.id}/edit` : p.order ? `/orders/${p.order.id}` : `/projects/${p.id}`}
-                      className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-4 py-3.5 transition-colors duration-150 hover:bg-surface-muted sm:grid-cols-[minmax(0,1fr)_9rem_auto] sm:px-5"
+                      className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-4 py-3.5 transition-colors duration-150 hover:bg-surface-hover sm:grid-cols-[minmax(0,1fr)_9rem_8.75rem] sm:px-5"
                     >
                       <span className="min-w-0">
-                        <span className="block truncate text-sm font-medium text-navy">{p.name}</span>
-                        <span className="block truncate text-xs leading-5 text-muted">
+                        <span className="block truncate text-sm font-medium text-ink">{p.name}</span>
+                        <span className="block truncate text-xs leading-5 text-ink-muted">
                           {categoryLabel(p.category)}
                           {p._count.quotations > 0 && ` · ${plural(p._count.quotations, "open quote")}`}
                           {` · updated ${formatDate(p.updatedAt)}`}
@@ -181,19 +181,19 @@ async function BrandHome({ actor, welcome }: { actor: Actor; welcome: boolean })
         <div className="space-y-6">
           <Panel title="Upcoming payments" actions={viewAll("/payments", "All payments")} bodyClassName={d.payments.length ? "p-0 sm:p-0" : undefined}>
             {d.payments.length === 0 ? (
-              <p className="text-sm text-muted">No payments are due.</p>
+              <p className="text-sm text-ink-muted">No payments are due.</p>
             ) : (
               <ul className="divide-y divide-line-subtle">
                 {d.payments.map((p) => (
                   <li key={p.id}>
-                    <Link href={`/orders/${p.order.id}#payments`} className="flex items-start justify-between gap-3 px-4 py-3.5 transition-colors duration-150 hover:bg-surface-muted sm:px-5">
+                    <Link href={`/orders/${p.order.id}#payments`} className="flex items-start justify-between gap-3 px-4 py-3.5 transition-colors duration-150 hover:bg-surface-hover sm:px-5">
                       <span className="min-w-0">
-                        <span className="block truncate text-sm font-medium text-navy">{p.label}</span>
-                        <span className="block truncate text-xs leading-5 text-muted">{p.order.reference} · {p.order.project.name}</span>
-                        {p.dueAt && <span className="block text-xs leading-5 text-muted">Due {relativeDays(p.dueAt)}</span>}
+                        <span className="block truncate text-sm font-medium text-ink">{p.label}</span>
+                        <span className="block truncate text-xs leading-5 text-ink-muted">{p.order.reference} · {p.order.project.name}</span>
+                        {p.dueAt && <span className="block text-xs leading-5 text-ink-muted">Due {relativeDays(p.dueAt)}</span>}
                       </span>
                       <span className="flex shrink-0 flex-col items-end gap-1.5">
-                        <span className="tabular text-sm font-semibold text-navy">{formatMoney(p.amount, p.currency)}</span>
+                        <span className="tabular text-sm font-semibold text-ink">{formatMoney(p.amount, p.currency)}</span>
                         <StatusBadge map={PAYMENT_STATUS} value={p.status} />
                       </span>
                     </Link>
@@ -218,26 +218,30 @@ function BrandOnboarding({ create }: { create: React.ReactNode }) {
     { icon: FileText, t: "Compare & accept", d: "Accepting a quotation creates the order and its production plan." },
   ];
   return (
-    <section aria-labelledby="getting-started" className="min-w-0 rounded-lg border border-line bg-white shadow-card">
-      <div className="border-b border-line px-4 py-6 sm:px-6 sm:py-7">
-        <p className="eyebrow text-slate-blue">Getting started</p>
-        <h2 id="getting-started" className="mt-2 font-display text-xl font-semibold tracking-tight text-navy">Start your first production run</h2>
-        <p className="mt-1.5 max-w-xl text-sm leading-6 text-muted">
+    <section aria-labelledby="getting-started" className="min-w-0 rounded-lg border border-line bg-surface">
+      <div className="border-b border-line px-4 py-6 sm:px-7 sm:py-8">
+        <p className="eyebrow text-accent-strong">Getting started</p>
+        <h2 id="getting-started" className="mt-3 max-w-lg font-display text-2xl font-normal leading-tight tracking-[-0.015em] text-ink sm:text-[28px]">
+          Start your first production run
+        </h2>
+        <p className="mt-2 max-w-xl text-sm leading-6 text-ink-muted">
           Nothing to show yet. Once you submit a project, its matches, quotations, orders and payments appear here.
         </p>
-        <div className="mt-5 flex flex-wrap gap-2 max-sm:[&>*]:grow">{create}</div>
+        <div className="mt-6 flex flex-wrap gap-2 max-sm:[&>*]:grow">{create}</div>
       </div>
       <ol className="grid sm:grid-cols-3">
         {steps.map((s, i) => (
-          <li key={s.t} className="border-line-subtle px-4 py-5 max-sm:border-t max-sm:first:border-t-0 sm:border-l sm:px-6 sm:first:border-l-0">
-            <span className="flex items-center gap-2.5">
-              <span className="tabular grid size-6 place-items-center rounded-full bg-teal-50 text-xs font-semibold text-teal-700" aria-hidden>{i + 1}</span>
-              <s.icon className="size-4 text-subtle" aria-hidden />
+          <li key={s.t} className="border-line-subtle px-4 py-5 max-sm:border-t max-sm:first:border-t-0 sm:border-l sm:px-7 sm:py-6 sm:first:border-l-0">
+            <span className="flex items-center justify-between gap-2.5">
+              <span className="tabular font-display text-2xl font-light leading-none text-accent-strong" aria-hidden>
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <s.icon className="size-4 text-ink-subtle" aria-hidden />
             </span>
-            <p className="mt-3 text-sm font-semibold text-navy">
+            <p className="mt-4 border-t border-line pt-3 text-sm font-semibold text-ink">
               <span className="sr-only">Step {i + 1}: </span>{s.t}
             </p>
-            <p className="mt-1 text-[13px] leading-5 text-muted">{s.d}</p>
+            <p className="mt-1 text-[13px] leading-5 text-ink-muted">{s.d}</p>
           </li>
         ))}
       </ol>
@@ -340,17 +344,17 @@ async function ManufacturerHome({ actor }: { actor: Actor }) {
                     <li key={o.id}>
                       <Link
                         href={`/orders/${o.id}`}
-                        className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-4 py-3.5 transition-colors duration-150 hover:bg-surface-muted sm:grid-cols-[minmax(0,1fr)_10rem_auto] sm:px-5"
+                        className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-4 py-3.5 transition-colors duration-150 hover:bg-surface-hover sm:grid-cols-[minmax(0,1fr)_10rem_auto] sm:px-5"
                       >
                         <span className="min-w-0">
-                          <span className="block truncate text-sm font-medium text-navy">{o.project.name}</span>
-                          <span className="tabular block truncate text-xs leading-5 text-muted">
+                          <span className="block truncate text-sm font-medium text-ink">{o.project.name}</span>
+                          <span className="tabular block truncate text-xs leading-5 text-ink-muted">
                             {o.reference}{current?.plannedEnd ? ` · stage due ${formatDate(current.plannedEnd)}` : ""}
                           </span>
                         </span>
                         <span className="col-span-2 row-start-2 min-w-0 sm:col-span-1 sm:row-start-auto">
                           <ProgressBar value={done} max={STAGES.length} label={`${done} of ${STAGES.length} stages complete`} tone={current?.isDelayed ? "danger" : "accent"} />
-                          <span className="tabular mt-1.5 flex justify-between gap-2 text-xs leading-4 text-muted">
+                          <span className="tabular mt-1.5 flex justify-between gap-2 text-xs leading-4 text-ink-muted">
                             <span className="truncate">{stageLabel(o.currentStage)}</span>
                             <span aria-hidden>{done}/{STAGES.length}</span>
                           </span>
@@ -376,16 +380,16 @@ async function ManufacturerHome({ actor }: { actor: Actor }) {
         <div className="space-y-6">
           <Panel title="Payments received" actions={viewAll("/payments", "Details")}>
             {d.paid.length === 0 ? (
-              <p className="text-sm text-muted">No payments received yet.</p>
+              <p className="text-sm text-ink-muted">No payments received yet.</p>
             ) : (
               <ul className="space-y-1">
                 {d.paid.map((p) => (
-                  <li key={p.currency} className="type-metric text-navy">{formatMoney(p._sum.amount ?? 0, p.currency)}</li>
+                  <li key={p.currency} className="type-metric text-ink">{formatMoney(p._sum.amount ?? 0, p.currency)}</li>
                 ))}
               </ul>
             )}
-            <p className="mt-3 flex items-start gap-1.5 border-t border-line-subtle pt-3 text-xs leading-5 text-muted">
-              <BadgeCheck className="mt-0.5 size-3.5 shrink-0 text-subtle" aria-hidden /> Sandbox payments — no real money is transferred in this build.
+            <p className="mt-3 flex items-start gap-1.5 border-t border-line-subtle pt-3 text-xs leading-5 text-ink-muted">
+              <BadgeCheck className="mt-0.5 size-3.5 shrink-0 text-ink-subtle" aria-hidden /> Sandbox payments — no real money is transferred in this build.
             </p>
           </Panel>
           <Panel title="Recent notifications" actions={viewAll("/notifications", "View all")} bodyClassName="p-0 sm:p-0">

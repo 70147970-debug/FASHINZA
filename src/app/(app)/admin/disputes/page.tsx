@@ -84,18 +84,18 @@ export default async function AdminDisputesPage({ searchParams }: { searchParams
                     <td className="text-[13px]">{DISPUTE_CATEGORY[d.category]}</td>
                     <td className="text-[13px]">
                       {d.order ? (
-                        <Link href={`/orders/${d.order.id}`} className="tabular rounded-sm text-navy underline-offset-4 hover:underline">
+                        <Link href={`/orders/${d.order.id}`} className="tabular rounded-sm text-ink underline-offset-4 hover:underline">
                           {d.order.reference}
                         </Link>
                       ) : (
-                        (d.project?.name ?? <span className="text-muted">—</span>)
+                        (d.project?.name ?? <span className="text-ink-muted">—</span>)
                       )}
                     </td>
                     <td className="text-[13px]">
                       {d.reporter.name}
-                      <p className="text-xs text-muted">{ROLE_LABEL[d.reporter.role]}</p>
+                      <p className="text-xs text-ink-muted">{ROLE_LABEL[d.reporter.role]}</p>
                     </td>
-                    <td className="tabular whitespace-nowrap text-[13px] text-muted">{formatDate(d.createdAt)}</td>
+                    <td className="tabular whitespace-nowrap text-[13px] text-ink-muted">{formatDate(d.createdAt)}</td>
                     <td>
                       <StatusBadge map={DISPUTE_STATUS} value={d.status} />
                     </td>

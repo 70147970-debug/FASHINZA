@@ -47,7 +47,7 @@ export function ChipSelect({
     <fieldset aria-describedby={hint ? `${id}-hint` : undefined}>
       <legend className="mb-2 text-[13px] font-medium leading-5 text-ink">
         {label}
-        {required ? <span className="text-danger" aria-hidden> *</span> : <span className="font-normal text-muted"> (optional)</span>}
+        {required ? <span className="text-accent-strong" aria-hidden> *</span> : <span className="font-normal text-ink-muted"> (optional)</span>}
       </legend>
       <div className="flex flex-wrap gap-2">
         {all.map((o) => {
@@ -56,8 +56,8 @@ export function ChipSelect({
             <label
               key={o.value}
               className={cn(
-                "inline-flex min-h-8 cursor-pointer select-none items-center gap-1.5 rounded-full border px-3 py-1 text-[13px] font-medium transition-colors duration-150 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-teal max-sm:min-h-10",
-                on ? "border-teal bg-teal-50 text-teal-800" : "border-line-strong bg-white text-neutral-700 hover:border-neutral-400 hover:text-navy",
+                "inline-flex min-h-8 cursor-pointer select-none items-center gap-1.5 rounded-md border px-3 py-1 text-[13px] font-medium transition-colors duration-150 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus max-sm:min-h-10",
+                on ? "border-accent bg-accent-soft text-accent-strong" : "border-line-strong bg-surface text-ink-muted hover:border-line-control hover:text-ink",
               )}
             >
               <input type="checkbox" name={name} value={o.value} checked={on} onChange={() => toggle(o.value)} className="sr-only" />
@@ -66,7 +66,7 @@ export function ChipSelect({
               {custom.includes(o.value) && (
                 <button
                   type="button"
-                  className="-mr-1 rounded-full p-0.5 hover:bg-teal/10"
+                  className="-mr-1 rounded-sm p-0.5 hover:bg-accent/15"
                   aria-label={`Remove ${o.label}`}
                   onClick={(e) => {
                     e.preventDefault();
@@ -100,13 +100,13 @@ export function ChipSelect({
           <button
             type="button"
             onClick={addCustom}
-            className="inline-flex h-9 shrink-0 items-center gap-1 rounded-md border border-line-strong bg-white px-3 text-[13px] font-medium text-navy shadow-card transition-colors hover:bg-surface-muted max-sm:h-10"
+            className="inline-flex h-9 shrink-0 items-center gap-1 rounded-md border border-line-strong bg-surface px-3 text-[13px] font-medium text-ink transition-colors hover:border-line-control hover:bg-surface-hover max-sm:h-10"
           >
             <Plus className="size-4" aria-hidden /> Add
           </button>
         </div>
       )}
-      {hint && <p id={`${id}-hint`} className="mt-1.5 text-xs text-muted">{hint}</p>}
+      {hint && <p id={`${id}-hint`} className="mt-1.5 text-xs text-ink-muted">{hint}</p>}
       <FieldError name={name} />
     </fieldset>
   );

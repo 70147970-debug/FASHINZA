@@ -70,28 +70,28 @@ export function QuotationCompare({ quotes, projectId, canDecide }: { quotes: Quo
     },
     { title: "Terms", rows: [{ label: "Valid until", render: (q) => formatDate(q.validUntil) }] },
   ];
-  const highlight = (q: QuoteRow) => (q.id === lowest || q.id === fastest ? "bg-teal-50/40" : "");
-  const rowHead = "sticky left-0 z-10 border-t border-line-subtle bg-white py-2.5 pl-4 pr-3 text-left text-[13px] font-normal text-muted sm:pl-5";
+  const highlight = (q: QuoteRow) => (q.id === lowest || q.id === fastest ? "bg-accent-soft/40" : "");
+  const rowHead = "sticky left-0 z-10 border-t border-line-subtle bg-surface py-2.5 pl-4 pr-3 text-left text-[13px] font-normal text-ink-muted sm:pl-5";
   const cell = "border-l border-t border-line-subtle px-4 py-2.5";
 
   return (
     <div className="relative">
-      {quotes.length > 1 && <p className="border-b border-line-subtle px-4 py-2 text-xs text-muted md:hidden">Scroll sideways to compare factories.</p>}
+      {quotes.length > 1 && <p className="border-b border-line-subtle px-4 py-2 text-xs text-ink-muted md:hidden">Scroll sideways to compare factories.</p>}
       <div className="overflow-x-auto" role="region" aria-label="Quotation comparison, scrollable" tabIndex={0}>
         <table className="w-full min-w-[34rem] border-separate border-spacing-0 text-left text-sm">
           <caption className="sr-only">Quotation comparison</caption>
           <thead>
             <tr>
-              <th scope="col" className="label-caps sticky left-0 z-10 w-40 min-w-36 bg-surface-muted py-3 pl-4 pr-3 align-bottom text-muted sm:w-48 sm:pl-5">Factory</th>
+              <th scope="col" className="label-caps sticky left-0 z-10 w-40 min-w-36 border-b border-line-strong bg-surface pb-3.5 pl-4 pr-3 pt-4 align-bottom text-ink-muted sm:w-48 sm:pl-5">Factory</th>
               {quotes.map((q) => {
                 const f = q.manufacturer.manufacturerProfile;
                 return (
-                  <th key={q.id} scope="col" className={`min-w-52 border-l border-line-subtle bg-surface-muted px-4 py-3 align-bottom font-normal`}>
-                    <span className="flex items-center gap-1 text-sm font-semibold text-navy">
+                  <th key={q.id} scope="col" className={`min-w-52 border-b border-l border-b-line-strong border-l-line-subtle px-4 pb-3.5 pt-4 align-bottom font-normal ${highlight(q)}`}>
+                    <span className="flex items-center gap-1.5 font-display text-[17px] font-medium leading-6 tracking-[-0.01em] text-ink">
                       {f?.businessName ?? "Factory"}
                       {f?.verificationStatus === "VERIFIED" && <BadgeCheck className="size-4 shrink-0 text-success" aria-label="Verified" />}
                     </span>
-                    <span className="mt-0.5 block text-xs text-muted">{f ? `${f.city}, ${f.country}` : ""} · v{q.version}</span>
+                    <span className="mt-0.5 block text-xs text-ink-muted">{f ? `${f.city}, ${f.country}` : ""} · v{q.version}</span>
                     <span className="mt-2 flex flex-wrap gap-1">
                       <StatusBadge map={QUOTATION_STATUS} value={q.status} />
                       {q.id === lowest && <Badge tone="success">Lowest total</Badge>}
@@ -102,17 +102,17 @@ export function QuotationCompare({ quotes, projectId, canDecide }: { quotes: Quo
               })}
             </tr>
           </thead>
-          {groups.map((g) => (
+          {groups.map((g, gi) => (
             <tbody key={g.title}>
               <tr>
-                <th scope="rowgroup" className="label-caps sticky left-0 z-10 border-t border-line bg-white pb-1.5 pl-4 pr-3 pt-4 text-left text-slate-blue sm:pl-5">{g.title}</th>
-                <td colSpan={quotes.length} className="border-t border-line" />
+                <th scope="rowgroup" className={`eyebrow sticky left-0 z-10 bg-surface pb-2 pl-4 pr-3 pt-5 text-left text-accent-strong sm:pl-5 ${gi ? "border-t border-line" : ""}`}>{g.title}</th>
+                <td colSpan={quotes.length} className={gi ? "border-t border-line" : undefined} />
               </tr>
               {g.rows.map((r) => (
                 <tr key={r.label}>
                   <th scope="row" className={rowHead}>{r.label}</th>
                   {quotes.map((q) => (
-                    <td key={q.id} className={`tabular ${cell} ${highlight(q)} ${r.strong ? "font-display text-base font-semibold text-navy" : "text-ink"}`}>{r.render(q)}</td>
+                    <td key={q.id} className={`tabular ${cell} ${highlight(q)} ${r.strong ? "font-display text-lg font-medium tracking-[-0.01em] text-ink" : "text-ink"}`}>{r.render(q)}</td>
                   ))}
                 </tr>
               ))}
@@ -121,12 +121,12 @@ export function QuotationCompare({ quotes, projectId, canDecide }: { quotes: Quo
                   <th scope="row" className={`${rowHead} align-top`}>Terms</th>
                   {quotes.map((q) => (
                     <td key={q.id} className={`${cell} ${highlight(q)} align-top text-xs leading-5 text-ink`}>
-                      {q.notes ?? <span className="text-muted">—</span>}
-                      {q.status === "REVISION_REQUESTED" && q.revisionRequest && <p className="mt-2 rounded-md bg-warning-50 px-2 py-1.5 text-warning-700">You asked: {q.revisionRequest}</p>}
+                      {q.notes ?? <span className="text-ink-muted">—</span>}
+                      {q.status === "REVISION_REQUESTED" && q.revisionRequest && <p className="mt-2 rounded-sm border border-warning-line bg-warning-soft px-2 py-1.5 text-warning-strong">You asked: {q.revisionRequest}</p>}
                       {q.revisions.length > 0 && (
                         <details className="mt-2">
-                          <summary className="cursor-pointer font-medium text-teal-700 hover:underline hover:underline-offset-4">History ({q.revisions.length} earlier version{q.revisions.length === 1 ? "" : "s"})</summary>
-                          <ul className="mt-1.5 space-y-1 text-muted">
+                          <summary className="cursor-pointer font-medium text-accent-strong hover:underline hover:underline-offset-4">History ({q.revisions.length} earlier version{q.revisions.length === 1 ? "" : "s"})</summary>
+                          <ul className="mt-1.5 space-y-1 text-ink-muted">
                             {q.revisions.map((r) => {
                               const s = (r.snapshot ?? {}) as { totalAmount?: string; productionDays?: number; quantity?: number };
                               return (
@@ -148,9 +148,9 @@ export function QuotationCompare({ quotes, projectId, canDecide }: { quotes: Quo
           {canDecide && (
             <tbody>
               <tr>
-                <th scope="row" className={`${rowHead} border-line bg-surface-muted py-3.5`}>Decision</th>
+                <th scope="row" className={`${rowHead} border-t-line-strong bg-surface-muted py-3.5`}>Decision</th>
                 {quotes.map((q) => (
-                  <td key={q.id} className="border-l border-t border-line bg-surface-muted px-4 py-3.5 align-top">
+                  <td key={q.id} className="border-l border-t border-l-line-subtle border-t-line-strong bg-surface-muted px-4 py-3.5 align-top">
                     {OPEN.includes(q.status) ? (
                       <QuotationDecisionButtons
                         quotationId={q.id}
@@ -160,7 +160,7 @@ export function QuotationCompare({ quotes, projectId, canDecide }: { quotes: Quo
                         canAccept={q.status === "SUBMITTED"}
                       />
                     ) : (
-                      <span className="text-xs text-muted">No action</span>
+                      <span className="text-xs text-ink-muted">No action</span>
                     )}
                   </td>
                 ))}

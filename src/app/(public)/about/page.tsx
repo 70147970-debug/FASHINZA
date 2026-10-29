@@ -23,13 +23,13 @@ export default function AboutPage() {
         title="Making apparel manufacturing easier to manage"
         description="Fashinza is a B2B platform that connects fashion brands with clothing manufacturers and keeps the whole production run in one shared workflow."
         aside={
-          <div className="rounded-lg border border-line bg-surface-muted p-5 sm:p-6">
-            <p className="label-caps mb-2 text-muted">Fact sheet</p>
-            <dl className="divide-y divide-line">
+          <div className="border-t border-line-strong lg:ml-auto lg:max-w-md">
+            <p className="label-caps py-4 text-ink-muted">Fact sheet</p>
+            <dl className="border-t border-line">
               {FACTS.map(([k, v]) => (
-                <div key={k} className="flex flex-col gap-0.5 py-3 sm:flex-row sm:justify-between sm:gap-6">
-                  <dt className="text-sm text-muted">{k}</dt>
-                  <dd className="text-sm font-medium text-navy sm:text-right">{v}</dd>
+                <div key={k} className="flex flex-col gap-0.5 border-b border-line py-3.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
+                  <dt className="text-sm text-ink-muted">{k}</dt>
+                  <dd className="font-display text-[1.0625rem] font-medium tracking-[-0.01em] text-ink sm:text-right">{v}</dd>
                 </div>
               ))}
             </dl>
@@ -37,23 +37,23 @@ export default function AboutPage() {
         }
       />
       <Section labelledBy="problem-title">
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-16">
-          <SectionHeading id="problem-title" eyebrow="Context" title="The problem we are addressing" className="lg:mb-0" />
-          <div className="space-y-5 text-[1.0625rem] leading-8 text-ink">
-            <p>
+        <div className="grid gap-10 lg:grid-cols-12 lg:gap-10">
+          <SectionHeading id="problem-title" index="01" eyebrow="Context" title="The problem we are addressing" className="lg:col-span-5 lg:mb-0" />
+          <div className="space-y-6 text-[1.0625rem] leading-8 text-ink lg:col-span-7 lg:pt-[3.75rem] lg:text-lg lg:leading-8">
+            <p className="first-letter:float-left first-letter:mr-2.5 first-letter:mt-1 first-letter:font-display first-letter:text-[3.75rem] first-letter:font-normal first-letter:leading-[0.85] first-letter:text-accent-strong">
               Many brands, especially startups, still source factories through directories and manage production
               through email, spreadsheets and messaging apps. Requirements get lost, status updates arrive late, and
               quality problems are discovered after the goods are made.
             </p>
-            <p className="text-muted">
+            <p className="text-ink-muted">
               Manufacturers face the opposite problem: requests that do not fit their capacity or capabilities, and
               no standard way to quote or report progress.
             </p>
           </div>
         </div>
       </Section>
-      <Section tone="white" labelledBy="approach-title">
-        <SectionHeading id="approach-title" eyebrow="Principles" title="Our approach" />
+      <Section tone="surface" labelledBy="approach-title">
+        <SectionHeading id="approach-title" index="02" eyebrow="Principles" title="Our approach" />
         <FeatureGrid columns={4}>
           <FeatureCard icon={Eye} title="Transparent matching">Compatibility is calculated from documented rules, and the reasons are always shown.</FeatureCard>
           <FeatureCard icon={Layers} title="One shared status">Brands and manufacturers see the same milestones, quotations and quality results.</FeatureCard>
@@ -62,10 +62,10 @@ export default function AboutPage() {
         </FeatureGrid>
       </Section>
       <Section labelledBy="project-title">
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-16">
-          <SectionHeading id="project-title" eyebrow="Academic project" title="About this project" className="lg:mb-0" />
-          <div className="rounded-lg border border-line bg-white p-6 shadow-card sm:p-8">
-            <p className="text-[0.9375rem] leading-7 text-ink">
+        <div className="grid gap-10 lg:grid-cols-12 lg:gap-10">
+          <SectionHeading id="project-title" index="03" eyebrow="Academic project" title="About this project" className="lg:col-span-5 lg:mb-0" />
+          <div className="border-l-2 border-accent pl-6 lg:col-span-7 lg:mt-[3.75rem]">
+            <p className="text-[1.0625rem] leading-8 text-ink">
               Fashinza is being developed as a Final Year Project in the Department of Software Engineering at The University of Lahore. This version is a
               working MVP: payments run through a sandbox provider (no real money), production updates refresh by polling, and email delivery is not yet
               configured. Demand forecasting and message translation are planned extensions.

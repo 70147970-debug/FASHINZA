@@ -38,33 +38,33 @@ export function RegisterForm({ defaultRole }: { defaultRole: "BRAND" | "MANUFACT
     >
       {state.message && <Alert tone={state.status === "success" ? "success" : "error"}>{state.message}</Alert>}
       <fieldset>
-        <legend className="mb-2 text-sm font-medium text-ink">Account type <span className="text-danger" aria-hidden>*</span></legend>
+        <legend className="mb-2 text-[13px] font-medium text-ink">Account type <span className="text-accent-strong" aria-hidden>*</span></legend>
         <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2">
           {ROLES.map((r) => (
             <label
               key={r.value}
               className={cn(
-                "relative flex cursor-pointer flex-col gap-1 rounded-lg border p-3.5 text-sm transition-colors duration-150 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-teal has-[:focus-visible]:ring-offset-2",
-                role === r.value ? "border-teal bg-teal-50 shadow-card" : "border-line-strong bg-white hover:bg-surface-muted",
+                "relative flex cursor-pointer flex-col gap-1 rounded-md border p-3.5 text-sm transition-colors duration-150 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-canvas",
+                role === r.value ? "border-accent bg-accent-soft" : "border-line-control bg-surface hover:bg-surface-hover",
               )}
             >
               <input type="radio" name="role" value={r.value} checked={role === r.value} onChange={() => setRole(r.value)} className="sr-only" />
               <span
                 className={cn(
                   "absolute right-3 top-3 grid size-4 place-items-center rounded-full border",
-                  role === r.value ? "border-teal-700 bg-teal-700 text-white" : "border-line-strong bg-white",
+                  role === r.value ? "border-accent bg-accent text-accent-fg" : "border-line-control bg-surface",
                 )}
                 aria-hidden
               >
                 {role === r.value && <Check className="size-2.5" strokeWidth={3.5} />}
               </span>
-              <r.icon className={cn("mb-1 size-5", role === r.value ? "text-teal-700" : "text-neutral-500")} aria-hidden />
-              <span className="font-medium text-navy">{r.label}</span>
-              <span className="text-xs leading-4 text-muted">{r.hint}</span>
+              <r.icon className={cn("mb-1 size-5", role === r.value ? "text-accent-strong" : "text-ink-subtle")} aria-hidden />
+              <span className="font-medium text-ink">{r.label}</span>
+              <span className="text-xs leading-4 text-ink-muted">{r.hint}</span>
             </label>
           ))}
         </div>
-        {errors.role && <p className="mt-1 text-xs text-danger">{errors.role}</p>}
+        {errors.role && <p className="mt-1.5 text-xs text-danger-strong">{errors.role}</p>}
       </fieldset>
       <Field id="name" label="Full name" required error={errors.name}>
         <Input name="name" autoComplete="name" />
