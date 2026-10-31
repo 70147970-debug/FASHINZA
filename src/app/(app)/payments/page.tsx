@@ -88,7 +88,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
                       badge={<StatusBadge map={PAYMENT_STATUS} value={p.status} />}
                       meta={
                         <>
-                          <Link href={`/orders/${p.order.id}#payments`} className="rounded-sm font-medium text-accent-strong underline-offset-4 hover:underline">{p.order.reference}</Link> · {p.order.project.name} · {counterparty(p)}
+                          <Link href={`/orders/${p.order.id}?tab=payments`} className="rounded-sm font-medium text-accent-strong underline-offset-4 hover:underline">{p.order.reference}</Link> · {p.order.project.name} · {counterparty(p)}
                         </>
                       }
                     >
@@ -127,7 +127,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
                         <p className="mt-0.5 text-xs text-ink-muted">Due after {stageLabel(p.triggerStage).toLowerCase()}</p>
                       </td>
                       <td>
-                        <Link href={`/orders/${p.order.id}#payments`} className="rounded-sm text-[13px] font-medium text-ink hover:underline hover:underline-offset-4">
+                        <Link href={`/orders/${p.order.id}?tab=payments`} className="rounded-sm text-[13px] font-medium text-ink hover:underline hover:underline-offset-4">
                           {p.order.project.name}
                         </Link>
                         <p className="mt-0.5 text-xs text-ink-muted">

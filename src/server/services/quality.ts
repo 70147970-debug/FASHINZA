@@ -38,7 +38,7 @@ export async function submitSample(actor: Actor, orderId: string, input: { descr
         data: { orderId, round, description: input.description, revisionNotes: input.revisionNotes, submittedById: actor.id, photos: { create: stored } },
       });
       await tx.productionMilestone.update({ where: { orderId_stage: { orderId, stage: "SAMPLING" } }, data: { status: "AWAITING_APPROVAL" } });
-      await notify(tx, order.brandId, "SAMPLE_SUBMITTED", "Sample ready for review", `Sample round ${round} for order ${order.reference} (${order.project.name}) is waiting for your decision.`, `/orders/${orderId}#sampling`);
+      await notify(tx, order.brandId, "SAMPLE_SUBMITTED", "Sample ready for review", `Sample round ${round} for order ${order.reference} (${order.project.name}) is waiting for your decision.`, `/orders/${orderId}?tab=samples`);
       await logActivity(tx, { actorId: actor.id, orderId, projectId: order.projectId, type: "SAMPLE_SUBMITTED", message: `Sample round ${round} submitted with ${stored.length} photo(s).` });
       return sample;
     });
@@ -61,7 +61,7 @@ export async function reviewSample(actor: Actor, sampleId: string, decision: "AP
     if (!updated.count) throw conflict("This sample has already been reviewed.");
     const label = { APPROVED: "approved", REJECTED: "rejected", REVISION_REQUESTED: "returned for revision" }[decision];
     await logActivity(tx, { actorId: actor.id, orderId: sample.orderId, projectId: sample.order.projectId, type: `SAMPLE_${decision}`, message: `Sample round ${sample.round} ${label}${feedback ? `: ${feedback}` : "."}` });
-    await notify(tx, sample.order.manufacturerId, "SAMPLE_DECISION", `Sample ${label}`, `Round ${sample.round} for order ${sample.order.reference} was ${label}${feedback ? `: ${feedback}` : "."}`, `/orders/${sample.orderId}#sampling`);
+    await notify(tx, sample.order.manufacturerId, "SAMPLE_DECISION", `Sample ${label}`, `Round ${sample.round} for order ${sample.order.reference} was ${label}${feedback ? `: ${feedback}` : "."}`, `/orders/${sample.orderId}?tab=samples`);
     if (decision === "APPROVED") {
       await completeStage(tx, sample.orderId, "SAMPLING", actor.id, `Sample round ${sample.round} approved.`);
     } else {
@@ -128,12 +128,12 @@ export async function submitQcReport(actor: Actor, orderId: string, input: QcRep
         });
         await rollbackForRework(tx, orderId);
         const msg = `Inspection failed for order ${order.reference}: ${evaluation.reasons.join(" ")} Production returned to ${stageLabel(REWORK_STAGE).toLowerCase()} for rework.`;
-        await notify(tx, [order.brandId, order.manufacturerId].filter((id) => id !== actor.id), "QC_OUTCOME", "Inspection failed — rework required", msg, `/orders/${orderId}#quality`);
+        await notify(tx, [order.brandId, order.manufacturerId].filter((id) => id !== actor.id), "QC_OUTCOME", "Inspection failed — rework required", msg, `/orders/${orderId}?tab=samples`);
         await notifyAdmins(tx, "QC_OUTCOME", "Failed inspection", msg, `/admin/qc`);
         await logActivity(tx, { actorId: actor.id, orderId, projectId: order.projectId, type: "QC_FAILED", message: msg });
       } else {
         await tx.productionMilestone.update({ where: { orderId_stage: { orderId, stage: "QUALITY_CONTROL" } }, data: { status: "AWAITING_APPROVAL" } });
-        await notify(tx, order.brandId, "QC_REPORT_SUBMITTED", "Inspection passed — decision needed", `Order ${order.reference} passed inspection (${defective} defect(s) in ${input.sampleSize} units). Review and accept the report to release the goods.`, `/orders/${orderId}#quality`);
+        await notify(tx, order.brandId, "QC_REPORT_SUBMITTED", "Inspection passed — decision needed", `Order ${order.reference} passed inspection (${defective} defect(s) in ${input.sampleSize} units). Review and accept the report to release the goods.`, `/orders/${orderId}?tab=samples`);
         await logActivity(tx, { actorId: actor.id, orderId, projectId: order.projectId, type: "QC_PASSED", message: `Inspection passed: ${defective} defect(s) in ${input.sampleSize} units inspected.` });
       }
       return report;
@@ -158,11 +158,11 @@ export async function decideQcReport(actor: Actor, reportId: string, decision: "
     if (decision === "ACCEPTED") {
       await tx.reworkTask.updateMany({ where: { orderId: o.id, status: "OPEN" }, data: { status: "COMPLETED", resolvedAt: new Date() } });
       await completeStage(tx, o.id, "QUALITY_CONTROL", actor.id, note ?? "QC report accepted by the brand.");
-      await notify(tx, o.manufacturerId, "QC_OUTCOME", "QC report accepted", `The brand accepted the inspection for order ${o.reference}. Prepare the shipment.`, `/orders/${o.id}#quality`);
+      await notify(tx, o.manufacturerId, "QC_OUTCOME", "QC report accepted", `The brand accepted the inspection for order ${o.reference}. Prepare the shipment.`, `/orders/${o.id}?tab=samples`);
     } else {
       await tx.reworkTask.create({ data: { orderId: o.id, qcReportId: report.id, description: `Brand rejected the inspection: ${note}` } });
       await rollbackForRework(tx, o.id);
-      await notify(tx, o.manufacturerId, "QC_OUTCOME", "QC report rejected — rework required", `The brand rejected the inspection for order ${o.reference}: ${note}`, `/orders/${o.id}#quality`);
+      await notify(tx, o.manufacturerId, "QC_OUTCOME", "QC report rejected — rework required", `The brand rejected the inspection for order ${o.reference}: ${note}`, `/orders/${o.id}?tab=samples`);
       await notifyAdmins(tx, "QC_OUTCOME", "Brand rejected an inspection", `Order ${o.reference}: ${note}`, `/admin/qc`);
     }
     await logActivity(tx, { actorId: actor.id, orderId: o.id, projectId: o.projectId, type: `QC_${decision}`, message: decision === "ACCEPTED" ? "Brand accepted the QC report." : `Brand rejected the QC report: ${note}` });

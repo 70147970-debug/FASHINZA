@@ -140,8 +140,8 @@ export async function completeStage(tx: Tx, orderId: string, stage: MilestoneSta
   const due = await tx.paymentMilestone.findMany({ where: { orderId, triggerStage: stage, status: "SCHEDULED" } });
   for (const p of due) {
     await tx.paymentMilestone.update({ where: { id: p.id }, data: { status: "DUE", dueAt: new Date(now.getTime() + PAYMENT_DUE_DAYS * DAY) } });
-    await notify(tx, order.brandId, "PAYMENT_UPDATE", "Payment milestone due", `${p.label} (${p.percentage.toString()}%) for order ${order.reference} is now due.`, `/orders/${orderId}#payments`);
-    await notify(tx, order.manufacturerId, "PAYMENT_UPDATE", "Payment milestone due", `${p.label} for order ${order.reference} is now due from the brand.`, `/orders/${orderId}#payments`);
+    await notify(tx, order.brandId, "PAYMENT_UPDATE", "Payment milestone due", `${p.label} (${p.percentage.toString()}%) for order ${order.reference} is now due.`, `/orders/${orderId}?tab=payments`);
+    await notify(tx, order.manufacturerId, "PAYMENT_UPDATE", "Payment milestone due", `${p.label} for order ${order.reference} is now due from the brand.`, `/orders/${orderId}?tab=payments`);
   }
 
   await logActivity(tx, { actorId, orderId, projectId: order.projectId, type: "MILESTONE_COMPLETED", message: `${stageLabel(stage)} completed.${next ? ` ${stageLabel(next)} started.` : " Order delivered."}` });
@@ -268,7 +268,7 @@ export async function postMessage(actor: Actor, orderId: string, body: string, m
     }
     await tx.message.create({ data: { orderId, milestoneId, authorId: actor.id, body } });
     const recipients = [order.brandId, order.manufacturerId].filter((id) => id !== actor.id);
-    await notify(tx, recipients, "MESSAGE_RECEIVED", `New message on ${order.reference}`, body.length > 140 ? `${body.slice(0, 137)}…` : body, `/orders/${orderId}#messages`);
+    await notify(tx, recipients, "MESSAGE_RECEIVED", `New message on ${order.reference}`, body.length > 140 ? `${body.slice(0, 137)}…` : body, `/orders/${orderId}?tab=messages`);
   });
 }
 

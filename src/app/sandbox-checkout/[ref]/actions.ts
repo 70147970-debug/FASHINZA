@@ -30,5 +30,5 @@ export async function simulateCheckoutAction(_prev: FormState, fd: FormData): Pr
     });
   });
   if (result.status === "error") return result;
-  return { status: "success", redirectTo: `/orders/${orderId}?payment=returned#payments` };
+  return { status: "success", redirectTo: `/orders/${orderId}?payment=returned&tab=payments` };
 }

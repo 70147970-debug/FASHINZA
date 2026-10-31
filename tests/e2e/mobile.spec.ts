@@ -1,13 +1,8 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { ACCOUNTS } from "./env";
-import { login } from "./helpers";
+import { expectNoHorizontalOverflow, login } from "./helpers";
 
 /** Mobile layout checks (Pixel 7 profile, plus 320 px and 375 px widths). */
-
-async function expectNoHorizontalOverflow(page: Page) {
-  const { scroll, width } = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, width: window.innerWidth }));
-  expect(scroll, `page is ${scroll}px wide in a ${width}px viewport`).toBeLessThanOrEqual(width);
-}
 
 const PUBLIC = ["/", "/how-it-works", "/for-brands", "/for-manufacturers", "/sustainability", "/about", "/faq", "/contact", "/login", "/register", "/privacy", "/terms"];
 

@@ -7,7 +7,7 @@ import { OrderDetail } from "@/components/orders/order-detail";
 
 export const metadata: Metadata = { title: "Order" };
 
-export default async function OrderPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ created?: string; payment?: string }> }) {
+export default async function OrderPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ created?: string; payment?: string; tab?: string }> }) {
   const actor = await requireOnboardedUser();
   const { id } = await params;
   const sp = await searchParams;

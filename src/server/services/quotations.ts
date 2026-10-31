@@ -110,7 +110,7 @@ async function announceSubmission(tx: Prisma.TransactionClient, quotationId: str
     revised ? "QUOTATION_REVISED" : "QUOTATION_RECEIVED",
     revised ? "Quotation revised" : "New quotation",
     `${factory} ${revised ? `sent version ${q.version} of their quotation` : "sent a quotation"} for “${q.project.name}”: ${q.currency} ${q.totalAmount.toFixed(2)} total.`,
-    `/projects/${q.projectId}#quotations`,
+    `/projects/${q.projectId}?tab=quotations`,
   );
   await logActivity(tx, { actorId: q.manufacturerId, projectId: q.projectId, type: revised ? "QUOTATION_REVISED" : "QUOTATION_SUBMITTED", message: `${factory} ${revised ? `revised their quotation (v${q.version})` : "submitted a quotation"}: ${q.currency} ${q.totalAmount.toFixed(2)}.` });
 }
@@ -149,7 +149,7 @@ export async function withdrawQuotation(actor: Actor, quotationId: string) {
     if (!q) throw notFound("Quotation");
     if (!["DRAFT", ...OPEN].includes(q.status)) throw conflict("This quotation can no longer be withdrawn.");
     await tx.quotation.update({ where: { id: q.id }, data: { status: "WITHDRAWN", decidedAt: new Date() } });
-    if (q.submittedAt) await notify(tx, q.project.brandId, "QUOTATION_REJECTED", "Quotation withdrawn", `A factory withdrew its quotation for “${q.project.name}”.`, `/projects/${q.projectId}#quotations`);
+    if (q.submittedAt) await notify(tx, q.project.brandId, "QUOTATION_REJECTED", "Quotation withdrawn", `A factory withdrew its quotation for “${q.project.name}”.`, `/projects/${q.projectId}?tab=quotations`);
   });
 }
 

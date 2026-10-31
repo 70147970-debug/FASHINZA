@@ -43,7 +43,7 @@ function Evidence({ m, size = "sm" }: { m: TrackerMilestone; size?: "sm" | "md" 
 function Comments({ count }: { count: number }) {
   if (count === 0) return null;
   return (
-    <a href="#messages" className="mt-2 inline-flex items-center gap-1 rounded-sm text-xs font-medium text-accent-strong underline-offset-4 hover:underline">
+    <a href="?tab=messages" className="mt-2 inline-flex items-center gap-1 rounded-sm text-xs font-medium text-accent-strong underline-offset-4 hover:underline">
       <MessageSquare className="size-3.5" aria-hidden />
       {count} comment{count === 1 ? "" : "s"}
     </a>
@@ -101,8 +101,11 @@ function UpcomingRow({ m }: { m: TrackerMilestone }) {
   );
 }
 
-/** The stage in progress: emphasised card with facts, evidence and the actions for whoever acts next. */
-function CurrentStage({ m, action }: { m: TrackerMilestone; action: React.ReactNode }) {
+/**
+ * The stage in progress: emphasised card with its facts and evidence. The controls live in the page's
+ * "Your next step" card; `note` is a short pointer to it (or nothing when the viewer has nothing to do).
+ */
+function CurrentStage({ m, note }: { m: TrackerMilestone; note?: React.ReactNode }) {
   const def = STAGE_BY_KEY[m.stage];
   const overdue = daysOverdue(m.plannedEnd, m.completedAt);
   const late = m.isDelayed || overdue > 0;
@@ -162,28 +165,28 @@ function CurrentStage({ m, action }: { m: TrackerMilestone; action: React.ReactN
         <Evidence m={m} size="md" />
         <Comments count={m.commentCount} />
       </div>
-      {action && <div className="space-y-4 border-t border-line bg-surface-muted px-4 py-4 sm:px-6 sm:py-5">{action}</div>}
+      {note && <div className="border-t border-line bg-surface-muted/50 px-4 py-3 text-[13px] leading-5 text-ink-muted sm:px-6">{note}</div>}
     </li>
   );
 }
 
 /**
- * Production milestones. While an order is open the stage in progress comes first (with its actions), the
+ * Production milestones (history view). While an order is open the stage in progress comes first, the
  * completed stages fold into a "history" disclosure and upcoming stages follow as compact rows. Closed orders
  * show the full history. Only the current stage carries aria-current="step".
- * `actionFor` renders the controls for the current stage (only the server decides who sees which controls;
- * the services enforce them again).
+ * The stage controls are not rendered here: they live in the page's "Your next step" card, and
+ * `currentNote` points there.
  */
 export function MilestoneTracker({
   milestones,
   currentStage,
   closed,
-  actionFor,
+  currentNote,
 }: {
   milestones: TrackerMilestone[];
   currentStage: MilestoneStage;
   closed: boolean;
-  actionFor: (m: TrackerMilestone) => React.ReactNode;
+  currentNote?: React.ReactNode;
 }) {
   const currentIndex = closed ? -1 : milestones.findIndex((m) => m.stage === currentStage);
 
@@ -226,7 +229,7 @@ export function MilestoneTracker({
         </details>
       )}
       <ol start={currentIndex + 1} className="space-y-0">
-        <CurrentStage m={current} action={actionFor(current)} />
+        <CurrentStage m={current} note={currentNote} />
       </ol>
 
       {after.length > 0 && (

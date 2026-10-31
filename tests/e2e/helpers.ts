@@ -36,3 +36,24 @@ export async function confirmDialog(page: Page, button: string | RegExp, fill?: 
 export function inDays(n: number) {
   return new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
 }
+
+/** Fails when the page scrolls sideways (wider content than the viewport). */
+export async function expectNoHorizontalOverflow(page: Page) {
+  const { scroll, width } = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, width: window.innerWidth }));
+  expect(scroll, `${page.url()} is ${scroll}px wide in a ${width}px viewport`).toBeLessThanOrEqual(width);
+}
+
+/** Opens each path on a 320px-wide screen, checks nothing scrolls sideways, then restores the viewport. */
+export async function expectPagesFitPhone(page: Page, paths: string[]) {
+  const original = page.viewportSize();
+  await page.setViewportSize({ width: 320, height: 740 });
+  try {
+    for (const path of paths) {
+      await page.goto(path);
+      await expect(page.locator("main h1").first()).toBeVisible();
+      await expectNoHorizontalOverflow(page);
+    }
+  } finally {
+    if (original) await page.setViewportSize(original);
+  }
+}

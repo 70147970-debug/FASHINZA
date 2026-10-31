@@ -90,7 +90,7 @@ export default async function AdminPaymentsPage({ searchParams }: { searchParams
                 <li key={p.id} className="px-4 py-3.5 sm:px-5">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <Link href={`/orders/${p.order.id}#payments`} className="rounded-sm text-sm font-medium text-ink underline-offset-4 hover:underline">
+                      <Link href={`/orders/${p.order.id}?tab=payments`} className="rounded-sm text-sm font-medium text-ink underline-offset-4 hover:underline">
                         <span className="tabular">{p.order.reference}</span> · {p.label}
                       </Link>
                       <p className="mt-0.5 text-xs text-ink-muted">

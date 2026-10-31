@@ -50,7 +50,7 @@ export default async function SandboxCheckoutPage({ params }: { params: Promise<
             </div>
             <div className="space-y-4 p-5 sm:p-7">
               {txn.status !== "PENDING" ? (
-                <Alert tone="info">This checkout has already been processed (status: {txn.status.toLowerCase()}). <Link className="font-medium underline underline-offset-4" href={`/orders/${pm.order.id}#payments`}>Back to the order</Link></Alert>
+                <Alert tone="info">This checkout has already been processed (status: {txn.status.toLowerCase()}). <Link className="font-medium underline underline-offset-4" href={`/orders/${pm.order.id}?tab=payments`}>Back to the order</Link></Alert>
               ) : (
                 <>
                   <p className="text-sm leading-6 text-ink-muted">

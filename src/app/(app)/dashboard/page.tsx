@@ -186,7 +186,7 @@ async function BrandHome({ actor, welcome }: { actor: Actor; welcome: boolean })
               <ul className="divide-y divide-line-subtle">
                 {d.payments.map((p) => (
                   <li key={p.id}>
-                    <Link href={`/orders/${p.order.id}#payments`} className="flex items-start justify-between gap-3 px-4 py-3.5 transition-colors duration-150 hover:bg-surface-hover sm:px-5">
+                    <Link href={`/orders/${p.order.id}?tab=payments`} className="flex items-start justify-between gap-3 px-4 py-3.5 transition-colors duration-150 hover:bg-surface-hover sm:px-5">
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-medium text-ink">{p.label}</span>
                         <span className="block truncate text-xs leading-5 text-ink-muted">{p.order.reference} · {p.order.project.name}</span>

@@ -16,7 +16,7 @@ const capped = (n: number) => (n >= CAP ? `${CAP}+` : n);
 
 function OrderLink({ order }: { order: { id: string; reference: string; project: { name: string } } }) {
   return (
-    <Link href={`/orders/${order.id}#quality`} className="rounded-sm text-sm font-medium text-ink underline-offset-4 hover:underline">
+    <Link href={`/orders/${order.id}?tab=samples`} className="rounded-sm text-sm font-medium text-ink underline-offset-4 hover:underline">
       {order.project.name}
       <span className="tabular font-normal text-ink-muted"> · {order.reference}</span>
     </Link>

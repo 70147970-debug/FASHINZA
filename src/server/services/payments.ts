@@ -128,7 +128,7 @@ async function applyEvent(tx: Prisma.TransactionClient, event: ProviderEvent): P
     const text = succeeded
       ? `${pm.label} payment of ${pm.currency} ${txn.amount.toFixed(2)} for order ${order.reference} was received.`
       : `${pm.label} payment for order ${order.reference} failed: ${event.data.reason ?? "declined"}.`;
-    await notify(tx, [order.brandId, order.manufacturerId], "PAYMENT_UPDATE", succeeded ? "Payment received" : "Payment failed", text, `/orders/${order.id}#payments`);
+    await notify(tx, [order.brandId, order.manufacturerId], "PAYMENT_UPDATE", succeeded ? "Payment received" : "Payment failed", text, `/orders/${order.id}?tab=payments`);
     await logActivity(tx, { actorId: null, orderId: order.id, projectId: order.projectId, type: succeeded ? "PAYMENT_SUCCEEDED" : "PAYMENT_FAILED", message: text });
     return { status: "processed" };
   }
@@ -139,7 +139,7 @@ async function applyEvent(tx: Prisma.TransactionClient, event: ProviderEvent): P
     if (!moved.count) return { status: "ignored", detail: "Refund already settled." };
     await tx.paymentMilestone.update({ where: { id: pm.id }, data: { status: "REFUNDED" } });
     const text = `${pm.label} payment of ${pm.currency} ${txn.amount.toFixed(2)} for order ${order.reference} was refunded.`;
-    await notify(tx, [order.brandId, order.manufacturerId], "PAYMENT_UPDATE", "Payment refunded", text, `/orders/${order.id}#payments`);
+    await notify(tx, [order.brandId, order.manufacturerId], "PAYMENT_UPDATE", "Payment refunded", text, `/orders/${order.id}?tab=payments`);
     await logActivity(tx, { actorId: null, orderId: order.id, projectId: order.projectId, type: "PAYMENT_REFUNDED", message: text });
     return { status: "processed" };
   }
@@ -192,6 +192,6 @@ export async function updatePaymentSchedule(actor: Actor, orderId: string, items
       })),
     });
     await logActivity(tx, { actorId: actor.id, orderId, projectId: order.projectId, type: "PAYMENT_SCHEDULE_CHANGED", message: `Payment schedule updated: ${sorted.map((s) => `${s.label} ${s.percentage}%`).join(", ")}.` });
-    await notify(tx, order.manufacturerId, "PAYMENT_UPDATE", "Payment schedule changed", `The brand updated the payment schedule for order ${order.reference}.`, `/orders/${orderId}#payments`);
+    await notify(tx, order.manufacturerId, "PAYMENT_UPDATE", "Payment schedule changed", `The brand updated the payment schedule for order ${order.reference}.`, `/orders/${orderId}?tab=payments`);
   });
 }
