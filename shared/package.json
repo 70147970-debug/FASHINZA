@@ -1,0 +1,22 @@
+{
+  "name": "@fashinza/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Plain-JavaScript domain modules shared by the Fashinza server and client (validation, matching, AQL, workflow, money maths, labels, formatting).",
+  "exports": {
+    "./*": "./src/*"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "decimal.js": "^10.6.0",
+    "tailwind-merge": "^3.7.0",
+    "zod": "~3.25.76"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.7"
+  }
+}

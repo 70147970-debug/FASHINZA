@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fashinza — Garment manufacturing for fashion brands</title>
+    <!-- The description (and per-page titles) are rendered by <PageMeta> (src/components/meta.jsx). -->
+    <!-- Browser chrome matches the page canvas: warm ivory (light) and charcoal (dark). -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F8F6F1" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#161616" />
+    <link rel="icon" href="./src/assets/favicon.ico" type="image/x-icon" sizes="16x16" />
+    <!--
+      No-flash theme script (same as THEME_INIT_SCRIPT in src/components/theme/theme.js): resolves the saved
+      preference (or the OS setting while it is "system") onto <html data-theme> before first paint, and keeps
+      following OS changes while the preference is "system". Plain ES5; blocked storage falls back to the OS.
+    -->
+    <script>
+      (function(){var d=document.documentElement,k="fz-theme",m;try{m=window.matchMedia("(prefers-color-scheme: dark)")}catch(e){}function p(){var v=null;try{v=localStorage.getItem(k)}catch(e){}return v==="light"||v==="dark"?v:"system"}function a(){var v=p();d.setAttribute("data-theme",v==="system"?(m&&m.matches?"dark":"light"):v)}a();try{m&&m.addEventListener("change",function(){if(p()==="system")a()})}catch(e){}})();
+    </script>
+  </head>
+  <body class="min-h-dvh">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

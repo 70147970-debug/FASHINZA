@@ -1,0 +1,149 @@
+import { Link } from "react-router";
+import { AlertTriangle } from "lucide-react";
+import { DataTable, MobileCard, MobileCardList, ProgressBar, StatusBadge } from "@/components/app/primitives";
+import { ORDER_STATUS } from "@fashinza/shared/labels.js";
+import { STAGES, stageLabel } from "@fashinza/shared/workflow.js";
+import { formatDate } from "@fashinza/shared/format.js";
+import { cn } from "@fashinza/shared/utils.js";
+
+function progress(o) {
+  return o.milestones.filter((m) => m.status === "COMPLETED").length;
+}
+
+function isClosed(o) {
+  return ["DELIVERED", "CANCELLED"].includes(o.status);
+}
+
+function delayed(o) {
+  if (isClosed(o)) return false;
+  return o.milestones.some((m) => m.isDelayed && !m.completedAt) || o.expectedCompletionDate < new Date();
+}
+
+/**
+ * The date that matters for the order's state: when it was delivered, the date it was due when it was cancelled,
+ * or the agreed delivery date while it is open (never a future-sounding "Due" on a finished order).
+ */
+function dateCell(o) {
+  if (o.status === "DELIVERED") return { label: "Delivered", date: o.deliveredAt };
+  if (o.status === "CANCELLED") return { label: "Was due", date: o.expectedCompletionDate };
+  return { label: "Due", date: o.expectedCompletionDate };
+}
+
+function DelayedFlag() {
+  return (
+    <span className="inline-flex items-center gap-1 text-xs font-medium text-danger-strong">
+      <AlertTriangle className="size-3.5" aria-hidden />
+      Delayed
+    </span>
+  );
+}
+
+function Stage({ o }) {
+  const done = progress(o);
+  return (
+    <span className="block min-w-0">
+      <span className="block truncate text-[13px] text-ink">
+        {o.status === "DELIVERED" ? "All stages complete" : isClosed(o) ? `Stopped at ${stageLabel(o.currentStage).toLowerCase()}` : stageLabel(o.currentStage)}
+      </span>
+      <span className="mt-1.5 flex items-center gap-2">
+        <ProgressBar
+          value={done}
+          max={STAGES.length}
+          label={`${done} of ${STAGES.length} stages complete`}
+          tone={delayed(o) ? "warning" : o.status === "DELIVERED" ? "success" : "ink"}
+          className="w-24"
+        />
+        <span className="tabular text-xs text-ink-muted">
+          {done}/{STAGES.length}
+        </span>
+      </span>
+    </span>
+  );
+}
+
+/**
+ * Orders as a table from tablet width and as stacked cards on phones (only one is in the accessibility tree),
+ * with stage progress and delay flags. Delayed open orders get a warning edge so they stand out in long lists.
+ * @param {{ items: any[], counterpart: "brand" | "factory" | "both" }} props
+ */
+export function OrderTable({ items, counterpart }) {
+  const party = (o) =>
+    counterpart === "brand"
+      ? o.brand.brandProfile?.companyName
+      : counterpart === "factory"
+        ? o.manufacturer.manufacturerProfile?.businessName
+        : `${o.brand.brandProfile?.companyName ?? "Brand"} → ${o.manufacturer.manufacturerProfile?.businessName ?? "Factory"}`;
+
+  const cards = (
+    <MobileCardList>
+      {items.map((o) => (
+        <MobileCard
+          key={o.id}
+          href={`/orders/${o.id}`}
+          title={o.project.name}
+          badge={<StatusBadge map={ORDER_STATUS} value={o.status} />}
+          meta={
+            <>
+              <span className="tabular">{o.reference}</span> · {party(o)}
+            </>
+          }
+        >
+          <span className="flex items-end justify-between gap-3">
+            <Stage o={o} />
+            <span className="shrink-0 text-right text-xs text-ink-muted">
+              <span className="block">
+                {dateCell(o).label} {formatDate(dateCell(o).date)}
+              </span>
+              {delayed(o) && <DelayedFlag />}
+            </span>
+          </span>
+        </MobileCard>
+      ))}
+    </MobileCardList>
+  );
+
+  return (
+    <DataTable label="Orders" cards={cards}>
+      <table className="data-table">
+        <thead>
+          <tr>
+            <th scope="col">Order</th>
+            <th scope="col">{counterpart === "brand" ? "Brand" : counterpart === "factory" ? "Factory" : "Parties"}</th>
+            <th scope="col">Stage</th>
+            <th scope="col">Delivery</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((o) => {
+            const late = delayed(o);
+            return (
+              <tr key={o.id} className={cn(late && "bg-danger-soft/40")}>
+                <td className={cn("relative", late && "shadow-[inset_2px_0_0_var(--color-danger)]")}>
+                  <Link to={`/orders/${o.id}`} className="cell-primary rounded-sm">
+                    {o.project.name}
+                  </Link>
+                  <p className="tabular mt-0.5 text-xs text-ink-muted">{o.reference}</p>
+                </td>
+                <td className="max-w-56 text-[13px]">{party(o)}</td>
+                <td>
+                  <Stage o={o} />
+                </td>
+                <td className="whitespace-nowrap">
+                  {isClosed(o) && <p className="text-xs text-ink-muted">{dateCell(o).label}</p>}
+                  <p className={cn("tabular text-[13px]", late ? "font-medium text-danger-strong" : isClosed(o) ? "text-ink-muted" : "text-ink")}>
+                    {formatDate(dateCell(o).date)}
+                  </p>
+                  {late && <DelayedFlag />}
+                </td>
+                <td>
+                  <StatusBadge map={ORDER_STATUS} value={o.status} />
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </DataTable>
+  );
+}

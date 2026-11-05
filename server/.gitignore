@@ -1,0 +1,3 @@
+node_modules
+# local overrides of the root .env (see docs/mern/README.md)
+.env

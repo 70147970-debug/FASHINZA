@@ -1,0 +1,171 @@
+import { useRef, useState } from "react";
+import { useRevalidator } from "react-router";
+import { UploadCloud, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/input";
+import { toast } from "@/components/ui/toaster";
+import { ATTACHMENT_KINDS, UPLOAD_LIMITS, attachmentKind } from "@fashinza/shared/constants.js";
+import { formatBytes } from "@fashinza/shared/format.js";
+
+/**
+ * Uploads project files through /api/projects/:id/attachments with XMLHttpRequest so that real
+ * byte-level progress can be shown. Type and size are checked here for fast feedback and again
+ * on the server (including the file signature) before anything is stored.
+ */
+export function FileUploader({ projectId, defaultKind = "TECH_PACK" }) {
+  const revalidator = useRevalidator();
+  const input = useRef(null);
+  const [kind, setKind] = useState(defaultKind);
+  const [notes, setNotes] = useState("");
+  const [uploads, setUploads] = useState([]);
+  const busy = uploads.some((u) => u.progress < 100 && !u.error);
+  const def = attachmentKind(kind);
+  const accept = def.imagesOnly ? UPLOAD_LIMITS.allowedMime.filter((m) => m.startsWith("image/")) : UPLOAD_LIMITS.allowedMime;
+  const formats = def.imagesOnly ? "PNG, JPEG or WebP" : "PDF, PNG, JPEG or WebP";
+
+  const update = (i, patch) => setUploads((u) => u.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+
+  function send(file, index) {
+    return new Promise((resolve) => {
+      if (!accept.includes(file.type)) {
+        update(index, { error: def.imagesOnly ? `${def.group} must be PNG, JPEG or WebP images.` : "Use a PDF, PNG, JPEG or WebP file." });
+        return resolve();
+      }
+      if (file.size > UPLOAD_LIMITS.maxBytes) {
+        update(index, { error: `Larger than ${UPLOAD_LIMITS.maxBytes / 1024 / 1024} MB.` });
+        return resolve();
+      }
+      const body = new FormData();
+      body.append("file", file);
+      body.append("kind", kind);
+      if (notes.trim()) body.append("notes", notes.trim());
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", `/api/projects/${projectId}/attachments`);
+      xhr.upload.onprogress = (e) => e.lengthComputable && update(index, { progress: Math.min(99, Math.round((e.loaded / e.total) * 100)) });
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          update(index, { progress: 100 });
+          const res = JSON.parse(xhr.responseText);
+          toast.success(res.version ? `Tech pack version ${res.version} uploaded.` : `${attachmentKind(res.kind ?? kind).label} uploaded: ${res.fileName}.`);
+        } else {
+          let msg = "Upload failed.";
+          try {
+            msg = JSON.parse(xhr.responseText).error?.message ?? msg;
+          } catch {
+            /* keep default */
+          }
+          update(index, { error: msg });
+        }
+        resolve();
+      };
+      xhr.onerror = () => {
+        update(index, { error: "Network error. Check your connection and try again." });
+        resolve();
+      };
+      xhr.send(body);
+    });
+  }
+
+  async function onFiles(list) {
+    if (!list?.length) return;
+    const files = Array.from(list).slice(0, 10);
+    const start = uploads.length;
+    setUploads((u) => [...u, ...files.map((f) => ({ name: f.name, size: f.size, progress: 0 }))]);
+    for (let i = 0; i < files.length; i++) await send(files[i], start + i);
+    if (input.current) input.current.value = "";
+    setNotes("");
+    await revalidator.revalidate();
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-[220px_1fr]">
+        <div>
+          <label htmlFor="upload-kind" className="mb-1.5 block text-sm font-medium text-ink">
+            File type
+          </label>
+          <Select id="upload-kind" value={kind} onChange={(e) => setKind(e.target.value)} disabled={busy} aria-describedby="upload-kind-hint">
+            {ATTACHMENT_KINDS.map((k) => (
+              <option key={k.value} value={k.value}>
+                {k.option}
+              </option>
+            ))}
+          </Select>
+          <p id="upload-kind-hint" className="mt-1.5 text-xs leading-4 text-ink-muted">
+            {def.description}
+          </p>
+        </div>
+        <div>
+          <label htmlFor="upload-notes" className="mb-1.5 block text-sm font-medium text-ink">
+            {kind === "TECH_PACK" ? "Version note" : "Note"} <span className="font-normal text-ink-muted">(optional)</span>
+          </label>
+          <Input
+            id="upload-notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            maxLength={300}
+            placeholder={
+              kind === "TECH_PACK"
+                ? "What changed in this version?"
+                : kind === "MEASUREMENT_CHART"
+                  ? "For example: graded XS–XL, tolerances ±1 cm"
+                  : "Short description"
+            }
+            disabled={busy}
+          />
+        </div>
+      </div>
+      <label
+        className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed border-line-control bg-surface-muted/60 px-4 py-9 text-center transition-colors duration-150 hover:border-accent hover:bg-accent-soft/40 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus"
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          e.preventDefault();
+          if (!busy) void onFiles(e.dataTransfer.files);
+        }}
+      >
+        <UploadCloud className="size-6 text-accent" strokeWidth={1.5} aria-hidden />
+        <span className="text-sm font-medium text-ink">Drop files here or choose files</span>
+        <span className="text-xs text-ink-muted">
+          {def.label}: {formats} · up to {UPLOAD_LIMITS.maxBytes / 1024 / 1024} MB each · stored privately
+        </span>
+        <input ref={input} type="file" multiple accept={accept.join(",")} className="sr-only" disabled={busy} onChange={(e) => void onFiles(e.target.files)} />
+      </label>
+      {uploads.length > 0 && (
+        <ul className="space-y-2" aria-live="polite">
+          {uploads.map((u, i) => (
+            <li key={`${u.name}-${i}`} className="rounded-md border border-line bg-surface px-3 py-2.5">
+              <div className="flex items-center justify-between gap-2 text-sm">
+                <span className="min-w-0 truncate">
+                  {u.name} <span className="text-xs text-ink-muted">· {formatBytes(u.size)}</span>
+                </span>
+                {u.error ? (
+                  <Button variant="ghost" size="sm" onClick={() => setUploads((x) => x.filter((_, j) => j !== i))} aria-label={`Dismiss ${u.name}`}>
+                    <X />
+                  </Button>
+                ) : (
+                  <span className="tabular text-xs text-ink-muted">{u.progress === 100 ? "Uploaded" : `${u.progress}%`}</span>
+                )}
+              </div>
+              {u.error ? (
+                <p className="mt-1 text-xs text-danger-strong" role="alert">
+                  {u.error}
+                </p>
+              ) : (
+                <div
+                  className="mt-2 h-1 overflow-hidden rounded-xs bg-line"
+                  role="progressbar"
+                  aria-valuenow={u.progress}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={`Uploading ${u.name}`}
+                >
+                  <div className="h-full rounded-xs bg-accent transition-[width] motion-reduce:transition-none" style={{ width: `${u.progress}%` }} />
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}

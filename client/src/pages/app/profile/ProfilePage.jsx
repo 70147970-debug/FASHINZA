@@ -1,0 +1,62 @@
+import { Eye, Lock, MapPin } from "lucide-react";
+import { useLoaderData } from "react-router";
+import { loadJson } from "@/lib/api";
+import { PageHeader, Panel } from "@/components/app/primitives";
+import { BrandProfileForm } from "@/components/profile/profile-forms";
+import { Avatar } from "@/components/ui/avatar";
+import { PageMeta } from "@/components/meta";
+
+/** GET /api/profile/brand. */
+export async function loader({ request }) {
+  const { profile } = await loadJson("/api/profile/brand", { request });
+  // findUniqueOrThrow: an onboarded brand always has a profile.
+  if (!profile) throw new Error("No BrandProfile found");
+  return { p: profile };
+}
+
+export default function BrandProfilePage() {
+  const { p } = useLoaderData();
+  return (
+    <>
+      <PageMeta title="Company profile" />
+      <PageHeader title="Company profile" description="Factories you are matched with see your company name, country and description." />
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+        <Panel title="Company details" description="Saved changes apply to every project you send.">
+          <BrandProfileForm values={p} />
+        </Panel>
+
+        <div className="space-y-6">
+          <Panel title="What factories see" description="Shown with each project you submit for matching.">
+            <div className="flex items-start gap-3">
+              <Avatar name={p.companyName} shape="square" tone="ink" size="lg" />
+              <div className="min-w-0">
+                <p className="truncate font-display text-lg font-medium leading-6 text-ink">{p.companyName}</p>
+                {p.country && (
+                  <p className="mt-0.5 flex items-center gap-1.5 text-[13px] text-ink-muted">
+                    <MapPin className="size-3.5 shrink-0 text-ink-subtle" aria-hidden /> {p.country}
+                  </p>
+                )}
+              </div>
+            </div>
+            <p className="mt-4 border-t border-line-subtle pt-4 text-sm leading-6 text-ink">
+              {p.description || <span className="text-ink-muted">No description yet. A short introduction helps factories decide how to quote.</span>}
+            </p>
+          </Panel>
+
+          <Panel title="Privacy">
+            <ul className="space-y-3 text-[13px] leading-5 text-ink-muted">
+              <li className="flex gap-2.5">
+                <Eye className="mt-0.5 size-4 shrink-0 text-ink-subtle" aria-hidden />
+                Factories see it only once they are matched to one of your submitted projects.
+              </li>
+              <li className="flex gap-2.5">
+                <Lock className="mt-0.5 size-4 shrink-0 text-ink-subtle" aria-hidden />
+                Your website, city, phone number and draft projects are not shown to factories.
+              </li>
+            </ul>
+          </Panel>
+        </div>
+      </div>
+    </>
+  );
+}

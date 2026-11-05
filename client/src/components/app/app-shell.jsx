@@ -1,0 +1,325 @@
+import { useEffect, useRef, useSyncExternalStore } from "react";
+import { Form, Link, useLocation } from "react-router";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { Bell, Building2, Check, ChevronDown, Factory, LogOut, Menu, Monitor, Moon, Search, Settings, Sun } from "lucide-react";
+import { Sheet, SheetClose, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { THEME_OPTIONS } from "@/components/theme/theme";
+import { readThemePreference, setThemePreference, subscribeTheme } from "@/components/theme/theme-client";
+import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@fashinza/shared/utils.js";
+import { ROLE_LABEL } from "@fashinza/shared/labels.js";
+import { NAV, homeFor } from "./nav";
+
+function isActive(pathname, href, exact) {
+  return exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+}
+
+/** Serif wordmark with a small accent-coloured full stop. */
+function Brand({ href }) {
+  return (
+    <Link to={href} className="inline-flex items-baseline rounded-sm" aria-label="Fashinza home">
+      <span className="font-display text-[1.375rem] font-medium leading-none tracking-[-0.025em] text-ink" aria-hidden>
+        Fashinza
+      </span>
+      <span className="ml-0.5 size-[5px] translate-y-[-1px] rounded-full bg-accent" aria-hidden />
+    </Link>
+  );
+}
+
+function NavLinks({ role, unread, onNavigate }) {
+  const { pathname } = useLocation();
+  return (
+    <nav aria-label="Application" className="flex flex-col gap-5">
+      {NAV[role].map((group, gi) => (
+        <div key={gi}>
+          {group.label && <p className="label-caps mb-1.5 px-3 text-ink-muted">{group.label}</p>}
+          <ul className="space-y-px">
+            {group.items.map((item) => {
+              const active = isActive(pathname, item.href, item.exact);
+              const count = item.href === "/notifications" && unread > 0 ? (unread > 99 ? "99+" : String(unread)) : null;
+              const link = (
+                <Link
+                  to={item.href}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "group relative flex h-9 items-center gap-3 rounded-md px-3 text-sm transition-colors duration-150 max-lg:h-10",
+                    active
+                      ? "bg-surface font-medium text-ink shadow-[inset_0_0_0_1px_var(--color-line)] before:absolute before:inset-y-2 before:-left-3 before:w-[3px] before:rounded-r-xs before:bg-accent"
+                      : "text-ink-muted hover:bg-surface-hover hover:text-ink",
+                  )}
+                >
+                  <item.icon
+                    className={cn("size-4 shrink-0", active ? "text-accent" : "text-ink-subtle group-hover:text-ink")}
+                    strokeWidth={active ? 2 : 1.75}
+                    aria-hidden
+                  />
+                  <span className="truncate">{item.label}</span>
+                  {count && (
+                    <span
+                      className={cn(
+                        "tabular ml-auto rounded-sm px-1.5 text-2xs font-semibold leading-[1.125rem]",
+                        active ? "bg-accent-soft text-accent-strong" : "bg-surface-muted text-ink-muted",
+                      )}
+                      aria-hidden
+                    >
+                      {count}
+                    </span>
+                  )}
+                </Link>
+              );
+              return <li key={item.href}>{onNavigate ? <SheetClose asChild>{link}</SheetClose> : link}</li>;
+            })}
+          </ul>
+        </div>
+      ))}
+    </nav>
+  );
+}
+
+function SidebarBody({ user, unread, onSignOut, mobile }) {
+  const org = user.org ?? ROLE_LABEL[user.role];
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex h-16 shrink-0 items-center px-6">
+        <Brand href={homeFor(user.role)} />
+      </div>
+
+      <div className="mx-6 mb-5 border-y border-line py-3">
+        <p className="eyebrow text-ink-muted">{ROLE_LABEL[user.role]} workspace</p>
+        <p className="mt-1 truncate font-display text-[15px] font-medium leading-5 text-ink">{org}</p>
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
+        <NavLinks role={user.role} unread={unread} onNavigate={mobile} />
+      </div>
+
+      <div className="mx-3 flex shrink-0 items-center gap-2.5 border-t border-line px-3 py-3">
+        <Avatar name={user.name} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[13px] font-medium leading-5 text-ink">{user.name}</p>
+          <p className="truncate text-xs leading-4 text-ink-muted">{user.email}</p>
+        </div>
+        <button
+          type="button"
+          onClick={onSignOut}
+          className="grid size-8 shrink-0 place-items-center rounded-md text-ink-muted transition-colors hover:bg-surface-hover hover:text-ink max-lg:size-10"
+          aria-label="Sign out"
+          title="Sign out"
+        >
+          <LogOut className="size-4" aria-hidden />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** What the global search covers for each role (the search page searches exactly these). */
+const SEARCH_SCOPE = {
+  BRAND: "Search projects and orders",
+  MANUFACTURER: "Search opportunities and orders",
+  ADMIN: "Search projects and orders",
+};
+
+/** The account's own profile page, linked from the account menu. */
+const PROFILE_LINK = {
+  BRAND: { href: "/profile", label: "Company profile", icon: Building2 },
+  MANUFACTURER: { href: "/factory", label: "Factory profile", icon: Factory },
+};
+
+const THEME_ICONS = { light: Sun, dark: Moon, system: Monitor };
+
+const menuItem =
+  "flex w-full cursor-default items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm text-ink outline-none transition-colors data-[highlighted]:bg-surface-hover data-[highlighted]:text-ink max-sm:min-h-10 [&_svg]:size-4 [&_svg]:text-ink-muted";
+
+export function AppShell({ user, unread, signOut, children }) {
+  const signOutForm = useRef(null);
+  const searchInput = useRef(null);
+  const requestSignOut = () => signOutForm.current?.requestSubmit();
+  const { pathname } = useLocation();
+  const theme = useSyncExternalStore(subscribeTheme, readThemePreference, () => "system");
+  const profile = PROFILE_LINK[user.role];
+
+  // On the results page the box keeps the query that was searched for; elsewhere it starts empty.
+  useEffect(() => {
+    const input = searchInput.current;
+    if (!input) return;
+    input.value = pathname === "/search" ? (new URLSearchParams(window.location.search).get("q") ?? "") : "";
+  }, [pathname]);
+
+  // "/" focuses the global search unless the user is typing somewhere already.
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
+      const t = e.target;
+      if (t && (t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName))) return;
+      e.preventDefault();
+      searchInput.current?.focus();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  return (
+    <div className="min-h-dvh lg:pl-sidebar">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-[60] focus:rounded-md focus:bg-surface-raised focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-ink focus:shadow-pop"
+      >
+        Skip to content
+      </a>
+
+      {/* Desktop sidebar */}
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-sidebar border-r border-line bg-canvas lg:block">
+        <SidebarBody user={user} unread={unread} onSignOut={requestSignOut} />
+      </aside>
+
+      {/* Top bar */}
+      <header className="sticky top-0 z-20 border-b border-line bg-canvas/90 backdrop-blur supports-[backdrop-filter]:bg-canvas/80">
+        <div className="flex h-16 items-center gap-2 px-3 sm:gap-3 sm:px-6 lg:px-8">
+          <Sheet>
+            <SheetTrigger asChild>
+              <button
+                type="button"
+                className="grid size-10 shrink-0 place-items-center rounded-md text-ink transition-colors hover:bg-surface-hover lg:hidden"
+                aria-label="Open navigation"
+              >
+                <Menu className="size-5" aria-hidden />
+              </button>
+            </SheetTrigger>
+            <SheetContent title="Navigation" side="left" hideTitle className="w-[17.5rem] max-w-[85vw] bg-canvas p-0">
+              <SidebarBody user={user} unread={unread} onSignOut={requestSignOut} mobile />
+            </SheetContent>
+          </Sheet>
+          <Link to={homeFor(user.role)} className="hidden shrink-0 items-baseline rounded-sm pr-2 sm:inline-flex lg:hidden" aria-label="Fashinza home">
+            <span className="font-display text-xl font-medium leading-none tracking-[-0.025em] text-ink" aria-hidden>
+              Fashinza
+            </span>
+            <span className="ml-0.5 size-[5px] rounded-full bg-accent" aria-hidden />
+          </Link>
+
+          <Form action="/search" role="search" className="flex min-w-0 flex-1 items-center sm:max-w-md">
+            <label htmlFor="global-search" className="sr-only">
+              {SEARCH_SCOPE[user.role]}
+            </label>
+            <div className="relative w-full">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-muted" strokeWidth={1.75} aria-hidden />
+              <input
+                ref={searchInput}
+                id="global-search"
+                name="q"
+                type="search"
+                placeholder={SEARCH_SCOPE[user.role]}
+                className="h-9 w-full min-w-0 rounded-md border border-line-control bg-surface pl-9 pr-3 text-sm text-ink transition-colors duration-150 placeholder:text-ink-placeholder hover:border-ink-muted focus:border-accent focus:outline-none focus:ring-[3px] focus:ring-accent/20 max-sm:h-10 lg:pr-9"
+              />
+              <kbd
+                className="pointer-events-none absolute right-2 top-1/2 hidden h-5 -translate-y-1/2 place-items-center rounded-sm border border-line bg-surface-muted px-1.5 font-sans text-2xs font-medium text-ink-muted lg:grid"
+                aria-hidden
+              >
+                /
+              </kbd>
+            </div>
+          </Form>
+
+          <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1">
+            {/* On phones the theme lives in the account menu, so the search box keeps the room. */}
+            <ThemeToggle className="max-sm:hidden" />
+            <Link
+              to="/notifications"
+              className="relative grid size-9 place-items-center rounded-md text-ink-muted transition-colors hover:bg-surface-hover hover:text-ink max-sm:size-10"
+              aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
+            >
+              <Bell className="size-[18px]" strokeWidth={1.75} aria-hidden />
+              {unread > 0 && (
+                <span
+                  className="tabular absolute right-0.5 top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-accent px-1 text-[10px] font-semibold leading-none text-accent-fg ring-2 ring-canvas"
+                  aria-hidden
+                >
+                  {unread > 99 ? "99+" : unread}
+                </span>
+              )}
+            </Link>
+            <span className="mx-1 hidden h-6 w-px bg-line sm:block" aria-hidden />
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger asChild>
+                <button
+                  className="flex items-center gap-2 rounded-md p-1 transition-colors hover:bg-surface-hover data-[state=open]:bg-surface-hover max-sm:p-1.5 sm:pr-2"
+                  aria-label="Account menu"
+                >
+                  <Avatar name={user.name} size="sm" />
+                  <span className="hidden max-w-40 truncate text-sm font-medium text-ink md:block">{user.name}</span>
+                  <ChevronDown className="hidden size-4 text-ink-muted sm:block" aria-hidden />
+                </button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Portal>
+                <DropdownMenu.Content
+                  align="end"
+                  sideOffset={8}
+                  className="z-50 w-64 rounded-lg border border-line bg-surface-raised p-1.5 text-ink shadow-pop"
+                >
+                  <div className="flex items-center gap-2.5 px-2.5 py-2">
+                    <Avatar name={user.name} />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-ink">{user.name}</p>
+                      <p className="truncate text-xs text-ink-muted">{user.email}</p>
+                    </div>
+                  </div>
+                  <div className="px-2.5 pb-2">
+                    <Badge tone="neutral">{ROLE_LABEL[user.role]} workspace</Badge>
+                  </div>
+                  <DropdownMenu.Separator className="-mx-1.5 my-1 h-px bg-line" />
+                  {profile && (
+                    <DropdownMenu.Item asChild>
+                      <Link to={profile.href} className={menuItem}>
+                        <profile.icon aria-hidden /> {profile.label}
+                      </Link>
+                    </DropdownMenu.Item>
+                  )}
+                  <DropdownMenu.Item asChild>
+                    <Link to="/settings" className={menuItem}>
+                      <Settings aria-hidden /> Settings
+                    </Link>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Separator className="-mx-1.5 my-1 h-px bg-line" />
+                  <DropdownMenu.Label className="label-caps px-2.5 pb-1 pt-1.5 text-ink-muted">Theme</DropdownMenu.Label>
+                  <DropdownMenu.RadioGroup value={theme} onValueChange={(v) => setThemePreference(v)}>
+                    {THEME_OPTIONS.map((o) => {
+                      const ThemeIcon = THEME_ICONS[o.value];
+                      return (
+                        <DropdownMenu.RadioItem key={o.value} value={o.value} className={menuItem}>
+                          <ThemeIcon aria-hidden />
+                          <span className="flex-1">{o.label}</span>
+                          <DropdownMenu.ItemIndicator>
+                            <Check className="!text-accent-strong" aria-hidden />
+                          </DropdownMenu.ItemIndicator>
+                        </DropdownMenu.RadioItem>
+                      );
+                    })}
+                  </DropdownMenu.RadioGroup>
+                  <DropdownMenu.Separator className="-mx-1.5 my-1 h-px bg-line" />
+                  <DropdownMenu.Item onSelect={requestSignOut} className={menuItem}>
+                    <LogOut aria-hidden /> Sign out
+                  </DropdownMenu.Item>
+                </DropdownMenu.Content>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Root>
+            <form
+              ref={signOutForm}
+              onSubmit={(e) => {
+                e.preventDefault();
+                signOut();
+              }}
+              className="hidden"
+              aria-hidden
+            />
+          </div>
+        </div>
+      </header>
+
+      <main id="main" className="mx-auto w-full min-w-0 max-w-app px-4 py-6 sm:px-6 sm:py-10 lg:px-10">
+        {children}
+      </main>
+    </div>
+  );
+}

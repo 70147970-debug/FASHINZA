@@ -1,0 +1,70 @@
+import { expect } from "@playwright/test";
+
+export const pdf = (name = "techpack.pdf") => ({ name, mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4\n% e2e test document\n%%EOF\n") });
+export const png = (name = "photo.png") => ({
+  name,
+  mimeType: "image/png",
+  buffer: Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.from("e2e-image-bytes")]),
+});
+
+/** @param {import("@playwright/test").Page} page */
+export async function login(page, email, password) {
+  await page.goto("/login");
+  await page.getByLabel("Email").fill(email);
+  await page.getByRole("textbox", { name: "Password", exact: true }).fill(password);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).not.toHaveURL(/\/login/);
+}
+
+/** @param {import("@playwright/test").Page} page */
+export async function logout(page) {
+  await page.context().clearCookies();
+}
+
+/** Clicks a toggle chip inside a labelled ChipSelect group. @param {import("@playwright/test").Page} page */
+export async function chip(page, group, option) {
+  await page.getByRole("group", { name: group }).locator("label", { hasText: new RegExp(`^${option.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`) }).click();
+}
+
+/**
+ * Confirms the open dialog by its submit button.
+ * @param {import("@playwright/test").Page} page
+ * @param {string | RegExp} button
+ * @param {Record<string, string>} [fill]
+ */
+export async function confirmDialog(page, button, fill) {
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  for (const [label, value] of Object.entries(fill ?? {})) await dialog.getByLabel(label).fill(value);
+  await dialog.getByRole("button", { name: button }).click();
+  await expect(dialog).toBeHidden();
+}
+
+export function inDays(n) {
+  return new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
+}
+
+/** Fails when the page scrolls sideways (wider content than the viewport). @param {import("@playwright/test").Page} page */
+export async function expectNoHorizontalOverflow(page) {
+  const { scroll, width } = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, width: window.innerWidth }));
+  expect(scroll, `${page.url()} is ${scroll}px wide in a ${width}px viewport`).toBeLessThanOrEqual(width);
+}
+
+/**
+ * Opens each path on a 320px-wide screen, checks nothing scrolls sideways, then restores the viewport.
+ * @param {import("@playwright/test").Page} page
+ * @param {string[]} paths
+ */
+export async function expectPagesFitPhone(page, paths) {
+  const original = page.viewportSize();
+  await page.setViewportSize({ width: 320, height: 740 });
+  try {
+    for (const path of paths) {
+      await page.goto(path);
+      await expect(page.locator("main h1").first()).toBeVisible();
+      await expectNoHorizontalOverflow(page);
+    }
+  } finally {
+    if (original) await page.setViewportSize(original);
+  }
+}

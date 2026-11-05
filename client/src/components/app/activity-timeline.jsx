@@ -1,0 +1,16 @@
+import { formatDateTime } from "@fashinza/shared/format.js";
+import { Timeline } from "./primitives";
+
+/** Audit-style activity feed for a record (newest first, as passed in). */
+export function ActivityTimeline({ items }) {
+  return (
+    <Timeline
+      items={items.map((a) => ({
+        id: a.id,
+        title: a.message,
+        meta: `${formatDateTime(a.createdAt)}${a.actor ? ` · ${a.actor.name}` : " · System"}`,
+        tone: a.actor ? "info" : "neutral",
+      }))}
+    />
+  );
+}

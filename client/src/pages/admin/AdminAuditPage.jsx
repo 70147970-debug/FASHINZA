@@ -1,0 +1,134 @@
+import { useLoaderData } from "react-router";
+import { ScrollText } from "lucide-react";
+import { DataTable, EmptyState, MobileCard, MobileCardList, PageHeader, Pagination } from "@/components/app/primitives";
+import { FilterBar } from "@/components/app/filter-bar";
+import { AuditTargetLink, auditActionLabel, auditTone, targetLabel } from "@/components/admin/audit-parts";
+import { PageMeta } from "@/components/meta";
+import { loadData, searchOf } from "@/lib/data";
+import { formatDateTime } from "@fashinza/shared/format.js";
+import { cn } from "@fashinza/shared/utils.js";
+
+/** /admin/audit — port of src/app/(app)/admin/audit/page.tsx (gate: user ADMIN). */
+
+export async function loader({ request }) {
+  const sp = searchOf(request);
+  const data = await loadData("/api/admin/audit", { request, query: { q: sp.q, targetType: sp.targetType || undefined, page: Number(sp.page) || 1 } });
+  return { data, sp };
+}
+
+const DOT = { success: "bg-success", danger: "bg-danger", warning: "bg-warning", info: "bg-info", neutral: "bg-ink-subtle" };
+
+/** Raw record id and metadata, folded away (searching by record id still works through the filter). */
+function AuditDetails({ value, targetId }) {
+  const details =
+    value && typeof value === "object" && !Array.isArray(value)
+      ? { recordId: targetId, ...value }
+      : value != null
+        ? { recordId: targetId, metadata: value }
+        : { recordId: targetId };
+  return (
+    <details className="group mt-1">
+      <summary className="inline-flex min-h-6 cursor-pointer list-none items-center rounded-sm text-xs font-medium text-accent-strong underline-offset-4 hover:underline max-sm:min-h-10 [&::-webkit-details-marker]:hidden">
+        <span className="group-open:hidden">Show details</span>
+        <span className="hidden group-open:inline">Hide details</span>
+      </summary>
+      <pre className="mt-1 max-w-full whitespace-pre-wrap break-all rounded-md border border-line-subtle bg-surface-muted p-2 font-mono text-2xs leading-4 text-ink-muted">
+        {JSON.stringify(details, null, 1)}
+      </pre>
+    </details>
+  );
+}
+
+export default function AuditPage() {
+  const { data, sp } = useLoaderData();
+  return (
+    <>
+      <PageMeta title="Audit log" />
+      <PageHeader
+        eyebrow="Administration"
+        title="Audit log"
+        description="Append-only record of administrative and sensitive actions: who did what, to which record, when and why. Open a record from its name."
+      />
+      <FilterBar
+        basePath="/admin/audit"
+        q={sp.q}
+        searchLabel="Search action, reason or record id"
+        selects={[{ name: "targetType", label: "Record type", value: sp.targetType, options: data.types.map((t) => ({ value: t, label: targetLabel(t) })) }]}
+      />
+      {data.items.length === 0 ? (
+        <EmptyState icon={ScrollText} title="No audit entries" description="Verification decisions, suspensions, refunds and dispute updates are recorded here." />
+      ) : (
+        <>
+          {/* The table comes first in the DOM so the raw action codes are found there on desktop; phones get cards. */}
+          <DataTable label="Audit log entries" className="hidden md:block">
+            <table className="data-table [&_td]:py-2.5 [&_td]:align-top">
+              <thead>
+                <tr>
+                  <th scope="col">When (UTC)</th>
+                  <th scope="col">Actor</th>
+                  <th scope="col">Action</th>
+                  <th scope="col">Target</th>
+                  <th scope="col">Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.items.map((a) => (
+                  <tr key={a.id}>
+                    <td className="tabular whitespace-nowrap text-[13px] text-ink-muted">{formatDateTime(a.createdAt)}</td>
+                    <td className="text-[13px]">
+                      <span className="font-medium text-ink" title={a.actor.email}>
+                        {a.actor.name}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="flex items-center gap-2 text-[13px] font-medium text-ink">
+                        <span className={cn("size-1.5 shrink-0 rounded-full", DOT[auditTone(a.action)])} aria-hidden />
+                        {auditActionLabel(a.action)}
+                      </span>
+                      <p className="mt-0.5 pl-3.5 font-mono text-2xs text-ink-muted">{a.action}</p>
+                    </td>
+                    <td className="min-w-40 max-w-64 text-[13px] leading-5">
+                      <AuditTargetLink type={a.targetType} target={a.target} />
+                      <p className="text-xs text-ink-muted">{targetLabel(a.targetType)}</p>
+                    </td>
+                    <td className="min-w-48 max-w-80 text-[13px] leading-5">
+                      {a.reason ?? <span className="text-ink-muted">—</span>}
+                      <AuditDetails value={a.metadata} targetId={a.targetId} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </DataTable>
+          <div className="md:hidden">
+            <MobileCardList>
+              {data.items.map((a) => (
+                <MobileCard
+                  key={a.id}
+                  title={
+                    <span className="flex items-center gap-2">
+                      <span className={cn("size-1.5 shrink-0 rounded-full", DOT[auditTone(a.action)])} aria-hidden />
+                      {auditActionLabel(a.action)}
+                    </span>
+                  }
+                  meta={
+                    <>
+                      <span className="tabular">{formatDateTime(a.createdAt)}</span> · {a.actor.name}
+                      <span className="block break-words">
+                        {targetLabel(a.targetType)} · <AuditTargetLink type={a.targetType} target={a.target} />
+                      </span>
+                    </>
+                  }
+                >
+                  {a.reason && <span className="block text-[13px] leading-5 text-ink">{a.reason}</span>}
+                  <AuditDetails value={a.metadata} targetId={a.targetId} />
+                </MobileCard>
+              ))}
+            </MobileCardList>
+          </div>
+          <Pagination page={data.page} pages={data.pages} total={data.total} basePath="/admin/audit" params={{ q: sp.q, targetType: sp.targetType }} />
+        </>
+      )}
+    </>
+  );
+}
