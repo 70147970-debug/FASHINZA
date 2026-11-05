@@ -29,3 +29,18 @@ test("the header and closing band offer the audience-specific next step", async 
   await expect(header.getByRole("link", { name: "Start a Project" })).toHaveAttribute("href", /\/register/);
   await expect(header.getByRole("link", { name: "FAQ" })).toBeVisible();
 });
+
+test("first-time visitors can jump to a brand or manufacturer path and read common questions", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("link", { name: /New here\? See how it works/ }).click();
+  await expect(page).toHaveURL(/#start$/);
+  const start = page.locator("section#start");
+  await expect(start.getByRole("heading", { name: "How will you use Fashinza?" })).toBeInViewport();
+  await expect(start.getByRole("link", { name: "Start Your Manufacturing Project" })).toHaveAttribute("href", "/register?role=brand");
+  await expect(start.getByRole("link", { name: "Join as a Manufacturer" })).toHaveAttribute("href", "/register?role=manufacturer");
+
+  const questions = page.locator("section", { has: page.locator("#questions-title") });
+  await questions.getByText("How do samples work?").click();
+  await expect(questions.locator("details[open]")).toHaveCount(1);
+  await expect(questions.getByRole("link", { name: "Read all questions" })).toHaveAttribute("href", "/faq");
+});
