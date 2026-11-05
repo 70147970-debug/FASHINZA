@@ -4,7 +4,7 @@ import { requireUser } from "@/server/auth/session";
 import { listAudit } from "@/server/services/admin";
 import { DataTable, EmptyState, MobileCard, MobileCardList, PageHeader, Pagination } from "@/components/app/primitives";
 import { FilterBar } from "@/components/app/filter-bar";
-import { auditActionLabel, auditTone, targetLabel } from "@/components/admin/audit-parts";
+import { AuditTargetLink, auditActionLabel, auditTone, targetLabel } from "@/components/admin/audit-parts";
 import { formatDateTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -12,15 +12,16 @@ export const metadata: Metadata = { title: "Audit log" };
 
 const DOT = { success: "bg-success", danger: "bg-danger", warning: "bg-warning", info: "bg-info", neutral: "bg-ink-subtle" } as const;
 
-function AuditDetails({ value }: { value: unknown }) {
-  if (value === null || value === undefined) return null;
+/** Raw record id and metadata, folded away (searching by record id still works through the filter). */
+function AuditDetails({ value, targetId }: { value: unknown; targetId: string }) {
+  const details = value && typeof value === "object" && !Array.isArray(value) ? { recordId: targetId, ...value } : value != null ? { recordId: targetId, metadata: value } : { recordId: targetId };
   return (
     <details className="group mt-1">
-      <summary className="inline-flex min-h-6 cursor-pointer list-none items-center rounded-sm text-xs font-medium text-accent-strong underline-offset-4 hover:underline [&::-webkit-details-marker]:hidden">
+      <summary className="inline-flex min-h-6 cursor-pointer list-none items-center rounded-sm text-xs font-medium text-accent-strong underline-offset-4 hover:underline max-sm:min-h-10 [&::-webkit-details-marker]:hidden">
         <span className="group-open:hidden">Show details</span>
         <span className="hidden group-open:inline">Hide details</span>
       </summary>
-      <pre className="mt-1 max-w-full whitespace-pre-wrap break-all rounded-md border border-line-subtle bg-surface-muted p-2 font-mono text-2xs leading-4 text-ink-muted">{JSON.stringify(value, null, 1)}</pre>
+      <pre className="mt-1 max-w-full whitespace-pre-wrap break-all rounded-md border border-line-subtle bg-surface-muted p-2 font-mono text-2xs leading-4 text-ink-muted">{JSON.stringify(details, null, 1)}</pre>
     </details>
   );
 }
@@ -34,7 +35,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
       <PageHeader
         eyebrow="Administration"
         title="Audit log"
-        description="Append-only record of administrative and sensitive actions: who did what, to which record, when and why."
+        description="Append-only record of administrative and sensitive actions: who did what, to which record, when and why. Open a record from its name."
       />
       <FilterBar
         basePath="/admin/audit"
@@ -63,8 +64,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
                   <tr key={a.id}>
                     <td className="tabular whitespace-nowrap text-[13px] text-ink-muted">{formatDateTime(a.createdAt)}</td>
                     <td className="text-[13px]">
-                      <span className="font-medium text-ink">{a.actor.name}</span>
-                      <p className="text-xs text-ink-muted">{a.actor.email}</p>
+                      <span className="font-medium text-ink" title={a.actor.email}>{a.actor.name}</span>
                     </td>
                     <td>
                       <span className="flex items-center gap-2 text-[13px] font-medium text-ink">
@@ -73,15 +73,13 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
                       </span>
                       <p className="mt-0.5 pl-3.5 font-mono text-2xs text-ink-muted">{a.action}</p>
                     </td>
-                    <td className="text-[13px]">
-                      {targetLabel(a.targetType)}
-                      <p className="max-w-44 truncate font-mono text-2xs text-ink-muted" title={a.targetId}>
-                        {a.targetId}
-                      </p>
+                    <td className="min-w-40 max-w-64 text-[13px] leading-5">
+                      <AuditTargetLink type={a.targetType} target={a.target} />
+                      <p className="text-xs text-ink-muted">{targetLabel(a.targetType)}</p>
                     </td>
                     <td className="min-w-48 max-w-80 text-[13px] leading-5">
                       {a.reason ?? <span className="text-ink-muted">—</span>}
-                      <AuditDetails value={a.metadata} />
+                      <AuditDetails value={a.metadata} targetId={a.targetId} />
                     </td>
                   </tr>
                 ))}
@@ -102,13 +100,14 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
                   meta={
                     <>
                       <span className="tabular">{formatDateTime(a.createdAt)}</span> · {a.actor.name}
-                      <span className="block break-all font-mono text-2xs">
-                        {targetLabel(a.targetType)} · {a.targetId}
+                      <span className="block break-words">
+                        {targetLabel(a.targetType)} · <AuditTargetLink type={a.targetType} target={a.target} />
                       </span>
                     </>
                   }
                 >
                   {a.reason && <span className="block text-[13px] leading-5 text-ink">{a.reason}</span>}
+                  <AuditDetails value={a.metadata} targetId={a.targetId} />
                 </MobileCard>
               ))}
             </MobileCardList>

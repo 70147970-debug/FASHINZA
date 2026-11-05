@@ -110,8 +110,8 @@ export function StatusBadge({
   );
 }
 
-/** A small "sandbox / demo" marker used wherever behaviour is simulated. */
-export function SandboxBadge({ children = "Sandbox mode" }: { children?: React.ReactNode }) {
+/** A small marker used wherever payments are simulated (test mode: no real money moves). */
+export function SandboxBadge({ children = "Test payments" }: { children?: React.ReactNode }) {
   return (
     <Badge tone="warning" dot>
       {children}
@@ -187,7 +187,8 @@ export function Metric({
   const iconTone = dot ? { accent: "text-accent", success: "text-success", warning: "text-warning", danger: "text-danger" }[tone as Exclude<MetricTone, "neutral">] : "text-ink-subtle";
   const body = (
     <>
-      <span className="flex items-center gap-1.5 pr-5 text-xs font-medium leading-4 text-ink-muted">
+      {/* Two label lines are reserved on phones so values in the same row line up when one label wraps. */}
+      <span className="flex items-center gap-1.5 pr-5 text-xs font-medium leading-4 text-ink-muted max-sm:min-h-8 max-sm:items-start">
         {Icon ? (
           <Icon className={cn("size-3.5 shrink-0", iconTone)} strokeWidth={1.75} aria-hidden />
         ) : (
@@ -593,7 +594,7 @@ export type Step = { key: string; label: string; state: StepState; hint?: React.
 const stepStateText: Record<StepState, string> = { done: "completed", current: "current stage", upcoming: "not started" };
 
 /**
- * Horizontal stage stepper (vertical below md). Completed = ink check, current = terracotta ring (ochre with
+ * Horizontal stage stepper (vertical below md). Completed = ink check, current = accent ring (warning tone with
  * `attention`), upcoming = numbered hairline circle.
  * It deliberately does not set aria-current="step" on its items: the order page's milestone list owns that.
  */

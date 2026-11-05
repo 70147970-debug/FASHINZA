@@ -19,7 +19,7 @@ export function Alert({
   className,
   children,
   ...props
-}: Omit<React.HTMLAttributes<HTMLDivElement>, "title"> & { tone?: keyof typeof tones; title?: React.ReactNode }) {
+}: Omit<React.HTMLAttributes<HTMLDivElement>, "title"> & { tone?: keyof typeof tones; title?: React.ReactNode; ref?: React.Ref<HTMLDivElement> }) {
   const { cls, icon, Icon } = tones[tone];
   return (
     <div

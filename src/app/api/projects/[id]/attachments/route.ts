@@ -4,7 +4,8 @@ import { getCurrentUser } from "@/server/auth/session";
 import { addAttachment } from "@/server/services/projects";
 import { errorResponse, unauthenticated } from "@/server/http";
 import { invalid } from "@/server/errors";
-import { UPLOAD_LIMITS } from "@/lib/constants";
+import { ATTACHMENT_KIND_VALUES, UPLOAD_LIMITS } from "@/lib/constants";
+import type { AttachmentKind } from "@/generated/prisma/enums";
 import { rateLimit } from "@/lib/rate-limit";
 
 /**
@@ -23,11 +24,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const file = form.get("file");
     const kind = String(form.get("kind") ?? "OTHER");
     if (!(file instanceof File)) throw invalid("Choose a file to upload.");
-    if (!["TECH_PACK", "SKETCH", "OTHER"].includes(kind)) throw invalid("Unknown file type.");
+    if (!(ATTACHMENT_KIND_VALUES as readonly string[]).includes(kind)) throw invalid("Unknown file type.");
     const notes = String(form.get("notes") ?? "").trim().slice(0, 300) || undefined;
-    const att = await addAttachment(actor, id, file, kind as "TECH_PACK" | "SKETCH" | "OTHER", notes);
+    const att = await addAttachment(actor, id, file, kind as AttachmentKind, notes);
     revalidatePath(`/projects/${id}`);
-    return NextResponse.json({ id: att.id, version: att.version, fileName: att.fileName }, { status: 201 });
+    return NextResponse.json({ id: att.id, kind: att.kind, version: att.version, fileName: att.fileName }, { status: 201 });
   } catch (e) {
     return errorResponse(e);
   }

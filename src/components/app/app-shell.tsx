@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Bell, ChevronDown, LogOut, Menu, Search, Settings } from "lucide-react";
+import { Bell, Building2, Check, ChevronDown, Factory, LogOut, Menu, Monitor, Moon, Search, Settings, Sun, type LucideIcon } from "lucide-react";
 import type { Role } from "@/generated/prisma/enums";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { THEME_OPTIONS, type ThemePreference } from "@/components/theme/theme";
+import { readThemePreference, setThemePreference, subscribeTheme } from "@/components/theme/theme-client";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -20,7 +22,7 @@ function isActive(pathname: string, href: string, exact?: boolean) {
   return exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
 }
 
-/** Serif wordmark with a small terracotta full stop. */
+/** Serif wordmark with a small accent-coloured full stop. */
 function Brand({ href }: { href: string }) {
   return (
     <Link href={href} className="inline-flex items-baseline rounded-sm" aria-label="Fashinza home">
@@ -119,6 +121,21 @@ function SidebarBody({ user, unread, onSignOut, mobile }: { user: ShellUser; unr
   );
 }
 
+/** What the global search covers for each role (the search page searches exactly these). */
+const SEARCH_SCOPE: Record<Role, string> = {
+  BRAND: "Search projects and orders",
+  MANUFACTURER: "Search opportunities and orders",
+  ADMIN: "Search projects and orders",
+};
+
+/** The account's own profile page, linked from the account menu. */
+const PROFILE_LINK: Partial<Record<Role, { href: string; label: string; icon: LucideIcon }>> = {
+  BRAND: { href: "/profile", label: "Company profile", icon: Building2 },
+  MANUFACTURER: { href: "/factory", label: "Factory profile", icon: Factory },
+};
+
+const THEME_ICONS: Record<ThemePreference, LucideIcon> = { light: Sun, dark: Moon, system: Monitor };
+
 const menuItem =
   "flex w-full cursor-default items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm text-ink outline-none transition-colors data-[highlighted]:bg-surface-hover data-[highlighted]:text-ink max-sm:min-h-10 [&_svg]:size-4 [&_svg]:text-ink-muted";
 
@@ -126,6 +143,16 @@ export function AppShell({ user, unread, signOut, children }: { user: ShellUser;
   const signOutForm = useRef<HTMLFormElement>(null);
   const searchInput = useRef<HTMLInputElement>(null);
   const requestSignOut = () => signOutForm.current?.requestSubmit();
+  const pathname = usePathname();
+  const theme = useSyncExternalStore(subscribeTheme, readThemePreference, () => "system" as ThemePreference);
+  const profile = PROFILE_LINK[user.role];
+
+  // On the results page the box keeps the query that was searched for; elsewhere it starts empty.
+  useEffect(() => {
+    const input = searchInput.current;
+    if (!input) return;
+    input.value = pathname === "/search" ? (new URLSearchParams(window.location.search).get("q") ?? "") : "";
+  }, [pathname]);
 
   // "/" focuses the global search unless the user is typing somewhere already.
   useEffect(() => {
@@ -177,7 +204,7 @@ export function AppShell({ user, unread, signOut, children }: { user: ShellUser;
           </Link>
 
           <form action="/search" role="search" className="flex min-w-0 flex-1 items-center sm:max-w-md">
-            <label htmlFor="global-search" className="sr-only">Search projects and orders</label>
+            <label htmlFor="global-search" className="sr-only">{SEARCH_SCOPE[user.role]}</label>
             <div className="relative w-full">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink-muted" strokeWidth={1.75} aria-hidden />
               <input
@@ -185,7 +212,7 @@ export function AppShell({ user, unread, signOut, children }: { user: ShellUser;
                 id="global-search"
                 name="q"
                 type="search"
-                placeholder="Search"
+                placeholder={SEARCH_SCOPE[user.role]}
                 className="h-9 w-full min-w-0 rounded-md border border-line-control bg-surface pl-9 pr-3 text-sm text-ink transition-colors duration-150 placeholder:text-ink-placeholder hover:border-ink-muted focus:border-accent focus:outline-none focus:ring-[3px] focus:ring-accent/20 max-sm:h-10 lg:pr-9"
               />
               <kbd
@@ -198,7 +225,8 @@ export function AppShell({ user, unread, signOut, children }: { user: ShellUser;
           </form>
 
           <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1">
-            <ThemeToggle />
+            {/* On phones the theme lives in the account menu, so the search box keeps the room. */}
+            <ThemeToggle className="max-sm:hidden" />
             <Link
               href="/notifications"
               className="relative grid size-9 place-items-center rounded-md text-ink-muted transition-colors hover:bg-surface-hover hover:text-ink max-sm:size-10"
@@ -239,11 +267,35 @@ export function AppShell({ user, unread, signOut, children }: { user: ShellUser;
                     <Badge tone="neutral">{ROLE_LABEL[user.role]} workspace</Badge>
                   </div>
                   <DropdownMenu.Separator className="-mx-1.5 my-1 h-px bg-line" />
+                  {profile && (
+                    <DropdownMenu.Item asChild>
+                      <Link href={profile.href} className={menuItem}>
+                        <profile.icon aria-hidden /> {profile.label}
+                      </Link>
+                    </DropdownMenu.Item>
+                  )}
                   <DropdownMenu.Item asChild>
                     <Link href="/settings" className={menuItem}>
                       <Settings aria-hidden /> Settings
                     </Link>
                   </DropdownMenu.Item>
+                  <DropdownMenu.Separator className="-mx-1.5 my-1 h-px bg-line" />
+                  <DropdownMenu.Label className="label-caps px-2.5 pb-1 pt-1.5 text-ink-muted">Theme</DropdownMenu.Label>
+                  <DropdownMenu.RadioGroup value={theme} onValueChange={(v) => setThemePreference(v as ThemePreference)}>
+                    {THEME_OPTIONS.map((o) => {
+                      const ThemeIcon = THEME_ICONS[o.value];
+                      return (
+                        <DropdownMenu.RadioItem key={o.value} value={o.value} className={menuItem}>
+                          <ThemeIcon aria-hidden />
+                          <span className="flex-1">{o.label}</span>
+                          <DropdownMenu.ItemIndicator>
+                            <Check className="!text-accent-strong" aria-hidden />
+                          </DropdownMenu.ItemIndicator>
+                        </DropdownMenu.RadioItem>
+                      );
+                    })}
+                  </DropdownMenu.RadioGroup>
+                  <DropdownMenu.Separator className="-mx-1.5 my-1 h-px bg-line" />
                   <DropdownMenu.Item onSelect={requestSignOut} className={menuItem}>
                     <LogOut aria-hidden /> Sign out
                   </DropdownMenu.Item>

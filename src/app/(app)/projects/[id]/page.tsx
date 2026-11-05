@@ -19,11 +19,12 @@ import { FileUploader } from "@/components/projects/file-uploader";
 import { MatchCard } from "@/components/projects/match-card";
 import { cn } from "@/lib/utils";
 import { QuotationCompare } from "@/components/projects/quotation-compare";
+import { RevisionChanges } from "@/components/projects/revision-changes";
 import { CancelProjectButton, RerunMatchingButton } from "@/components/projects/project-buttons";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import type { ScoreBreakdown } from "@/lib/matching";
-import { PROJECT_STATUS, QUOTATION_STATUS, categoryLabel } from "@/lib/labels";
+import { PROJECT_STATUS, QUOTATION_STATUS, categoryLabel, sampleRequestSummary } from "@/lib/labels";
 import { formatDate, formatDateTime, formatMoney, formatNumber, relativeDays } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Project" };
@@ -122,6 +123,7 @@ export default async function ProjectPage({
   const matches = matchData?.matches ?? [];
   const matchCount = matches.length;
   const techPacks = project.attachments.filter((a) => a.kind === "TECH_PACK").length;
+  const sampleSummary = sampleRequestSummary(project);
 
   const toDecide = visibleQuotes.filter((q) => q.status === "SUBMITTED");
   const beingRevised = visibleQuotes.filter((q) => q.status === "REVISION_REQUESTED");
@@ -215,7 +217,7 @@ export default async function ProjectPage({
             <>
               Compare totals, production time and terms side by side, then accept one to create the order — or ask a factory to revise.
               {beingRevised.length > 0 && ` ${plural(beingRevised.length, "more is", "more are")} being revised.`}
-              {tab === "quotations" && " Your decision buttons are in the last row of the comparison below."}
+              {tab === "quotations" && " Your decision buttons are under each factory's summary below."}
             </>
           ),
           when: deadlineText,
@@ -337,7 +339,7 @@ export default async function ProjectPage({
               description={matchCount ? `${plural(matchCount, "matched factory has", "matched factories have")} been invited. Quotations appear here as soon as they are sent.` : "Quotations arrive from matched factories. There are no matches yet."}
             />
           ) : (
-            <QuotationCompare quotes={visibleQuotes} projectId={id} canDecide={canDecide} />
+            <QuotationCompare quotes={visibleQuotes} projectId={id} canDecide={canDecide} samplesRequested={project.sampleRequired} />
           )}
         </Panel>
       )}
@@ -399,13 +401,15 @@ export default async function ProjectPage({
               { label: "Preferred country", value: project.preferredCountry ?? "No preference" },
               { label: "Processes", value: project.requiredCapabilities.join(", ") || "None specified" },
               { label: "Certifications", value: project.requiredCertifications.join(", ") || "None required" },
+              { label: "Samples", value: sampleSummary },
             ]}
           />
-          {(project.description || project.sustainabilityNotes || project.additionalInstructions) && (
+          {(project.description || project.sustainabilityNotes || project.additionalInstructions || (project.sampleRequired && project.sampleNotes)) && (
             <div className="mt-5 max-w-3xl space-y-3 border-t border-line-subtle pt-4 text-sm leading-6">
               {project.description && <p className="whitespace-pre-line break-words text-ink">{project.description}</p>}
               {project.sustainabilityNotes && <p className="break-words"><span className="font-medium text-ink">Sustainability: </span>{project.sustainabilityNotes}</p>}
               {project.additionalInstructions && <p className="break-words"><span className="font-medium text-ink">Instructions: </span>{project.additionalInstructions}</p>}
+              {project.sampleRequired && project.sampleNotes && <p className="whitespace-pre-line break-words"><span className="font-medium text-ink">Sample notes: </span>{project.sampleNotes}</p>}
             </div>
           )}
         </Panel>
@@ -434,11 +438,7 @@ export default async function ProjectPage({
                 {project.revisions.map((r) => (
                   <li key={r.id}>
                     <p className="text-xs text-ink-muted">{formatDateTime(r.createdAt)}</p>
-                    <ul className="mt-1 space-y-0.5">
-                      {Object.entries(r.changes as Record<string, { from: string | null; to: string | null }>).map(([field, c]) => (
-                        <li key={field} className="break-words"><span className="font-medium text-ink">{field}</span>: <span className="text-ink-muted line-through">{c.from ?? "empty"}</span> → {c.to ?? "empty"}</li>
-                      ))}
-                    </ul>
+                    <RevisionChanges changes={r.changes} currency={project.currency} className="mt-1 space-y-0.5" />
                   </li>
                 ))}
               </ul>

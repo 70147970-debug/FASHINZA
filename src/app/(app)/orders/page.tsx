@@ -7,6 +7,7 @@ import { requireOnboardedUser } from "@/server/auth/session";
 import { listOrders, refreshDelays } from "@/server/services/orders";
 import { EmptyState, PageHeader, Pagination } from "@/components/app/primitives";
 import { FilterBar } from "@/components/app/filter-bar";
+import { StatusTabs } from "@/components/orders/order-parts";
 import { OrderTable } from "@/components/orders/order-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +16,9 @@ import { ORDER_STATUS } from "@/lib/labels";
 export const metadata: Metadata = { title: "Orders" };
 
 const ATTENTION: Record<string, string> = { samples: "Samples awaiting your review", qc: "QC reports awaiting your decision" };
+
+/** Status views: "Active" groups every open status; each status also has its own tab. */
+const VIEWS = [{ value: "ACTIVE", label: "Active" }, ...Object.entries(ORDER_STATUS).map(([value, s]) => ({ value, label: s.label }))];
 
 export default async function OrdersPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; delayed?: string; attention?: string; page?: string }> }) {
   const actor = await requireOnboardedUser();
@@ -26,6 +30,11 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const delayed = sp.delayed === "1";
   const data = await listOrders(actor, { q: sp.q, status, delayed, attention, page: Number(sp.page) || 1 });
   const filtered = !!(sp.q || status || delayed || attention);
+  /** The status tab and search kept, the delayed / attention narrowing removed. */
+  const withoutToggles = (() => {
+    const q = new URLSearchParams(Object.entries({ q: sp.q, status }).filter((e): e is [string, string] => !!e[1]));
+    return q.size ? `/orders?${q}` : "/orders";
+  })();
 
   return (
     <>
@@ -36,23 +45,21 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
             <>
               {delayed && <Badge tone="danger" dot>Delayed only</Badge>}
               {attention && <Badge tone="warning" dot>{ATTENTION[attention]}</Badge>}
+              <Link href={withoutToggles} className="inline-flex min-h-10 items-center rounded-sm text-[13px] font-medium text-accent-strong underline-offset-4 hover:underline sm:min-h-0">
+                Clear filter
+              </Link>
             </>
           ) : undefined
         }
         description={actor.role === "BRAND" ? "Production orders created from accepted quotations." : "Orders your factory is producing."}
       />
-      <FilterBar
-        basePath="/orders"
-        q={sp.q}
-        searchLabel="Search by reference or project"
-        hidden={{ delayed: delayed ? "1" : undefined, attention }}
-        selects={[{ name: "status", label: "Status", value: status, options: [{ value: "ACTIVE", label: "All active" }, ...Object.entries(ORDER_STATUS).map(([value, s]) => ({ value, label: s.label }))] }]}
-      />
+      <StatusTabs basePath="/orders" label="Order status" value={status} options={VIEWS} params={{ q: sp.q, delayed: delayed ? "1" : undefined, attention }} />
+      <FilterBar basePath="/orders" q={sp.q} searchLabel="Search by reference or project" hidden={{ status, delayed: delayed ? "1" : undefined, attention }} />
       {data.items.length === 0 ? (
         <EmptyState
           icon={PackageSearch}
           title={filtered ? "No orders match these filters" : "No orders yet"}
-          description={filtered ? "Nothing needs attention here right now." : actor.role === "BRAND" ? "An order is created when you accept a quotation on one of your projects." : "An order is created when a brand accepts one of your quotations."}
+          description={delayed || attention ? "Nothing needs attention here right now." : filtered ? "Try another status tab or a different search." : actor.role === "BRAND" ? "An order is created when you accept a quotation on one of your projects." : "An order is created when a brand accepts one of your quotations."}
           action={filtered ? <Button asChild variant="outline"><Link href="/orders">Show all orders</Link></Button> : <Button asChild variant="accent"><Link href={actor.role === "BRAND" ? "/projects" : "/opportunities"}>{actor.role === "BRAND" ? "Go to projects" : "View opportunities"}</Link></Button>}
         />
       ) : (

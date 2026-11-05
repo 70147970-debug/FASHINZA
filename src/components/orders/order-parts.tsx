@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { FileText, ImageIcon } from "lucide-react";
+import { TabStrip } from "@/components/app/tab-strip";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -93,9 +94,22 @@ export function SubHeading({ children, className }: { children: React.ReactNode;
   return <h3 className={cn("label-caps mb-3 text-ink-muted", className)}>{children}</h3>;
 }
 
+export type StatusTabOption = {
+  value: string;
+  label: string;
+  /** Small number after the label (shown whenever it is defined, including 0). */
+  count?: number;
+  /** Colours the count as a warning while it is above zero (a queue with work waiting). */
+  attention?: boolean;
+  /** Screen-reader words after the count, e.g. "unread". */
+  countLabel?: string;
+};
+
 /**
- * Status filter as link tabs (GET, no JavaScript): "All" plus one tab per status. Used on lists whose only
- * filter is a status, so there is no search box that would do nothing. Other query params are kept.
+ * The one status filter for list pages (projects, orders, quotations, payments, disputes, notifications and the
+ * admin queues): link tabs that work without JavaScript, keep the other query params (search, toggles) and drop
+ * the page number. "All" comes first unless `allPosition="end"` (queues whose default view is a single status).
+ * On phones the strip scrolls sideways with a faded edge and keeps the selected tab in view (see TabStrip).
  */
 export function StatusTabs({
   basePath,
@@ -104,16 +118,20 @@ export function StatusTabs({
   param = "status",
   allValue,
   allLabel = "All",
+  allCount,
+  allPosition = "start",
   params = {},
   label = "Filter by status",
 }: {
   basePath: string;
   value?: string;
-  options: { value: string; label: string }[];
+  options: StatusTabOption[];
   param?: string;
   /** Query value for the "All" tab when the list defaults to a narrower view (e.g. "ALL"). */
   allValue?: string;
   allLabel?: string;
+  allCount?: number;
+  allPosition?: "start" | "end";
   params?: Record<string, string | undefined>;
   label?: string;
 }) {
@@ -124,28 +142,42 @@ export function StatusTabs({
     const s = q.toString();
     return s ? `${basePath}?${s}` : basePath;
   };
-  const tabs = [{ value: allValue, label: allLabel }, ...options];
+  type Tab = Omit<StatusTabOption, "value"> & { value: string | undefined };
+  const all: Tab = { value: allValue, label: allLabel, count: allCount };
+  const tabs: Tab[] = allPosition === "end" ? [...options, all] : [all, ...options];
+  const selected = value ?? allValue ?? undefined;
   return (
-    <nav aria-label={label} className="mb-4 overflow-x-auto border-b border-line">
-      <ul className="flex min-w-max gap-6">
+    <TabStrip label={label} active={selected ?? "all"} className="-mx-4 mb-4 border-b border-line px-4 sm:mx-0 sm:px-0">
+      <ul className="flex min-w-max gap-5">
         {tabs.map((t) => {
-          const active = (t.value ?? undefined) === (value ?? allValue ?? undefined);
+          const active = (t.value ?? undefined) === selected;
           return (
             <li key={t.value ?? "all"}>
               <Link
                 href={href(t.value)}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "-mb-px inline-flex h-10 items-center border-b-2 text-[13px] font-medium transition-colors duration-150",
-                  active ? "border-accent text-ink" : "border-transparent text-ink-muted hover:border-line-strong hover:text-ink",
+                  "-mb-px inline-flex min-h-10 items-center gap-2 whitespace-nowrap border-b-2 text-sm transition-colors duration-150",
+                  active ? "border-accent font-medium text-ink" : "border-transparent text-ink-muted hover:border-line-strong hover:text-ink",
                 )}
               >
                 {t.label}
+                {t.count !== undefined && (
+                  <span
+                    className={cn(
+                      "tabular rounded-sm px-1.5 text-2xs font-semibold leading-[1.125rem]",
+                      t.attention && t.count > 0 ? "bg-warning-soft text-warning-strong" : active ? "bg-accent-soft text-accent-strong" : "bg-surface-muted text-ink-muted",
+                    )}
+                  >
+                    {t.count}
+                    {t.countLabel && <span className="sr-only"> {t.countLabel}</span>}
+                  </span>
+                )}
               </Link>
             </li>
           );
         })}
       </ul>
-    </nav>
+    </TabStrip>
   );
 }

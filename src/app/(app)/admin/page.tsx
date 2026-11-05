@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Fragment } from "react";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { AlertTriangle, ArrowRight, BadgeCheck, CheckCircle2, ChevronRight, CircleDollarSign, PackageSearch, ScanSearch, ShieldAlert, Users, Webhook } from "lucide-react";
@@ -38,16 +39,15 @@ function Breakdown({ rows, map }: { rows: { key: string; count: number }[]; map:
   );
 }
 
-/** One work queue: label, what it means, how many are waiting. Zero reads as "Clear". */
+/** One work queue with work waiting: label, what it means, how many. Clear queues are listed on one line instead. */
 function QueueRow({ href, icon: Icon, label, description, count, tone }: { href: string; icon: LucideIcon; label: string; description: string; count: number; tone: QueueTone }) {
-  const open = count > 0;
   return (
     <li>
       <Link href={href} className="group flex items-center gap-4 px-4 py-4 transition-colors duration-150 hover:bg-surface-hover sm:px-5">
         <span
           className={cn(
             "grid size-9 shrink-0 place-items-center rounded-md border",
-            !open ? "border-line bg-canvas text-ink-subtle" : tone === "danger" ? "border-danger-line bg-danger-soft text-danger-strong" : "border-warning-line bg-warning-soft text-warning-strong",
+            tone === "danger" ? "border-danger-line bg-danger-soft text-danger-strong" : "border-warning-line bg-warning-soft text-warning-strong",
           )}
           aria-hidden
         >
@@ -57,17 +57,10 @@ function QueueRow({ href, icon: Icon, label, description, count, tone }: { href:
           <span className="block text-sm font-medium text-ink">{label}</span>
           <span className="block text-xs leading-5 text-ink-muted">{description}</span>
         </span>
-        {open ? (
-          <span className={cn("tabular shrink-0 font-display text-2xl font-normal leading-none tracking-[-0.02em]", tone === "danger" ? "text-danger-strong" : "text-warning-strong")}>
-            {formatNumber(count)}
-            <span className="sr-only"> waiting</span>
-          </span>
-        ) : (
-          <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-ink-muted">
-            <CheckCircle2 className="size-3.5 text-success" aria-hidden />
-            <span className="max-sm:sr-only">Clear</span>
-          </span>
-        )}
+        <span className={cn("tabular shrink-0 font-sans text-2xl font-medium leading-none tracking-[-0.02em]", tone === "danger" ? "text-danger-strong" : "text-warning-strong")}>
+          {formatNumber(count)}
+          <span className="sr-only"> waiting</span>
+        </span>
         <ChevronRight className="size-4 shrink-0 text-ink-subtle transition-colors duration-150 group-hover:text-ink-muted" aria-hidden />
       </Link>
     </li>
@@ -84,13 +77,15 @@ export default async function AdminOverviewPage() {
   const [firstPaid, ...otherPaid] = d.paidByCurrency;
 
   const queues = [
-    { key: "factories", href: "/admin/factories?status=PENDING", icon: BadgeCheck, label: "Factories awaiting verification", description: "Check documents, then approve or reject.", count: d.pendingFactories, tone: "warning" as const },
-    { key: "delayed", href: "/admin/orders?delayed=1", icon: AlertTriangle, label: "Delayed orders", description: "A stage or the agreed date has passed.", count: d.delayedOrders, tone: "danger" as const },
-    { key: "disputes", href: "/admin/disputes", icon: ShieldAlert, label: "Open disputes", description: "Open or in review; record a resolution.", count: d.openDisputes, tone: "warning" as const },
-    { key: "qc", href: "/admin/qc", icon: ScanSearch, label: "Failed inspections (30 days)", description: "Inspections that exceeded the AQL limits.", count: d.failedQc30, tone: "warning" as const },
-    { key: "webhooks", href: "/admin/payments", icon: Webhook, label: "Unprocessed webhook errors", description: "Provider events that could not be applied.", count: d.webhookErrors, tone: "danger" as const },
-  ].sort((a, b) => Number(b.count > 0) - Number(a.count > 0));
-  const waiting = queues.filter((q) => q.count > 0).length;
+    { key: "factories", href: "/admin/factories?status=PENDING", icon: BadgeCheck, label: "Factories awaiting verification", short: "Factory verification", description: "Check documents, then approve or reject.", count: d.pendingFactories, tone: "warning" as const },
+    { key: "delayed", href: "/admin/orders?delayed=1", icon: AlertTriangle, label: "Delayed orders", short: "Delayed orders", description: "A stage or the agreed date has passed.", count: d.delayedOrders, tone: "danger" as const },
+    { key: "disputes", href: "/admin/disputes", icon: ShieldAlert, label: "Open disputes", short: "Open disputes", description: "Open or in review; record a resolution.", count: d.openDisputes, tone: "warning" as const },
+    { key: "qc", href: "/admin/qc#failed", icon: ScanSearch, label: "Failed inspections (30 days)", short: "Failed inspections", description: "Inspections with more defects than the sampling limit allows.", count: d.failedQc30, tone: "warning" as const },
+    { key: "webhooks", href: "/admin/payments?events=errors", icon: Webhook, label: "Unprocessed webhook errors", short: "Webhook errors", description: "Provider events that could not be applied.", count: d.webhookErrors, tone: "danger" as const },
+  ];
+  const open = queues.filter((q) => q.count > 0);
+  const clear = queues.filter((q) => q.count === 0);
+  const waiting = open.length;
 
   return (
     <>
@@ -111,7 +106,7 @@ export default async function AdminOverviewPage() {
           value={firstPaid ? formatMoney(firstPaid._sum.amount ?? 0, firstPaid.currency) : 0}
           href="/admin/payments"
           icon={CircleDollarSign}
-          hint={otherPaid.length ? `+ ${otherPaid.map((p) => formatMoney(p._sum.amount ?? 0, p.currency)).join(" · ")}` : "Sandbox provider — no real funds."}
+          hint={otherPaid.length ? `+ ${otherPaid.map((p) => formatMoney(p._sum.amount ?? 0, p.currency)).join(" · ")}` : "Test payments, no real money."}
         />
       </MetricStrip>
 
@@ -122,11 +117,27 @@ export default async function AdminOverviewPage() {
             description={waiting ? `${waiting} of ${queues.length} queues have work waiting.` : "Every queue is clear."}
             bodyClassName="p-0 sm:p-0"
           >
-            <ul className="divide-y divide-line-subtle">
-              {queues.map(({ key, ...q }) => (
-                <QueueRow key={key} {...q} />
-              ))}
-            </ul>
+            {open.length > 0 && (
+              <ul className="divide-y divide-line-subtle">
+                {open.map((q) => (
+                  <QueueRow key={q.key} href={q.href} icon={q.icon} label={q.label} description={q.description} count={q.count} tone={q.tone} />
+                ))}
+              </ul>
+            )}
+            {clear.length > 0 && (
+              <div className={cn("flex flex-wrap items-center gap-x-1.5 gap-y-1 px-4 py-2.5 text-xs text-ink-muted sm:px-5", open.length > 0 && "border-t border-line-subtle")}>
+                <CheckCircle2 className="size-3.5 shrink-0 text-success" aria-hidden />
+                <span className="font-medium text-ink">{open.length ? "Clear:" : "All clear:"}</span>
+                {clear.map((q, i) => (
+                  <Fragment key={q.key}>
+                    {i > 0 && <span aria-hidden>·</span>}
+                    <Link href={q.href} className="inline-flex min-h-8 items-center rounded-sm underline-offset-4 hover:text-ink hover:underline max-sm:min-h-10">
+                      {q.short}
+                    </Link>
+                  </Fragment>
+                ))}
+              </div>
+            )}
           </Panel>
 
           <Panel
@@ -159,8 +170,6 @@ export default async function AdminOverviewPage() {
             <DescriptionList
               layout="rows"
               items={[
-                { label: "Brands", value: <span className="tabular">{formatNumber(users.BRAND ?? 0)}</span> },
-                { label: "Factories", value: <span className="tabular">{formatNumber(users.MANUFACTURER ?? 0)}</span> },
                 { label: "Administrators", value: <span className="tabular">{formatNumber(users.ADMIN ?? 0)}</span> },
                 {
                   label: "Suspended accounts",

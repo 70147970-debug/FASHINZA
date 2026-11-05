@@ -23,8 +23,16 @@ test("a new manufacturer onboards, uploads documents and requests verification",
   await chip(page, "Production processes", "Cut and sew");
   await page.getByLabel("Minimum order (units)").fill("150");
   await page.getByLabel("Monthly capacity (units)").fill("6000");
+  // Machinery: one machine type per row with a count.
+  await page.getByLabel("Machine type, row 1").fill("Single-needle lockstitch");
+  await page.getByLabel("Quantity of Single-needle lockstitch").fill("40");
+  await page.getByRole("button", { name: "Add machine" }).click();
+  await page.getByLabel("Machine type, row 2").fill("Overlock 4-thread");
+  await page.getByLabel("Quantity of Overlock 4-thread").fill("12");
   await page.getByRole("button", { name: "Save and continue" }).click();
   await expect(page).toHaveURL(/\/factory\?welcome=1/);
+  await expect(page.getByLabel("Machine type, row 1")).toHaveValue("Single-needle lockstitch");
+  await expect(page.getByLabel("Quantity of Overlock 4-thread")).toHaveValue("12");
 
   // Verification cannot be requested before the business registration is uploaded.
   await expect(page.getByRole("button", { name: "Request verification" })).toBeDisabled();
@@ -41,14 +49,11 @@ test("an administrator verifies the document and approves the factory", async ({
   await login(page, ACCOUNTS.admin.email, ACCOUNTS.admin.password);
   await page.goto("/admin/factories");
   await page.getByRole("link", { name: factory.name }).click();
-  // Approving before the registration document is verified is refused.
-  await page.getByRole("button", { name: "Approve factory" }).click();
-  const dialog = page.getByRole("dialog");
-  await dialog.getByLabel("Verification note").fill("Checked.");
-  await dialog.getByRole("button", { name: "Approve" }).click();
-  await expect(dialog.getByText("Verify the business registration document before approving the factory.")).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(dialog).toBeHidden();
+  // The machinery the factory listed is shown for review.
+  await expect(page.getByText("Single-needle lockstitch")).toBeVisible();
+  // Approving is unavailable until the registration document is verified, and the page says why.
+  await expect(page.getByRole("button", { name: "Approve factory" })).toBeDisabled();
+  await expect(page.getByText("Approve is unavailable until the business registration is verified.")).toBeVisible();
 
   await page.getByRole("button", { name: "Verify" }).first().click();
   await confirmDialog(page, "Verify document");
@@ -60,6 +65,23 @@ test("an administrator verifies the document and approves the factory", async ({
   await login(page, factory.email, factory.password);
   await page.goto("/notifications");
   await expect(page.getByText("Your factory is verified")).toBeVisible();
+});
+
+test("a verified factory updates its machinery, with errors shown on the incomplete row", async ({ page }) => {
+  await logout(page);
+  await login(page, factory.email, factory.password);
+  await page.goto("/factory");
+  await page.getByRole("button", { name: "Add machine" }).click();
+  await page.getByLabel("Machine type, row 3").fill("Flatlock / coverstitch");
+  await page.getByRole("button", { name: "Save factory profile" }).click();
+  await expect(page.getByText("Enter how many.")).toBeVisible();
+  await page.getByLabel("Quantity of Flatlock / coverstitch").fill("6");
+  await page.getByRole("button", { name: "Remove Overlock 4-thread" }).click();
+  await page.getByRole("button", { name: "Save factory profile" }).click();
+  await expect(page.getByText("Factory profile saved.")).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel("Machine type, row 2")).toHaveValue("Flatlock / coverstitch");
+  await expect(page.getByLabel("Machine type, row 3")).toHaveCount(0);
 });
 
 test("an administrator suspends an account and it can no longer sign in", async ({ page }) => {

@@ -25,7 +25,7 @@ if (!/design|e2e|test/i.test(new URL(DB.replace(/^postgresql:/, "http:")).pathna
   throw new Error("SCREENSHOT_DB must point at a disposable database whose name contains design, e2e or test.");
 }
 
-type Role = "BRAND" | "MANUFACTURER" | "ADMIN" | null;
+type Role = "BRAND" | "MANUFACTURER" | "ADMIN" | "DRAFT_OWNER" | null;
 type Screen = { name: string; role: Role; path: string; mobile?: boolean };
 
 async function main() {
@@ -40,12 +40,16 @@ async function main() {
   const adminId = (await one(`select id from "user" where role='ADMIN' and status='ACTIVE' limit 1`)).id;
   const projectId = order.projectId ?? (await one(`select id from project where "brandId"='${brandId}' limit 1`)).id;
   const factoryProfile = (await one(`select id from manufacturer_profile order by "createdAt" desc limit 1`)).id;
-  const draft = (await one(`select id from project where status='DRAFT' limit 1`)).id;
+  // The wizard opens only for the owner's editable projects, so it is captured as that project's brand.
+  const editable = await one(
+    `select id, "brandId" from project where status in ('DRAFT','SUBMITTED','QUOTING') order by (status='DRAFT') desc, ("brandId"='${brandId}') desc limit 1`,
+  );
+  const draft = editable.id;
 
   // Tag this run's sessions so cleanup never signs out a concurrent run.
   const tag = `ui-screenshots-${randomBytes(4).toString("hex")}`;
   const tokens: Record<string, string> = {};
-  for (const [role, userId] of [["BRAND", brandId], ["MANUFACTURER", factoryId], ["ADMIN", adminId]] as const) {
+  for (const [role, userId] of [["BRAND", brandId], ["MANUFACTURER", factoryId], ["ADMIN", adminId], ["DRAFT_OWNER", editable.brandId]] as const) {
     if (!userId) continue;
     const token = randomBytes(32).toString("hex");
     await db.query(
@@ -70,7 +74,7 @@ async function main() {
     { name: "brand-dashboard", role: "BRAND", path: "/dashboard", mobile: true },
     { name: "brand-projects", role: "BRAND", path: "/projects", mobile: true },
     { name: "brand-project-new", role: "BRAND", path: "/projects/new" },
-    ...(draft ? [{ name: "brand-project-wizard", role: "BRAND" as const, path: `/projects/${draft}/edit?step=2` }] : []),
+    ...(draft ? [{ name: "brand-project-wizard", role: "DRAFT_OWNER" as const, path: `/projects/${draft}/edit?step=2` }] : []),
     { name: "brand-project-detail", role: "BRAND", path: `/projects/${projectId}` },
     { name: "brand-orders", role: "BRAND", path: "/orders" },
     ...(order.id ? [{ name: "brand-order-detail", role: "BRAND" as const, path: `/orders/${order.id}`, mobile: true }] : []),
@@ -110,6 +114,23 @@ async function main() {
       try {
         const res = await page.goto(BASE + s.path, { waitUntil: "networkidle", timeout: 60_000 });
         const file = path.join(OUT, `${s.name}${viewport === "mobile" ? "-mobile" : ""}.png`);
+        // Scroll through the page so lazily loaded photos below the fold are fetched before the full-page capture.
+        await page.evaluate(async () => {
+          for (let y = 0; y < document.documentElement.scrollHeight; y += 600) {
+            window.scrollTo(0, y);
+            await new Promise((r) => setTimeout(r, 50));
+          }
+          window.scrollTo(0, 0);
+        });
+        await page.waitForLoadState("networkidle");
+        // Hidden images (e.g. the sign-in photo on phones) never load, so each wait is capped.
+        await page.evaluate(() =>
+          Promise.all(
+            [...document.images].map((img) =>
+              img.complete ? null : Promise.race([img.decode().catch(() => null), new Promise((r) => setTimeout(r, 3000))]),
+            ),
+          ),
+        );
         await page.screenshot({ path: file, fullPage: true });
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
         console.log(`${res?.status()} ${file}${overflow > 0 ? `  ⚠ horizontal overflow ${overflow}px` : ""}`);

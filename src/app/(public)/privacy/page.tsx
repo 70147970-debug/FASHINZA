@@ -10,7 +10,7 @@ export default function PrivacyPage() {
     <LegalPage
       title="Privacy Policy"
       updated="23 October 2026"
-      intro="Fashinza is a Final Year Project at The University of Lahore. This policy explains, in plain language, what the platform stores and why."
+      intro="Fashinza is a Final Year Project at The University of Lahore that connects fashion brands with garment manufacturers. This policy explains, in plain language, what we store and why."
       sections={[
         {
           heading: "What we collect",
@@ -18,7 +18,7 @@ export default function PrivacyPage() {
             <ul>
               <li>Account details: your name, work email, a password hash (never the password itself) and your account type.</li>
               <li>Organisation details you enter: company or factory name, location, capabilities, capacity and contact details.</li>
-              <li>Business records you create: projects, tech packs and other files, quotations, orders, production evidence, QC reports, messages and disputes.</li>
+              <li>Business records you create: projects, tech packs, sketches and other files, quotations, orders, samples, production evidence, quality inspection reports, messages and disputes.</li>
               <li>Sign-in records: session creation time, IP address and browser user agent, used for security.</li>
               <li>Contact form messages, including your name and email.</li>
             </ul>
@@ -30,7 +30,7 @@ export default function PrivacyPage() {
             <ul>
               <li>To run the workflow you asked for: matching your project with factories, sharing it with the factories invited to quote, and tracking the resulting order.</li>
               <li>To verify manufacturers: administrators review uploaded documents.</li>
-              <li>To keep the platform secure: rate limiting, session management and an audit log of administrative actions.</li>
+              <li>To keep accounts secure: limiting repeated sign-in attempts, managing sign-in sessions and keeping an audit log of administrative actions.</li>
             </ul>
           ),
         },
@@ -49,8 +49,8 @@ export default function PrivacyPage() {
           heading: "Files and payments",
           body: (
             <p>
-              Uploaded files are stored privately and are never published at public addresses; each download checks that you may access it. Payments in this
-              build run through a sandbox provider: no card details are entered or stored by Fashinza.
+              Uploaded files are stored privately and are never published at public addresses; each download checks that you may access it. Payments are
+              simulated for now: no card details are entered or stored by Fashinza, and no real money moves.
             </p>
           ),
         },

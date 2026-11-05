@@ -12,8 +12,8 @@ import { Alert } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 
 const ROLES = [
-  { value: "BRAND", label: "Fashion brand", hint: "I want to manufacture clothing", icon: Shirt },
-  { value: "MANUFACTURER", label: "Manufacturer", hint: "I run a clothing factory", icon: Factory },
+  { value: "BRAND", label: "Fashion brand", hint: "I'm producing a clothing collection", icon: Shirt },
+  { value: "MANUFACTURER", label: "Manufacturer", hint: "I run a garment factory", icon: Factory },
 ] as const;
 
 export function RegisterForm({ defaultRole }: { defaultRole: "BRAND" | "MANUFACTURER" }) {

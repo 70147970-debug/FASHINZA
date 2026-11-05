@@ -5,7 +5,7 @@ import type { QuotationStatus } from "@/generated/prisma/enums";
 import { requireOnboardedUser } from "@/server/auth/session";
 import { listMyQuotations } from "@/server/services/opportunities";
 import { DataTable, EmptyState, MobileCard, MobileCardList, PageHeader, Pagination, StatusBadge } from "@/components/app/primitives";
-import { FilterBar } from "@/components/app/filter-bar";
+import { StatusTabs } from "@/components/orders/order-parts";
 import { Button } from "@/components/ui/button";
 import { QUOTATION_STATUS, categoryLabel } from "@/lib/labels";
 import { formatDate, formatMoney } from "@/lib/format";
@@ -21,13 +21,13 @@ export default async function QuotationsPage({ searchParams }: { searchParams: P
   return (
     <>
       <PageHeader title="Quotations" description="Every quotation you have drafted or sent, with its current status." />
-      <FilterBar basePath="/quotations" selects={[{ name: "status", label: "Status", value: status, options: Object.entries(QUOTATION_STATUS).map(([value, s]) => ({ value, label: s.label })) }]} />
+      <StatusTabs basePath="/quotations" label="Quotation status" value={status} options={Object.entries(QUOTATION_STATUS).map(([value, s]) => ({ value, label: s.label }))} />
       {data.items.length === 0 ? (
         <EmptyState
           icon={FileText}
           title={status ? "No quotations with this status" : "No quotations yet"}
           description="Open an opportunity to prepare a quotation."
-          action={status ? <Button asChild variant="outline"><Link href="/quotations">Clear filter</Link></Button> : <Button asChild variant="accent"><Link href="/opportunities">View opportunities</Link></Button>}
+          action={status ? <Button asChild variant="outline"><Link href="/quotations">Show all quotations</Link></Button> : <Button asChild variant="accent"><Link href="/opportunities">View opportunities</Link></Button>}
         />
       ) : (
         <>

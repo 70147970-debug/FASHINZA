@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Bell } from "lucide-react";
 import type { Notification } from "@/generated/prisma/client";
+import { NotificationTypeIcon } from "@/components/app/notification-type";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,7 @@ export function RecentNotifications({ items }: { items: Notification[] }) {
             <span className="flex w-2 shrink-0 justify-center pt-[7px]">
               {!n.readAt && <span className="size-2 rounded-full bg-accent" aria-hidden />}
             </span>
+            <NotificationTypeIcon type={n.type} className="mt-0.5 size-4 shrink-0 text-ink-subtle" />
             <span className="min-w-0 flex-1">
               <span className="flex items-baseline justify-between gap-3">
                 <span className={cn("min-w-0 truncate text-sm leading-5", n.readAt ? "text-ink" : "font-medium text-ink")}>

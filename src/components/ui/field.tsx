@@ -3,6 +3,7 @@ import * as React from "react";
 import { AlertCircle } from "lucide-react";
 import { Label } from "./label";
 import { FormErrorsContext } from "@/components/forms/action-form";
+import { cn } from "@/lib/utils";
 
 /** Label + control + hint/error, wired for screen readers. Errors come from props or the enclosing ActionForm. */
 export function Field({
@@ -43,7 +44,7 @@ export function Field({
       {control}
       {hint && !message && <p id={`${id}-hint`} className="text-xs leading-4 text-ink-muted">{hint}</p>}
       {message && (
-        <p id={`${id}-error`} className="flex items-start gap-1 text-xs font-medium leading-4 text-danger-strong">
+        <p id={`${id}-error`} data-field-error="" className="flex items-start gap-1 text-xs font-medium leading-4 text-danger-strong">
           <AlertCircle className="mt-px size-3.5 shrink-0" aria-hidden />
           {message}
         </p>
@@ -56,5 +57,9 @@ export function Field({
 export function FieldError({ name, className }: { name: string; className?: string }) {
   const message = React.useContext(FormErrorsContext)[name];
   if (!message) return null;
-  return <p className={className ?? "mt-1.5 text-xs font-medium leading-4 text-danger-strong"}>{message}</p>;
+  return (
+    <p data-field-error="" className={cn("scroll-mt-24", className ?? "mt-1.5 text-xs font-medium leading-4 text-danger-strong")}>
+      {message}
+    </p>
+  );
 }

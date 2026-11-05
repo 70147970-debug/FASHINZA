@@ -47,20 +47,41 @@ export function DocumentReviewButtons({ documentId, profileId }: { documentId: s
   );
 }
 
-export function VerificationDecision({ profileId, name }: { profileId: string; name: string }) {
+/**
+ * Approve / Reject for a pending factory. While approval cannot succeed (`canApprove` false: the business
+ * registration is not verified yet) Approve renders disabled, outside any dialog, and points at the element
+ * that explains why (`blockedReasonId`). The server checks the same rule again.
+ */
+export function VerificationDecision({
+  profileId,
+  name,
+  canApprove = true,
+  blockedReasonId,
+}: {
+  profileId: string;
+  name: string;
+  canApprove?: boolean;
+  blockedReasonId?: string;
+}) {
   return (
     <div className="flex flex-wrap gap-2">
-      <ActionDialog
-        trigger={<Button variant="accent"><BadgeCheck /> Approve factory</Button>}
-        title={`Verify ${name}?`}
-        description="The factory will be matched to brand projects and can send quotations. Its business registration must already be verified."
-        action={decideVerificationAction}
-        hidden={{ profileId, decision: "VERIFIED" }}
-        confirmLabel="Approve"
-        tone="accent"
-      >
-        <Reason label="Verification note (recorded in the audit log)" />
-      </ActionDialog>
+      {canApprove ? (
+        <ActionDialog
+          trigger={<Button variant="accent"><BadgeCheck /> Approve factory</Button>}
+          title={`Verify ${name}?`}
+          description="The factory will be matched to brand projects and can send quotations. Its business registration must already be verified."
+          action={decideVerificationAction}
+          hidden={{ profileId, decision: "VERIFIED" }}
+          confirmLabel="Approve"
+          tone="accent"
+        >
+          <Reason label="Verification note (recorded in the audit log)" />
+        </ActionDialog>
+      ) : (
+        <Button variant="accent" disabled aria-describedby={blockedReasonId}>
+          <BadgeCheck /> Approve factory
+        </Button>
+      )}
       <ActionDialog
         trigger={<Button variant="outline"><XCircle /> Reject</Button>}
         title={`Reject ${name}'s verification?`}
@@ -101,16 +122,17 @@ export function UserStatusButton({
   userId: string;
   name: string;
   suspended: boolean;
-  /** "md" when the button sits in a page header next to other md actions. */
+  /** Height only: "md" when the button sits in a page header next to other md actions. */
   size?: "sm" | "md";
 }) {
+  // Suspending is an account action, not a verification decision, so it stays visibly secondary (ghost).
   return (
     <ActionDialog
       trigger={
         suspended ? (
           <Button variant="outline" size={size}><RotateCcw /> Reactivate</Button>
         ) : (
-          <Button variant={size === "md" ? "outline" : "ghost"} size={size}><Ban /> Suspend</Button>
+          <Button variant="ghost" size={size}><Ban /> Suspend</Button>
         )
       }
       title={suspended ? `Reactivate ${name}?` : `Suspend ${name}?`}
@@ -130,7 +152,7 @@ export function RefundButton({ paymentMilestoneId, amount }: { paymentMilestoneI
     <ActionDialog
       trigger={<Button variant="outline" size="sm"><RotateCcw /> Refund</Button>}
       title={`Refund ${amount}?`}
-      description="A refund is requested from the (sandbox) provider and the milestone is marked refunded when the provider confirms it."
+      description="A refund is requested from the payment provider (test mode: no real money moves) and the milestone is marked refunded when the provider confirms it."
       action={refundAction}
       hidden={{ paymentMilestoneId }}
       confirmLabel="Issue refund"

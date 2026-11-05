@@ -52,6 +52,13 @@ export async function createOrderFromQuotation(tx: Tx, quotationId: string, acto
         totalAmount: q.totalAmount.toFixed(2),
         currency: q.currency,
         notes: q.notes,
+        // Sample request from the brief and the factory's sample proposal, as agreed.
+        sampleRequired: q.project.sampleRequired,
+        sampleQuantity: q.project.sampleRequired ? q.project.sampleQuantity : null,
+        sampleSizes: q.project.sampleRequired ? q.project.sampleSizes : [],
+        sampleRequestNotes: q.project.sampleRequired ? q.project.sampleNotes : null,
+        sampleLeadTimeDays: q.sampleLeadTimeDays,
+        sampleNotes: q.sampleNotes,
       },
     },
   });

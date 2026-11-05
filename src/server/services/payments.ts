@@ -41,7 +41,8 @@ export async function listPayments(actor: Actor, f: { status?: string; page?: nu
   const [items, total, totals] = await Promise.all([
     db.paymentMilestone.findMany({
       where,
-      orderBy: [{ updatedAt: "desc" }],
+      // Grouped by order (newest order first), then in schedule order, so one order's milestones stay together.
+      orderBy: [{ order: { createdAt: "desc" } }, { orderId: "asc" }, { sequence: "asc" }],
       skip: (page - 1) * pageSize,
       take: pageSize,
       include: {

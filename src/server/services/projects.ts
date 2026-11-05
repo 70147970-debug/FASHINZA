@@ -1,7 +1,9 @@
 import { db } from "@/lib/db";
 import type { Prisma } from "@/generated/prisma/client";
 import type { AttachmentKind, ProjectStatus } from "@/generated/prisma/enums";
-import { projectDraftSchema, projectSubmitSchema, type ProjectDraftInput } from "@/lib/validation/project";
+import { projectDraftSchema, projectSubmitSchema, REVIEW_STEP, type ProjectDraftInput } from "@/lib/validation/project";
+import { attachmentKind } from "@/lib/constants";
+import { fieldLabel } from "@/lib/labels";
 import { zodFieldErrors } from "@/lib/form-state";
 import type { Actor } from "@/server/actor";
 import { assertRole, projectScope } from "@/server/access";
@@ -14,6 +16,7 @@ const EDITABLE_AFTER_SUBMIT: ProjectStatus[] = ["SUBMITTED", "QUOTING"];
 const COMPARED_FIELDS = [
   "name", "category", "description", "quantity", "maxMoq", "targetUnitPrice", "currency", "deadline", "fabricRequirements", "fabrics", "sizes", "colors",
   "additionalInstructions", "requiredCapabilities", "preferredCountry", "requiredCertifications", "sustainabilityNotes",
+  "sampleRequired", "sampleQuantity", "sampleSizes", "sampleNotes",
 ] as const;
 
 /** Optional fields that were cleared must be written as null, not skipped. */
@@ -82,7 +85,7 @@ export async function saveProject(actor: Actor, projectId: string | null, raw: R
   await db.$transaction(async (tx) => {
     await tx.project.update({ where: { id: project.id }, data: toData(input) });
     await tx.projectRevision.create({ data: { projectId: project.id, changedById: actor.id, changes: changes as Prisma.InputJsonValue } });
-    await logActivity(tx, { actorId: actor.id, projectId: project.id, type: "PROJECT_REVISED", message: `Project requirements updated: ${Object.keys(changes).join(", ")}.` });
+    await logActivity(tx, { actorId: actor.id, projectId: project.id, type: "PROJECT_REVISED", message: `Project requirements updated: ${Object.keys(changes).map(fieldLabel).join(", ")}.` });
     const quoting = await tx.quotation.findMany({ where: { projectId: project.id, status: { in: ["DRAFT", "SUBMITTED", "REVISION_REQUESTED"] } }, select: { manufacturerId: true } });
     if (quoting.length) {
       await notify(tx, quoting.map((q) => q.manufacturerId), "SYSTEM", "Project requirements changed", `The brand updated “${project.name}”. Review the changes before finalising your quotation.`, `/opportunities/${project.id}`);
@@ -102,7 +105,7 @@ export async function submitProject(actor: Actor, projectId: string) {
 
   return db.$transaction(async (tx) => {
     // Re-check inside the transaction so a double submit cannot run matching twice.
-    const updated = await tx.project.updateMany({ where: { id: projectId, status: "DRAFT" }, data: { status: "SUBMITTED", submittedAt: new Date(), wizardStep: 6 } });
+    const updated = await tx.project.updateMany({ where: { id: projectId, status: "DRAFT" }, data: { status: "SUBMITTED", submittedAt: new Date(), wizardStep: REVIEW_STEP } });
     if (!updated.count) throw conflict("This project has already been submitted.");
     await logActivity(tx, { actorId: actor.id, projectId, type: "PROJECT_SUBMITTED", message: "Project submitted for matching." });
     const summary = await runMatchingForProject(tx, projectId, actor.id);
@@ -150,11 +153,14 @@ export async function deleteDraft(actor: Actor, projectId: string) {
   await Promise.all(files.map((f) => deleteStoredFile(f.fileKey)));
 }
 
-/** Uploads a file. Tech packs receive the next version number; earlier versions are kept as history. */
+/**
+ * Uploads a file. Tech packs receive the next version number; earlier versions are kept as history.
+ * Reference images and sketches must be images; measurement charts and other files may also be PDFs.
+ */
 export async function addAttachment(actor: Actor, projectId: string, file: File, kind: AttachmentKind, notes?: string) {
   const project = await ownedProject(actor, projectId);
   if (["CANCELLED", "DELIVERED"].includes(project.status)) throw conflict("Files cannot be added to a closed project.");
-  const stored = await saveUpload(file, "projects", { imagesOnly: kind === "SKETCH" });
+  const stored = await saveUpload(file, "projects", { imagesOnly: attachmentKind(kind).imagesOnly });
   try {
     for (let attempt = 0; ; attempt++) {
       try {
@@ -172,6 +178,9 @@ export async function addAttachment(actor: Actor, projectId: string, file: File,
               const recipients = order ? [order.manufacturerId] : (await tx.matchResult.findMany({ where: { projectId }, select: { manufacturerId: true } })).map((m) => m.manufacturerId);
               if (recipients.length) await notify(tx, recipients, "SYSTEM", "New tech pack version", `Version ${version} of the tech pack for “${project.name}” is now the current version.`, order ? `/orders/${order.id}` : `/opportunities/${projectId}`);
             }
+          } else if (project.status !== "DRAFT") {
+            // Drafts are private; once factories can see the project, record what was added and when.
+            await logActivity(tx, { actorId: actor.id, projectId, type: "FILE_ADDED", message: `${attachmentKind(kind).label} added: ${att.fileName}${notes ? ` (${notes})` : ""}.` });
           }
           return att;
         });
@@ -229,7 +238,7 @@ export async function listProjects(actor: Actor, f: ProjectListFilters = {}) {
       orderBy: { updatedAt: "desc" },
       skip: (page - 1) * pageSize,
       take: pageSize,
-      include: { _count: { select: { quotations: { where: { status: { in: ["SUBMITTED", "REVISION_REQUESTED"] } } }, matchResults: true } }, order: { select: { id: true } } },
+      include: { _count: { select: { quotations: { where: { status: { in: ["SUBMITTED", "REVISION_REQUESTED"] } } }, matchResults: true } }, order: { select: { id: true, deliveredAt: true } } },
     }),
     db.project.count({ where }),
   ]);

@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
-import { BellOff, CheckCheck } from "lucide-react";
+import { BellOff, CheckCheck, ChevronRight } from "lucide-react";
 import type { Notification } from "@/generated/prisma/client";
 import { requireUser } from "@/server/auth/session";
 import { listNotifications, markRead, unreadCount } from "@/server/services/notifications";
 import { EmptyState, PageHeader, Pagination } from "@/components/app/primitives";
+import { NotificationTypeIcon, asksForDecision } from "@/components/app/notification-type";
+import { StatusTabs } from "@/components/orders/order-parts";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -46,16 +48,12 @@ export default async function NotificationsPage({ searchParams }: { searchParams
   const unread = sp.unread === "1";
   const [data, unreadTotal] = await Promise.all([listNotifications(actor, { unread, page: Number(sp.page) || 1 }), unreadCount(actor)]);
   const hasUnread = data.items.some((n) => !n.readAt);
-  const views = [
-    { href: "/notifications", label: "All", active: !unread, count: undefined },
-    { href: "/notifications?unread=1", label: "Unread", active: unread, count: unreadTotal },
-  ];
 
   return (
     <div className="max-w-4xl">
       <PageHeader
         title="Notifications"
-        description="Updates on your projects, quotations, orders, payments and disputes. Email delivery is not configured in this build."
+        description="Updates on your projects, quotations, orders, payments and disputes. Rows with an arrow open the related page. Email notifications are not switched on yet."
         actions={
           hasUnread && (
             <form action={markAllRead}>
@@ -65,30 +63,13 @@ export default async function NotificationsPage({ searchParams }: { searchParams
         }
       />
 
-      <nav aria-label="Filter notifications" className="-mx-4 mb-5 overflow-x-auto border-b border-line px-4 sm:mx-0 sm:px-0">
-        <ul className="flex gap-5">
-          {views.map((v) => (
-            <li key={v.label} className="shrink-0">
-              <Link
-                href={v.href}
-                aria-current={v.active ? "page" : undefined}
-                className={cn(
-                  "-mb-px inline-flex h-10 items-center gap-2 border-b-2 text-sm transition-colors duration-150",
-                  v.active ? "border-accent font-medium text-ink" : "border-transparent text-ink-muted hover:border-line-strong hover:text-ink",
-                )}
-              >
-                {v.label}
-                {!!v.count && (
-                  <span className="tabular rounded-sm bg-accent-soft px-1.5 text-xs font-medium leading-5 text-accent-strong">
-                    {v.count}
-                    <span className="sr-only"> unread</span>
-                  </span>
-                )}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
+      <StatusTabs
+        basePath="/notifications"
+        param="unread"
+        label="Filter notifications"
+        value={unread ? "1" : undefined}
+        options={[{ value: "1", label: "Unread", count: unreadTotal || undefined, countLabel: "unread" }]}
+      />
 
       {data.items.length === 0 ? (
         <EmptyState
@@ -126,11 +107,14 @@ export default async function NotificationsPage({ searchParams }: { searchParams
 }
 
 function NotificationRow({ n }: { n: Notification }) {
+  // Decision-type rows (a sample, a QC report, a quotation to review) keep an accent icon while unread.
+  const decide = !n.readAt && asksForDecision(n.type);
   const body = (
     <>
       <span className="flex w-2 shrink-0 justify-center pt-[7px]">
         {!n.readAt && <span className="size-2 rounded-full bg-accent" aria-hidden />}
       </span>
+      <NotificationTypeIcon type={n.type} className={cn("mt-0.5 size-4 shrink-0", decide ? "text-accent" : "text-ink-subtle")} />
       <span className="min-w-0 flex-1">
         <span className={cn("block break-words text-sm leading-5", n.readAt ? "text-ink" : "font-semibold text-ink")}>
           {!n.readAt && <span className="sr-only">Unread: </span>}
@@ -142,11 +126,12 @@ function NotificationRow({ n }: { n: Notification }) {
         {timeFmt.format(new Date(n.createdAt))}
         <span className="sr-only"> UTC</span>
       </time>
+      {n.link && <ChevronRight className="size-4 shrink-0 self-center text-ink-subtle transition-colors duration-150 group-hover:text-ink-muted" aria-hidden />}
     </>
   );
   const row = "flex gap-3 px-4 py-3.5 sm:px-5";
   return n.link ? (
-    <Link href={`/notifications/${n.id}`} prefetch={false} className={cn(row, "transition-colors duration-150 hover:bg-surface-hover")}>
+    <Link href={`/notifications/${n.id}`} prefetch={false} className={cn(row, "group transition-colors duration-150 hover:bg-surface-hover")}>
       {body}
     </Link>
   ) : (

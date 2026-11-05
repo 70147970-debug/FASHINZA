@@ -12,7 +12,8 @@ export default function ForgotPasswordPage() {
       <p className="mb-8 mt-3 text-[0.9375rem] leading-6 text-ink-muted">Enter the email you registered with and we will issue a reset link that is valid for one hour.</p>
       <ForgotPasswordForm />
       <p className="mt-8 border-t border-line pt-5 text-sm text-ink-muted">
-        Remembered it? <Link href="/login" className="font-medium text-accent-strong underline decoration-accent-line underline-offset-4 transition-colors duration-150 hover:decoration-accent-strong">Back to sign in</Link>
+        Remembered it?{" "}
+        <Link href="/login" className="py-2.5 font-medium text-accent-strong underline decoration-accent-line underline-offset-4 transition-colors duration-150 hover:decoration-accent-strong">Back to sign in</Link>
       </p>
     </>
   );

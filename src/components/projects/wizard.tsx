@@ -1,12 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { ActionForm, SubmitButton } from "@/components/forms/action-form";
 import { ChipSelect } from "@/components/forms/chip-select";
 import { Field } from "@/components/ui/field";
 import { Input, Select, Textarea } from "@/components/ui/input";
 import { CAPABILITIES, CERTIFICATIONS, CURRENCIES, GARMENT_CATEGORIES } from "@/lib/constants";
-import { SIZE_OPTIONS, MIN_LEAD_DAYS } from "@/lib/validation/project";
+import { SIZE_OPTIONS, MIN_LEAD_DAYS, MAX_SAMPLE_PIECES, LAST_FIELD_STEP } from "@/lib/validation/project";
 import { isoDateInDays } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -33,6 +34,10 @@ export type WizardProject = {
   preferredCountry: string | null;
   requiredCertifications: string[];
   sustainabilityNotes: string | null;
+  sampleRequired: boolean;
+  sampleQuantity: number | null;
+  sampleSizes: string[];
+  sampleNotes: string | null;
 };
 
 /** A titled group of fields inside a step (plain heading: no aria-labelledby, so it never matches getByLabel). */
@@ -161,7 +166,7 @@ export function QuantityStep({ project }: { project: WizardProject }) {
 
 export function SustainabilityStep({ project }: { project: WizardProject }) {
   return (
-    <StepForm project={project} step={4} isLast={project.status === "DRAFT" ? false : true}>
+    <StepForm project={project} step={4}>
       <ChipSelect
         name="requiredCertifications"
         label="Required certifications"
@@ -172,6 +177,69 @@ export function SustainabilityStep({ project }: { project: WizardProject }) {
       <Field id="sustainabilityNotes" label="Sustainability requirements" hint="For example recycled packaging, low-impact dyes or traceability needs.">
         <Textarea name="sustainabilityNotes" rows={4} defaultValue={project.sustainabilityNotes ?? ""} />
       </Field>
+    </StepForm>
+  );
+}
+
+/**
+ * Sample request. "Yes" asks factories to include a sample proposal (lead time, charge, approach) in their
+ * quotation. Every order still has a sampling stage where one sample is approved before cutting, so "No"
+ * is worded as going straight to that pre-production sample. The sample fields are disabled (and so not
+ * posted, which clears them) while "No" is chosen.
+ */
+export function SamplesStep({ project }: { project: WizardProject }) {
+  const [required, setRequired] = useState(project.sampleRequired);
+  const sizeOptions = project.sizes.length ? project.sizes : SIZE_OPTIONS;
+  const option = (value: boolean, title: string, text: string) => (
+    <label
+      className={cn(
+        "flex min-h-11 cursor-pointer gap-3 rounded-md border p-3.5 transition-colors duration-150 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus",
+        required === value ? "border-accent bg-accent-soft/50" : "border-line-strong bg-surface hover:border-line-control",
+      )}
+    >
+      <input type="radio" name="sampleRequired" value={String(value)} checked={required === value} onChange={() => setRequired(value)} className="mt-0.5 size-4 shrink-0 accent-accent" />
+      <span className="min-w-0">
+        <span className="block text-sm font-medium text-ink">{title}</span>
+        <span className="mt-0.5 block text-[13px] leading-5 text-ink-muted">{text}</span>
+      </span>
+    </label>
+  );
+  return (
+    <StepForm project={project} step={LAST_FIELD_STEP}>
+      <Group first title="Sample request" description="Sampling lets you check fit, fabric and finish before bulk production.">
+        <fieldset>
+          <legend className="mb-2 text-[13px] font-medium leading-5 text-ink">
+            Do you need samples before bulk production?<span className="text-accent-strong" aria-hidden> *</span>
+          </legend>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {option(true, "Yes, request samples", "Factories include a sample lead time, charge and approach in their quotation.")}
+            {option(false, "No, go straight to a pre-production sample", "For repeat styles. Every order still has one sample approved before cutting starts.")}
+          </div>
+        </fieldset>
+      </Group>
+      {/* Hidden and disabled while "No" is chosen: nothing is posted, so the saved sample details are cleared. */}
+      <fieldset hidden={!required} disabled={!required} aria-labelledby="sample-details-title" className="min-w-0 space-y-5 border-t border-line-subtle pt-6">
+        <div>
+          <h3 id="sample-details-title" className="type-heading text-ink">What to sample</h3>
+          <p className="mt-0.5 text-[13px] leading-5 text-ink-muted">Factories see this with the brief and propose how they will make it.</p>
+        </div>
+        <div className="grid gap-6 sm:grid-cols-2">
+          <Field id="sampleQuantity" label="Sample pieces" required hint={`Pieces in total, up to ${MAX_SAMPLE_PIECES}. One per size is common for a fit check.`}>
+            <Input name="sampleQuantity" type="number" inputMode="numeric" min={1} max={MAX_SAMPLE_PIECES} defaultValue={project.sampleQuantity ?? 1} />
+          </Field>
+        </div>
+        <ChipSelect
+          name="sampleSizes"
+          label="Sample sizes"
+          options={sizeOptions}
+          defaultValue={project.sampleSizes}
+          allowCustom
+          hint={project.sizes.length ? "Usually your base size. The options are the sizes in this brief." : "Usually your base size."}
+        />
+        <Field id="sampleNotes" label="Sample notes" hint="For example: make the sample in production fabric and trims, or send a size set after fit approval.">
+          <Textarea name="sampleNotes" rows={3} maxLength={1000} defaultValue={project.sampleNotes ?? ""} />
+        </Field>
+      </fieldset>
     </StepForm>
   );
 }

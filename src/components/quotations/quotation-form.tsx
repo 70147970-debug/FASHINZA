@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Send, Undo2 } from "lucide-react";
+import { Send, Trash2, Undo2 } from "lucide-react";
 import { ActionForm, SubmitButton } from "@/components/forms/action-form";
 import { ActionDialog } from "@/components/forms/action-dialog";
 import { Field } from "@/components/ui/field";
@@ -9,6 +9,7 @@ import { Input, Textarea } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { calculateQuotationTotals } from "@/lib/quotation-math";
 import { formatMoney, formatNumber, isoDateInDays } from "@/lib/format";
+import { MAX_SAMPLE_LEAD_DAYS } from "@/lib/validation/quotation";
 import { saveQuotationAction, withdrawQuotationAction } from "@/app/(app)/opportunities/actions";
 
 export type QuotationDefaults = {
@@ -24,14 +25,18 @@ export type QuotationDefaults = {
   productionDays: number;
   validUntil: string;
   notes: string;
+  sampleLeadTimeDays: number | "";
+  sampleNotes: string;
 };
+
+/** What the brand asked for on the brief, shown above the factory's sample proposal. */
+export type SampleRequest = { required: boolean; summary: string; notes: string | null };
 
 const MONEY_FIELDS = [
   { name: "unitPrice", label: "Making cost per unit (CMT)", required: true, hint: "Cut, make and trim per piece." },
   { name: "fabricCostPerUnit", label: "Fabric cost per unit" },
   { name: "finishingCostPerUnit", label: "Finishing cost per unit", hint: "Washing, dyeing, printing, labelling." },
   { name: "packagingCostPerUnit", label: "Packaging cost per unit" },
-  { name: "samplingCost", label: "Sampling charge (total)" },
   { name: "logisticsCost", label: "Logistics estimate (total)", hint: "Inland freight, export clearance or shipping as agreed in your terms." },
 ] as const;
 
@@ -44,11 +49,13 @@ export function QuotationForm({
   currency,
   defaults,
   hasBeenSent,
+  sampleRequest,
 }: {
   projectId: string;
   currency: string;
   defaults: QuotationDefaults;
   hasBeenSent: boolean;
+  sampleRequest: SampleRequest;
 }) {
   const [v, setV] = useState<Record<string, string>>(Object.fromEntries(Object.entries(defaults).map(([k, x]) => [k, String(x)])));
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setV((s) => ({ ...s, [k]: e.target.value }));
@@ -101,7 +108,7 @@ export function QuotationForm({
         </div>
       </Section>
 
-      <Section title={`Cost breakdown (${currency})`} description="Per-unit costs are multiplied by the quoted quantity; sampling and logistics are totals.">
+      <Section title={`Cost breakdown (${currency})`} description="Per-unit costs are multiplied by the quoted quantity; logistics is a total. The sampling charge is in the sample proposal below.">
         <div className="grid gap-5 sm:grid-cols-2">
           {MONEY_FIELDS.map((f) => (
             <Field key={f.name} id={f.name} label={f.label} required={"required" in f && f.required} hint={"hint" in f ? f.hint : undefined}>
@@ -112,6 +119,35 @@ export function QuotationForm({
             <Input name="taxPercent" inputMode="decimal" placeholder="0" value={v.taxPercent} onChange={set("taxPercent")} className="tabular" />
           </Field>
         </div>
+      </Section>
+
+      <Section
+        title="Sample proposal"
+        description={sampleRequest.required ? "The brand asked for samples before bulk production. Tell them when and how you will make them." : "The brand did not ask for samples. One pre-production sample is still approved on the order before cutting."}
+      >
+        <div className="rounded-md border border-line bg-surface-muted px-3.5 py-3 text-[13px] leading-5">
+          <p>
+            <span className="text-ink-muted">Brand&apos;s request: </span>
+            <span className="font-medium text-ink">{sampleRequest.summary}</span>
+          </p>
+          {sampleRequest.required && sampleRequest.notes && <p className="mt-1 whitespace-pre-line break-words text-ink">{sampleRequest.notes}</p>}
+        </div>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field
+            id="sampleLeadTimeDays"
+            label="Sample lead time (days)"
+            required={sampleRequest.required}
+            hint={`Days from order confirmation to sending the sample, up to ${MAX_SAMPLE_LEAD_DAYS}.`}
+          >
+            <Input name="sampleLeadTimeDays" type="number" inputMode="numeric" min={1} max={MAX_SAMPLE_LEAD_DAYS} value={v.sampleLeadTimeDays} onChange={set("sampleLeadTimeDays")} className="tabular" />
+          </Field>
+          <Field id="samplingCost" label="Sampling charge (total)" hint="Added once to the subtotal. Leave empty if sampling is free.">
+            <Input name="samplingCost" inputMode="decimal" placeholder="0.00" value={v.samplingCost} onChange={set("samplingCost")} className="tabular" />
+          </Field>
+        </div>
+        <Field id="sampleNotes" label="How you will make the sample" hint="Fabric and trims used, rounds of fit comments included, courier and who pays it.">
+          <Textarea name="sampleNotes" rows={3} maxLength={1000} defaultValue={defaults.sampleNotes} />
+        </Field>
       </Section>
 
       {/* Live breakdown: same calculation as the server, which recalculates and stores its own totals. */}
@@ -186,10 +222,24 @@ function Line({ label, value, strong = false }: { label: string; value: string; 
   );
 }
 
-export function WithdrawQuotationButton({ quotationId, projectId }: { quotationId: string; projectId: string }) {
-  return (
+/**
+ * Low-emphasis exit from quoting, rendered in the quote panel's footer (outside the quotation form, away from
+ * Send). A draft was never seen by the brand, so its wording says the draft is discarded and nobody is told.
+ */
+export function WithdrawQuotationButton({ quotationId, projectId, isDraft = false }: { quotationId: string; projectId: string; isDraft?: boolean }) {
+  return isDraft ? (
     <ActionDialog
-      trigger={<Button type="button" variant="outline"><Undo2 /> Withdraw quotation</Button>}
+      trigger={<Button type="button" variant="ghost" size="sm"><Trash2 /> Discard draft</Button>}
+      title="Discard and stop quoting?"
+      description="Your draft is discarded and you cannot quote on this project again. The brand is not notified."
+      action={withdrawQuotationAction}
+      hidden={{ quotationId, projectId }}
+      confirmLabel="Discard and stop quoting"
+      tone="danger"
+    />
+  ) : (
+    <ActionDialog
+      trigger={<Button type="button" variant="ghost" size="sm"><Undo2 /> Withdraw quotation</Button>}
       title="Withdraw this quotation?"
       description="The brand is told you withdrew. You cannot quote on this project again."
       action={withdrawQuotationAction}

@@ -2,33 +2,34 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Logo } from "@/components/site/logo";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { Photo } from "@/components/ui/photo";
+import { PhotoCredit } from "@/components/site/marketing";
 
 const POINTS = [
   {
-    title: "Matching you can read",
-    text: "Every factory match shows the rules behind its score, and why others were excluded.",
+    title: "Factories that fit your garment",
+    text: "Matching checks category, MOQ, capacity and certifications, and shows the reasons for every factory.",
   },
   {
-    title: "One shared status",
-    text: "Brands and manufacturers see the same quotations, milestones and quality reports.",
+    title: "One shared production record",
+    text: "Brands and manufacturers see the same quotations, samples, milestones and inspection reports.",
   },
   {
     title: "Manufacturers reviewed by a person",
-    text: "Verification is a manual review of documents by a Fashinza administrator.",
+    text: "An administrator reviews every factory's documents before it is verified.",
   },
 ];
 
-const STAGES = ["Fabric", "Sampling", "Cutting", "Stitching", "Finishing", "QC", "Shipping", "Delivery"];
-
 /**
- * Editorial split: the form on ivory (left), and a contrasting value panel (ink in light, raised warm-dark in
- * dark mode) with the same three factual points. Below lg the panel is replaced by a ruled list under the form.
+ * Editorial split: the form on ivory (left), and a photographic panel (lg+) — designers fitting a sample, under a
+ * scrim that deepens towards the bottom where the ivory copy sits. Below lg the panel is replaced by a ruled list
+ * under the form.
  */
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="grid min-h-dvh bg-canvas lg:grid-cols-[minmax(0,1fr)_minmax(0,0.92fr)]">
       <main id="main" className="flex min-w-0 flex-col">
-        <div className="flex h-16 items-center justify-between gap-3 border-b border-line px-4 sm:px-8 lg:border-b-0 lg:px-12">
+        <div className="flex h-16 items-center justify-between gap-2 border-b border-line px-4 sm:px-8 lg:border-b-0 lg:px-12">
           <Logo />
           <div className="flex items-center gap-1 sm:gap-2">
             <Link
@@ -36,14 +37,15 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               className="inline-flex min-h-10 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-ink-muted transition-colors duration-150 hover:text-ink"
             >
               <ArrowLeft className="size-4" aria-hidden />
-              Back to website
+              <span className="max-[359px]:hidden">Back to website</span>
+              <span className="min-[360px]:hidden">Website</span>
             </Link>
-            <ThemeToggle className="lg:hidden" />
+            <ThemeToggle />
           </div>
         </div>
         <div className="flex flex-1 flex-col items-center justify-start px-4 pb-12 pt-10 sm:justify-center sm:px-8 sm:pt-10">
           <div className="w-full max-w-[27rem]">{children}</div>
-          <ol className="mt-12 w-full max-w-[27rem] border-t border-line-strong lg:hidden" aria-label="About Fashinza">
+          <ol className="mt-12 w-full max-w-[27rem] border-t border-line-strong lg:hidden" aria-label="Why Fashinza">
             {POINTS.map((p, i) => (
               <li key={p.title} className="grid grid-cols-[2rem_minmax(0,1fr)] gap-x-3 border-b border-line py-4 text-[13px] leading-5">
                 <span className="font-display text-base italic leading-5 text-accent-strong tabular" aria-hidden>
@@ -62,50 +64,38 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <Link href="/terms" className="inline-flex min-h-10 items-center underline-offset-4 transition-colors duration-150 hover:text-ink hover:underline">Terms of Service</Link>
         </p>
       </main>
-      <aside className="hidden bg-inverse text-ink-inverse lg:block" aria-label="About Fashinza">
-        <div className="sticky top-0 flex h-dvh max-h-[62rem] flex-col justify-between overflow-hidden px-12 py-10 xl:px-16 xl:py-12">
-          <div className="flex items-center justify-between gap-4 border-b border-ink-inverse/15 pb-5">
-            <p className="eyebrow text-ink-inverse-muted">Apparel manufacturing, managed</p>
-            <ThemeToggle className="text-ink-inverse-muted hover:bg-ink-inverse/10 hover:text-ink-inverse" />
-          </div>
-          <div className="max-w-[30rem] py-10">
-            <h2 className="text-balance font-display text-[2.5rem] font-[420] leading-[1.06] tracking-[-0.03em] text-ink-inverse xl:text-[2.875rem]">
-              Brief, quote, produce and inspect —{" "}
-              <em className="font-display font-[380] italic text-ink-inverse-muted">in one workflow.</em>
-            </h2>
-            <ol className="mt-10 border-t border-ink-inverse/15">
-              {POINTS.map((p, i) => (
-                <li key={p.title} className="grid grid-cols-[3rem_minmax(0,1fr)] gap-x-4 border-b border-ink-inverse/15 py-5">
-                  <span className="font-display text-[1.75rem] font-light leading-none tracking-[-0.02em] text-accent tabular" aria-hidden>
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <div>
-                    <p className="font-display text-lg font-medium tracking-[-0.01em] text-ink-inverse">{p.title}</p>
-                    <p className="mt-1 text-sm leading-6 text-ink-inverse-muted">{p.text}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-            <div className="mt-10" aria-hidden>
-              <div className="flex items-baseline justify-between text-xs text-ink-inverse-muted">
-                <span className="label-caps">Order stages · example</span>
-                <span className="tabular">4 of 8</span>
-              </div>
-              <div className="mt-3 grid grid-cols-8 gap-1">
-                {STAGES.map((s, i) => (
-                  <span
-                    key={s}
-                    className={i < 3 ? "h-1 rounded-xs bg-ink-inverse" : i === 3 ? "h-1 rounded-xs bg-accent" : "h-1 rounded-xs bg-ink-inverse/20"}
-                  />
+      <aside className="hidden bg-inverse text-ink-inverse lg:block" aria-label="Why Fashinza">
+        <div className="sticky top-0 isolate h-dvh max-h-[62rem] overflow-hidden">
+          <Photo photo="designersSampleFitting" sizes="46vw" fill rounded="none" position="55% center" decorative />
+          {/* ≥74% scrim across the lower 64% of the panel, where the copy sits; muted text stays in the ≥85% band. */}
+          <div aria-hidden className="absolute inset-0 bg-linear-to-t from-scrim/95 via-scrim/85 via-55% to-scrim/30" />
+          <PhotoCredit photo="designersSampleFitting" decorative />
+          <div className="relative flex h-full flex-col justify-end px-12 py-10 xl:px-16 xl:py-12">
+            <div className="max-w-[30rem]">
+              <p className="eyebrow flex items-center gap-3 text-ink-inverse">
+                <span className="h-px w-8 bg-taupe" aria-hidden />
+                Garment manufacturing, managed
+              </p>
+              <h2 className="mt-6 text-balance font-display text-[2.375rem] font-medium leading-[1.08] tracking-[-0.025em] text-ink-inverse xl:text-[2.75rem]">
+                Brief, sample, produce and inspect,{" "}
+                <em className="font-normal italic">in one shared record.</em>
+              </h2>
+              <ol className="mt-9 border-t border-ink-inverse/20">
+                {POINTS.map((p, i) => (
+                  <li key={p.title} className="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-x-4 border-b border-ink-inverse/20 py-4">
+                    <span className="font-display text-[1.5rem] font-normal leading-none tracking-[-0.02em] text-accent-inverse tabular" aria-hidden>
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <div>
+                      <p className="font-display text-[1.0625rem] font-medium tracking-[-0.01em] text-ink-inverse">{p.title}</p>
+                      <p className="mt-1 text-sm leading-6 text-ink-inverse-muted">{p.text}</p>
+                    </div>
+                  </li>
                 ))}
-              </div>
-              <div className="mt-2 flex justify-between text-xs text-ink-inverse-muted">
-                <span>Fabric sourcing</span>
-                <span>Delivery</span>
-              </div>
+              </ol>
+              <p className="mt-6 text-xs text-ink-inverse-muted">Final Year Project · The University of Lahore</p>
             </div>
           </div>
-          <p className="border-t border-ink-inverse/15 pt-5 text-xs text-ink-inverse-muted">Final Year Project · The University of Lahore</p>
         </div>
       </aside>
     </div>

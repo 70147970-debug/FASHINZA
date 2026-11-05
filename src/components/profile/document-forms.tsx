@@ -10,8 +10,11 @@ import { Button } from "@/components/ui/button";
 import { CERTIFICATIONS, UPLOAD_LIMITS } from "@/lib/constants";
 import { deleteDocumentAction, requestVerificationAction, uploadDocumentAction } from "@/app/(app)/profile-actions";
 
-export function UploadDocumentForm() {
-  const [type, setType] = useState("BUSINESS_REGISTRATION");
+type DocumentKind = "BUSINESS_REGISTRATION" | "CERTIFICATION" | "OTHER";
+
+/** `defaultType` lets the page pre-select a certificate once the business registration is uploaded. */
+export function UploadDocumentForm({ defaultType = "BUSINESS_REGISTRATION" }: { defaultType?: DocumentKind }) {
+  const [type, setType] = useState<string>(defaultType);
   return (
     <ActionForm action={uploadDocumentAction} resetOnSuccess className="space-y-4">
       <div className={type === "CERTIFICATION" ? "grid gap-4 sm:grid-cols-2 xl:grid-cols-1" : undefined}>

@@ -78,7 +78,7 @@ export function NextStepCard({ order, view }: { order: Order; view: OrderView })
           key: "stage",
           title: `Complete ${label}`,
           meta: dueMeta,
-          lead: <>Upload evidence ({def.requirement.toLowerCase()}), then mark the stage complete.</>,
+          lead: <>Upload evidence ({def.requirement.charAt(0).toLowerCase() + def.requirement.slice(1)}), then mark the stage complete.</>,
           body: (
             <>
               {current.evidence.length > 0 && (
@@ -96,7 +96,7 @@ export function NextStepCard({ order, view }: { order: Order; view: OrderView })
               <EvidenceForm orderId={order.id} stage={current.stage} requirement={def.requirement} />
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-line pt-4">
                 <CompleteStageButton orderId={order.id} stage={current.stage} label={def.label} disabled={current.evidence.length === 0} />
-                {current.evidence.length === 0 && <p className="text-xs text-ink-muted">Upload evidence to enable completion.</p>}
+                {current.evidence.length === 0 && <p className="text-xs text-ink-muted">Choose files above and press Add evidence first; completing needs at least one uploaded file.</p>}
               </div>
             </>
           ),
@@ -262,7 +262,7 @@ export function NextStepCard({ order, view }: { order: Order; view: OrderView })
     tasks.push({
       key: "payments",
       title: dueCount === 0 ? "Payment in progress" : payable.length === 1 ? `Payment due: ${payable[0].label}` : `${payable.length} payments due`,
-      lead: <>Paid through a sandbox provider: no real money moves. <TabLink tab="payments">Schedule and receipts</TabLink></>,
+      lead: <>Test payments for now: no real money moves. <TabLink tab="payments">Schedule and receipts</TabLink></>,
       body: (
         <ul className="divide-y divide-line-subtle rounded-md border border-line">
           {payable.map((p) => (

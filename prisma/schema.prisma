@@ -81,10 +81,13 @@ enum ProjectStatus {
   CANCELLED
 }
 
+/// TECH_PACK is versioned. REFERENCE_IMAGE and SKETCH accept images only; MEASUREMENT_CHART accepts a PDF or an image.
 enum AttachmentKind {
   TECH_PACK
   SKETCH
   OTHER
+  REFERENCE_IMAGE
+  MEASUREMENT_CHART
 }
 
 enum QuotationStatus {
@@ -360,6 +363,7 @@ model ManufacturerProfile {
 
   capabilities ManufacturerCapability[]
   documents    ManufacturerDocument[]
+  machinery    ManufacturerMachine[]
 
   @@index([verificationStatus])
   @@index([country])
@@ -376,6 +380,20 @@ model ManufacturerCapability {
   @@unique([profileId, kind, name])
   @@index([name])
   @@map("manufacturer_capability")
+}
+
+/// Machinery a factory lists on its profile, e.g. "Single-needle lockstitch" × 40. Shown to brands and
+/// admins; not used for match scores.
+model ManufacturerMachine {
+  id        String              @id @default(cuid())
+  profileId String
+  profile   ManufacturerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  type      String
+  quantity  Int
+  sortOrder Int                 @default(0)
+
+  @@unique([profileId, type])
+  @@map("manufacturer_machine")
 }
 
 model ManufacturerDocument {
@@ -422,6 +440,11 @@ model Project {
   preferredCountry       String?
   requiredCertifications String[]
   sustainabilityNotes    String?
+  /// Sample request: whether the brand wants samples before bulk production, and which.
+  sampleRequired         Boolean         @default(true)
+  sampleQuantity         Int?            @default(1)
+  sampleSizes            String[]        @default([])
+  sampleNotes            String?
   status                 ProjectStatus   @default(DRAFT)
   wizardStep             Int             @default(1)
   submittedAt            DateTime?
@@ -519,6 +542,9 @@ model Quotation {
   minQuantity          Int
   productionDays       Int
   samplingCost         Decimal?        @db.Decimal(12, 2)
+  /// Sample proposal: days to make the requested samples and how the factory will make them.
+  sampleLeadTimeDays   Int?
+  sampleNotes          String?
   notes                String?
   validUntil           DateTime
   status               QuotationStatus @default(DRAFT)

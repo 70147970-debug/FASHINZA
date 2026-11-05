@@ -55,7 +55,7 @@ export default async function SettingsPage() {
         <SettingsSection id="email" icon={BellRing} title="Email notifications" description="How Fashinza reaches you outside the app.">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <p className="text-sm leading-6 text-ink-muted">
-              Email delivery is not configured in this build. All notifications are kept in your in-app notification centre.
+              Email notifications are not switched on yet. All notifications are kept in your in-app notification centre.
             </p>
             <Badge tone="neutral" className="shrink-0 self-start">Not configured</Badge>
           </div>

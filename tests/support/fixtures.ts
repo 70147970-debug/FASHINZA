@@ -10,7 +10,7 @@ import { randomUUID } from "node:crypto";
 const TABLES = [
   "webhook_event", "payment_transaction", "payment_milestone", "message", "rework_task", "qc_defect", "qc_report_photo", "qc_report",
   "sample_photo", "sample", "milestone_evidence", "production_milestone", "activity_log", "issue_report", "order", "quotation_revision",
-  "quotation", "match_result", "project_revision", "project_attachment", "project", "manufacturer_document", "manufacturer_capability",
+  "quotation", "match_result", "project_revision", "project_attachment", "project", "manufacturer_document", "manufacturer_capability", "manufacturer_machine",
   "manufacturer_profile", "brand_profile", "notification", "audit_log", "contact_inquiry", "verification", "session", "account", "user",
 ];
 
@@ -49,7 +49,16 @@ export function pngFile(name = "photo.png") {
   return new File([Buffer.concat([header, Buffer.from("test-image-bytes")])], name, { type: "image/png" });
 }
 
-type FactoryOptions = { categories?: string[]; moq?: number; capacity?: number; leadTime?: number; country?: string; certification?: string; verify?: boolean };
+type FactoryOptions = {
+  categories?: string[];
+  moq?: number;
+  capacity?: number;
+  leadTime?: number;
+  country?: string;
+  certification?: string;
+  verify?: boolean;
+  machinery?: { type: string; quantity: number }[];
+};
 
 export async function makeFactory(admin: Actor, o: FactoryOptions = {}): Promise<Actor> {
   const m = await makeUser("MANUFACTURER");
@@ -68,6 +77,7 @@ export async function makeFactory(admin: Actor, o: FactoryOptions = {}): Promise
     typicalLeadTimeDays: o.leadTime ?? 30,
     contactName: "Factory contact",
     contactEmail: m.email,
+    machinery: o.machinery ?? [{ type: "Single-needle lockstitch", quantity: 40 }, { type: "Overlock 4-thread", quantity: 12 }],
   });
   if (o.verify !== false) {
     const reg = await addManufacturerDocument(actor, pdfFile("registration.pdf"), "BUSINESS_REGISTRATION");
@@ -124,6 +134,8 @@ export const QUOTE = {
   productionDays: 40,
   validUntil: inDays(30),
   notes: "FOB Karachi",
+  sampleLeadTimeDays: 12,
+  sampleNotes: "One fit sample in production fabric; one round of comments included.",
 };
 
 /** Brand + verified factory + accepted quotation → order at FABRIC_SOURCING. */

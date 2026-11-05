@@ -100,12 +100,26 @@ test("the brand briefs a project through the wizard and submits it for matching"
   await page.reload();
   await expect(page.getByRole("heading", { name: "E2E organic tee" })).toBeVisible();
 
-  // Step 5 — tech pack upload with progress.
+  // Step 5 — samples: requested by default (1 piece); ask for a size M fit sample.
+  await expect(page.getByLabel("Yes, request samples")).toBeChecked();
+  await expect(page.getByLabel("Sample pieces")).toHaveValue("1");
+  await chip(page, "Sample sizes", "M");
+  await page.getByRole("button", { name: "Save and continue" }).click();
+  await expect(page).toHaveURL(/step=6/);
+
+  // Step 6 — tech pack upload with progress, then a measurement chart.
   await page.locator('input[type="file"]').setInputFiles(pdf("e2e-techpack.pdf"));
   await expect(page.getByText("e2e-techpack.pdf").first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Tech pack versions/ })).toBeVisible();
+  await page.getByLabel("File type").selectOption("MEASUREMENT_CHART");
+  await page.locator('input[type="file"]').setInputFiles(pdf("e2e-measurements.pdf"));
+  await expect(page.getByRole("heading", { name: /Measurement charts/ })).toBeVisible();
+  await expect(page.getByText("e2e-measurements.pdf").first()).toBeVisible();
+  await expect(page.getByRole("list", { name: "Files factories look for" }).getByRole("listitem").filter({ hasText: "Measurement chart" })).toContainText("1 uploaded");
   await page.getByRole("link", { name: "Continue to review" }).click();
 
-  // Step 6 — review and submit.
+  // Step 7 — review and submit.
+  await expect(page).toHaveURL(/step=7/);
   await expect(page.getByText("Everything factories need is in place.")).toBeVisible();
   await page.getByRole("button", { name: "Submit project for matching" }).click();
   await expect(page).toHaveURL(/submitted=1/);
@@ -129,10 +143,15 @@ test("the matched factory sends a quotation with a server-calculated total", asy
   await expect(page.getByRole("heading", { name: "Send your quotation" })).toBeVisible();
   await page.getByLabel("Making cost per unit (CMT)").fill("3.10");
   await page.getByLabel("Fabric cost per unit").fill("2.05");
+  // The brand asked for samples, so the sample proposal needs a lead time before the quote can be sent.
   await page.getByLabel("Sampling charge (total)").fill("120");
   await page.getByLabel("Logistics estimate (total)").fill("350.50");
   await page.getByLabel("Minimum quantity").fill("300");
   await page.getByLabel("Production duration (days)").fill("40");
+  await page.getByRole("button", { name: "Send quotation" }).click();
+  await expect(page.locator("#sampleLeadTimeDays-error")).toHaveText("The brand asked for samples. Enter how many days you need to make them.");
+  await expect(page.getByLabel("Sample lead time (days)")).toBeFocused();
+  await page.getByLabel("Sample lead time (days)").fill("14");
   // The live preview matches what the server will store.
   // (3.10 + 2.05) × 500 + 120 sampling + 350.50 logistics = 3,045.50
   await expect(page.getByRole("definition").filter({ hasText: "3,045.50" }).last()).toBeVisible();
@@ -172,6 +191,9 @@ test("the brand compares, requests a revision, then accepts and an order is crea
   await page.getByRole("link", { name: "Payments tab" }).click();
   await expect(page).toHaveURL(/tab=payments/);
   await expect(page.locator("#payments")).toContainText("Sample approval · 30%");
+  // The agreed terms carry the brand's sample request and the factory's sample lead time.
+  await page.goto(`${orderUrl}?tab=details`);
+  await expect(page.locator("#terms")).toContainText("1 piece · size M · in 14 days");
   await expectPagesFitPhone(page, tabUrls(projectUrl, ["quotations", "matches", "requirements", "files", "activity"]));
 });
 

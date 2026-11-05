@@ -4,6 +4,7 @@ import type { Actor } from "@/server/actor";
 import { assertRole } from "@/server/access";
 import { expireQuotations } from "./quotations";
 import { refreshDelays } from "./orders";
+import { resolveAuditTargets } from "./admin";
 
 const ACTIVE_ORDER: Prisma.OrderWhereInput = { status: { notIn: ["DELIVERED", "CANCELLED"] } };
 const delayedOrder = (): Prisma.OrderWhereInput => ({
@@ -16,7 +17,7 @@ export async function brandDashboard(actor: Actor) {
   assertRole(actor, "BRAND");
   await Promise.all([refreshDelays(), expireQuotations({ project: { brandId: actor.id } })]);
   const mine = { brandId: actor.id };
-  const [activeProjects, drafts, activeOrders, pendingQuotations, samplesToReview, delayedOrders, pendingQc, payments, notifications] = await Promise.all([
+  const [activeProjects, drafts, activeOrders, pendingQuotations, samplesToReview, delayedOrders, pendingQc, payments, notifications, openPayments] = await Promise.all([
     db.project.count({ where: { ...mine, status: { in: ["SUBMITTED", "QUOTING"] } } }),
     db.project.count({ where: { ...mine, status: "DRAFT" } }),
     db.order.count({ where: { ...mine, ...ACTIVE_ORDER } }),
@@ -31,16 +32,18 @@ export async function brandDashboard(actor: Actor) {
       include: { order: { select: { id: true, reference: true, project: { select: { name: true } } } } },
     }),
     db.notification.findMany({ where: { userId: actor.id }, orderBy: { createdAt: "desc" }, take: 6 }),
+    // Uncapped totals of due and failed milestones per order and currency (the `payments` list above stops at 5).
+    db.paymentMilestone.groupBy({ by: ["orderId", "status", "currency"], where: { order: mine, status: { in: ["DUE", "FAILED"] } }, _sum: { amount: true }, _count: true }),
   ]);
   const totalProjects = await db.project.count({ where: mine });
-  return { activeProjects, drafts, activeOrders, pendingQuotations, samplesToReview, delayedOrders, pendingQc, payments, notifications, isNew: totalProjects === 0 };
+  return { activeProjects, drafts, activeOrders, pendingQuotations, samplesToReview, delayedOrders, pendingQc, payments, notifications, openPayments, isNew: totalProjects === 0 };
 }
 
 export async function manufacturerDashboard(actor: Actor) {
   assertRole(actor, "MANUFACTURER");
   await Promise.all([refreshDelays(), expireQuotations({ manufacturerId: actor.id })]);
   const mine = { manufacturerId: actor.id };
-  const [profile, newOpportunities, openQuotes, revisionRequests, activeOrders, delayedOrders, actionOrders, paid, notifications] = await Promise.all([
+  const [profile, newOpportunities, openQuotes, revisionRequests, activeOrders, delayedOrders, actionOrders, paid, notifications, stageStates] = await Promise.all([
     db.manufacturerProfile.findUnique({ where: { userId: actor.id }, select: { verificationStatus: true, verificationNote: true, businessName: true } }),
     db.matchResult.count({ where: { ...mine, project: { status: { in: ["SUBMITTED", "QUOTING"] }, quotations: { none: mine } } } }),
     db.quotation.count({ where: { ...mine, status: "SUBMITTED" } }),
@@ -55,8 +58,13 @@ export async function manufacturerDashboard(actor: Actor) {
     }),
     db.paymentMilestone.groupBy({ by: ["currency"], where: { order: mine, status: "PAID" }, _sum: { amount: true } }),
     db.notification.findMany({ where: { userId: actor.id }, orderBy: { createdAt: "desc" }, take: 6 }),
+    // Uncapped: the current stage of every open order before delivery, to count whose turn it is.
+    db.order.findMany({
+      where: { ...mine, ...ACTIVE_ORDER, currentStage: { not: "DELIVERY" } },
+      select: { id: true, currentStage: true, milestones: { select: { stage: true, status: true, isDelayed: true } } },
+    }),
   ]);
-  return { profile, newOpportunities, openQuotes, revisionRequests, activeOrders, delayedOrders, actionOrders, paid, notifications };
+  return { profile, newOpportunities, openQuotes, revisionRequests, activeOrders, delayedOrders, actionOrders, paid, notifications, stageStates };
 }
 
 export async function adminDashboard(actor: Actor) {
@@ -77,5 +85,9 @@ export async function adminDashboard(actor: Actor) {
     db.project.groupBy({ by: ["status"], _count: true }),
     db.auditLog.findMany({ orderBy: { createdAt: "desc" }, take: 6, include: { actor: { select: { name: true } } } }),
   ]);
-  return { usersByRole, suspended, pendingFactories, verifiedFactories, ordersByStatus, delayedOrders, openDisputes, failedQc30, paidByCurrency, webhookErrors, projectsByStatus, recentAudit };
+  const targets = await resolveAuditTargets(recentAudit);
+  return {
+    usersByRole, suspended, pendingFactories, verifiedFactories, ordersByStatus, delayedOrders, openDisputes, failedQc30, paidByCurrency, webhookErrors, projectsByStatus,
+    recentAudit: recentAudit.map((a) => ({ ...a, target: targets[a.targetId] })),
+  };
 }

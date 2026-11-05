@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { PAYMENT_STATUS } from "@/lib/labels";
 import { stageLabel } from "@/lib/workflow";
 import { formatDate, formatDateTime, formatMoney } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Payments" };
 
@@ -23,11 +24,26 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
   const sum = (s: string) => data.totals.filter((t) => t.status === s);
   const isBrand = actor.role === "BRAND";
   const counterparty = (p: (typeof data.items)[number]) => (isBrand ? p.order.manufacturer.manufacturerProfile?.businessName : p.order.brand.brandProfile?.companyName);
+  /** One timing line per row (the Timing column), worded for the milestone's state. */
   const dueText = (p: (typeof data.items)[number]) =>
-    p.paidAt ? `Paid ${formatDate(p.paidAt)}` : p.dueAt && p.status === "DUE" ? `Due by ${formatDate(p.dueAt)}` : `After ${stageLabel(p.triggerStage).toLowerCase()}`;
+    p.status === "SCHEDULED"
+      ? `Due after ${stageLabel(p.triggerStage).toLowerCase()}`
+      : p.status === "DUE"
+        ? p.dueAt ? `Due by ${formatDate(p.dueAt)}` : "Due now"
+        : p.status === "PROCESSING"
+          ? "Checkout in progress"
+          : p.status === "FAILED"
+            ? isBrand ? "Failed, pay again" : "Payment failed"
+            : p.paidAt ? `Paid ${formatDate(p.paidAt)}` : "—";
   const payable = (s: string) => isBrand && ["DUE", "FAILED", "PROCESSING"].includes(s);
-  // Only the first payable milestone gets the terracotta button; the rest are outline, so the screen keeps one key action.
-  const firstPayable = data.items.find((p) => payable(p.status))?.id;
+  // Group each order's milestones together in schedule order (the order page's order), keeping the orders in
+  // the sequence the list returned them (most recently active first). The first payable row is then the same
+  // milestone the order page's "Your next step" card highlights.
+  const orderRank = new Map<string, number>();
+  for (const p of data.items) if (!orderRank.has(p.order.id)) orderRank.set(p.order.id, orderRank.size);
+  const items = [...data.items].sort((a, b) => orderRank.get(a.order.id)! - orderRank.get(b.order.id)! || a.sequence - b.sequence);
+  // Only the first payable milestone gets the accent button; the rest are outline, so the screen keeps one key action.
+  const firstPayable = items.find((p) => payable(p.status))?.id;
 
   const totals = (key: string) => {
     const rows = sum(key);
@@ -43,7 +59,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
     );
   };
 
-  const transactions = data.items
+  const transactions = items
     .flatMap((p) => p.transactions.map((t) => ({ ...t, milestone: p })))
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
@@ -52,7 +68,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
       <PageHeader
         title="Payments"
         meta={<SandboxBadge />}
-        description="Milestone payments across your orders. This build uses a sandbox payment provider: no real money moves, and Fashinza does not hold funds in escrow."
+        description="Milestone payments across your orders, grouped by order in schedule order. Payments are simulated for now: no real money moves, and Fashinza does not hold funds in escrow."
       />
 
       <MetricStrip label="Payment totals" columns={3}>
@@ -77,7 +93,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
               label="Payment milestones"
               cards={
                 <MobileCardList>
-                  {data.items.map((p) => (
+                  {items.map((p) => (
                     <MobileCard
                       key={p.id}
                       title={
@@ -118,13 +134,15 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
                   </tr>
                 </thead>
                 <tbody>
-                  {data.items.map((p) => (
-                    <tr key={p.id} className={p.status === "DUE" ? "bg-warning-soft/60" : undefined}>
+                  {items.map((p, i) => (
+                    <tr
+                      key={p.id}
+                      className={cn(p.status === "DUE" && "bg-warning-soft/60", i < items.length - 1 && items[i + 1].order.id !== p.order.id && "[&>td]:border-b-line-strong")}
+                    >
                       <td>
                         <p className="cell-primary">
                           {p.label} · <span className="tabular">{p.percentage.toString()}%</span>
                         </p>
-                        <p className="mt-0.5 text-xs text-ink-muted">Due after {stageLabel(p.triggerStage).toLowerCase()}</p>
                       </td>
                       <td>
                         <Link href={`/orders/${p.order.id}?tab=payments`} className="rounded-sm text-[13px] font-medium text-ink hover:underline hover:underline-offset-4">
@@ -148,7 +166,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
             <Pagination page={data.page} pages={data.pages} total={data.total} basePath="/payments" params={{ status }} />
           </PageSection>
 
-          <PageSection title="Transaction history" description="Charges and refunds reported by the sandbox provider for the milestones above.">
+          <PageSection title="Transaction history" description="Charges and refunds reported by the payment provider (test mode) for the milestones above.">
             {transactions.length === 0 ? (
               <EmptyState icon={CreditCard} title="No transactions yet" description="A transaction is recorded each time a milestone payment is attempted or refunded." />
             ) : (

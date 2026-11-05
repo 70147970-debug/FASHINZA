@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, CreditCard, PackageCheck, Plus, Send, ShieldAlert, Trash2, Truck, Upload } from "lucide-react";
 import { ActionForm, SubmitButton } from "@/components/forms/action-form";
@@ -33,20 +33,38 @@ export function LiveRefresh({ seconds = 30 }: { seconds?: number }) {
   return null;
 }
 
+/**
+ * Evidence upload for the current stage. Choosing files does not upload them: once files are chosen the
+ * "Add evidence" button becomes the prominent one and a line says how many files will be uploaded.
+ */
 export function EvidenceForm({ orderId, stage, requirement }: { orderId: string; stage: string; requirement: string }) {
+  const [chosen, setChosen] = useState(0);
+  const clear = useCallback(() => setChosen(0), []);
   return (
-    <ActionForm action={addEvidenceAction} resetOnSuccess className="space-y-3">
+    <ActionForm action={addEvidenceAction} resetOnSuccess onSuccess={clear} className="space-y-3">
       <input type="hidden" name="orderId" value={orderId} />
       <input type="hidden" name="stage" value={stage} />
       <div>
-        <label htmlFor={`ev-${stage}`} className="mb-1.5 block text-sm font-medium text-ink">Evidence <span className="font-normal text-ink-muted">— {requirement.toLowerCase()}</span></label>
-        <input id={`ev-${stage}`} name="file" type="file" multiple accept="image/png,image/jpeg,image/webp,application/pdf" className={fileInputCls} />
+        <label htmlFor={`ev-${stage}`} className="mb-1.5 block text-sm font-medium text-ink">Evidence <span className="font-normal text-ink-muted">— {requirement.charAt(0).toLowerCase() + requirement.slice(1)}</span></label>
+        <input
+          id={`ev-${stage}`}
+          name="file"
+          type="file"
+          multiple
+          accept="image/png,image/jpeg,image/webp,application/pdf"
+          className={fileInputCls}
+          aria-describedby={`ev-${stage}-hint`}
+          onChange={(e) => setChosen(e.currentTarget.files?.length ?? 0)}
+        />
+        <p id={`ev-${stage}-hint`} className="mt-1 text-xs leading-4 text-ink-muted">
+          {chosen > 0 ? `${chosen} file${chosen === 1 ? "" : "s"} chosen, not uploaded yet: press Add evidence.` : "Photos (PNG, JPEG, WebP) or PDF. Choosing files does not upload them."}
+        </p>
         <FieldError name="file" />
       </div>
       <Field id={`ev-note-${stage}`} name="note" label="Note">
         <Input name="note" maxLength={500} placeholder="What does this show?" />
       </Field>
-      <SubmitButton variant="outline" size="sm" pendingText="Uploading…"><Upload /> Add evidence</SubmitButton>
+      <SubmitButton variant={chosen > 0 ? "primary" : "outline"} size="sm" pendingText="Uploading…"><Upload /> Add evidence</SubmitButton>
     </ActionForm>
   );
 }
@@ -305,7 +323,7 @@ export function MessageForm({ orderId, milestones }: { orderId: string; mileston
   );
 }
 
-/** `quiet` renders an outline button, so a list with several payable milestones keeps a single terracotta action. */
+/** `quiet` renders an outline button, so a list with several payable milestones keeps a single accent action. */
 export function PayButton({ paymentMilestoneId, label, amount, quiet }: { paymentMilestoneId: string; label: string; amount: string; quiet?: boolean }) {
   return (
     <ActionForm action={startPaymentAction}>
@@ -350,10 +368,17 @@ export function ScheduleEditor({ orderId, items, total, currency }: { orderId: s
   );
 }
 
-export function RaiseDisputeButton({ orderId, projectId }: { orderId?: string; projectId?: string }) {
+/** `quiet` renders a small ghost trigger for page headers, so it never reads as the page's main action. */
+export function RaiseDisputeButton({ orderId, projectId, quiet = false }: { orderId?: string; projectId?: string; quiet?: boolean }) {
   return (
     <ActionDialog
-      trigger={<Button variant="outline"><ShieldAlert /> Raise a dispute</Button>}
+      trigger={
+        quiet ? (
+          <Button variant="ghost" size="sm" className="text-ink-muted hover:text-ink"><ShieldAlert /> Raise a dispute</Button>
+        ) : (
+          <Button variant="outline"><ShieldAlert /> Raise a dispute</Button>
+        )
+      }
       title="Raise a dispute"
       description="The Fashinza team reviews disputes with the full order history. The other party is notified."
       action={raiseDisputeAction}

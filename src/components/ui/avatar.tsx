@@ -13,9 +13,9 @@ function initialsOf(name: string) {
 }
 
 /**
- * Initials avatar for people (round) and organisations (square), set in Fraunces. Decorative by default:
+ * Initials avatar for people (round) and organisations (square), set in the display serif (font-display). Decorative by default:
  * the name should also appear as text next to it.
- * Tones: `accent` (terracotta tint), `ink` (solid), `neutral`.
+ * Tones: `accent` (forest-green accent tint), `ink` (solid), `neutral`.
  */
 export function Avatar({
   name,

@@ -88,7 +88,7 @@ export async function refundAction(_prev: FormState, fd: FormData): Promise<Form
     // The sandbox provider settles refunds immediately by sending its webhook; a real provider
     // would send it asynchronously once the refund clears.
     if (getPaymentProvider().isSandbox) await deliverSandboxEvent("refund.succeeded", { providerRef: refund.providerRef, amount: refund.amount, currency: refund.currency });
-    return "Refund issued through the sandbox provider.";
+    return "Refund issued through the payment provider (test mode).";
   });
   revalidatePath("/admin/payments");
   return result;

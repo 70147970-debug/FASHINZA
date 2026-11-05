@@ -6,14 +6,24 @@ const CATEGORY_VALUES = [
 ] as const;
 
 const optionalText = (max: number) => z.string().trim().max(max).optional().transform((v) => v || undefined);
-const optionalInt = (label: string, min: number, max: number) =>
-  z.preprocess(
+const optionalInt = (label: string, min: number, max: number) => {
+  const cap = label[0].toUpperCase() + label.slice(1);
+  return z.preprocess(
     (v) => (v === "" || v === undefined || v === null ? undefined : Number(v)),
-    z.number({ invalid_type_error: `Enter ${label} as a number.` }).int(`Enter ${label} as a whole number.`).min(min, `${label[0].toUpperCase() + label.slice(1)} must be at least ${min}.`).max(max).optional(),
+    z
+      .number({ invalid_type_error: `Enter ${label} as a number.` })
+      .int(`Enter ${label} as a whole number.`)
+      .min(min, `${cap} must be at least ${min}.`)
+      .max(max, `${cap} cannot be more than ${max.toLocaleString("en-GB")}.`)
+      .optional(),
   );
+};
 const list = z.array(z.string().trim().min(1).max(80)).max(30).default([]);
+/** Radio and checkbox values arrive as strings; anything but an explicit "no" counts as yes. */
+const yesNo = z.preprocess((v) => (typeof v === "boolean" ? v : !["false", "no", "0", "off"].includes(String(v ?? "").trim().toLowerCase())), z.boolean());
 
 export const MIN_LEAD_DAYS = 14;
+export const MAX_SAMPLE_PIECES = 50;
 
 /** Fields per wizard step. Drafts accept partial data; only name and category are needed to save. */
 export const projectDraftSchema = z.object({
@@ -40,6 +50,10 @@ export const projectDraftSchema = z.object({
   preferredCountry: optionalText(80),
   requiredCertifications: list,
   sustainabilityNotes: optionalText(2000),
+  sampleRequired: yesNo.default(true),
+  sampleQuantity: optionalInt("the number of sample pieces", 1, MAX_SAMPLE_PIECES),
+  sampleSizes: list,
+  sampleNotes: optionalText(1000),
 });
 
 export type ProjectDraftInput = z.infer<typeof projectDraftSchema>;
@@ -58,6 +72,7 @@ export const projectSubmitSchema = projectDraftSchema
     const earliest = new Date(Date.now() + MIN_LEAD_DAYS * 24 * 60 * 60 * 1000);
     if (d.deadline < earliest) ctx.addIssue({ code: "custom", path: ["deadline"], message: `Choose a delivery date at least ${MIN_LEAD_DAYS} days from today.` });
     if (d.maxMoq !== undefined && d.maxMoq > d.quantity) ctx.addIssue({ code: "custom", path: ["maxMoq"], message: "The MOQ limit cannot be higher than the order quantity." });
+    if (d.sampleRequired && d.sampleQuantity === undefined) ctx.addIssue({ code: "custom", path: ["sampleQuantity"], message: "Enter how many sample pieces you need." });
   });
 
 export const PROJECT_STEPS = [
@@ -65,10 +80,17 @@ export const PROJECT_STEPS = [
   { step: 2, title: "Specifications", fields: ["fabricRequirements", "fabrics", "colors", "sizes", "requiredCapabilities", "additionalInstructions"] },
   { step: 3, title: "Quantity & budget", fields: ["quantity", "maxMoq", "targetUnitPrice", "currency", "deadline", "preferredCountry"] },
   { step: 4, title: "Sustainability", fields: ["requiredCertifications", "sustainabilityNotes"] },
-  { step: 5, title: "Tech pack & files", fields: [] },
-  { step: 6, title: "Review & submit", fields: [] },
+  { step: 5, title: "Samples", fields: ["sampleRequired", "sampleQuantity", "sampleSizes", "sampleNotes"] },
+  { step: 6, title: "Tech pack & files", fields: [] },
+  { step: 7, title: "Review & submit", fields: [] },
 ] as const;
 
-export const ARRAY_FIELDS = ["fabrics", "sizes", "requiredCapabilities", "requiredCertifications"] as const;
+/** Steps without form fields: file uploads, then the final review. */
+export const FILES_STEP = 6;
+export const REVIEW_STEP = 7;
+/** The last step that edits requirements (what a submitted project can still change). */
+export const LAST_FIELD_STEP = 5;
+
+export const ARRAY_FIELDS = ["fabrics", "sizes", "requiredCapabilities", "requiredCertifications", "sampleSizes"] as const;
 
 export const SIZE_OPTIONS = ["XXS", "XS", "S", "M", "L", "XL", "XXL", "3XL", "Kids 2-4", "Kids 5-8", "Kids 9-12", "One size"];

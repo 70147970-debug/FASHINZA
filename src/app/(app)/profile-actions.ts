@@ -25,7 +25,11 @@ export async function saveBrandProfileAction(_prev: FormState, formData: FormDat
 
 export async function saveFactoryProfileAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const actor = await requireUser(["MANUFACTURER"]);
-  const parsed = parseForm(manufacturerProfileSchema, formObject(formData, ["categories", "production", "fabrics", "finishing"]));
+  // Machinery rows arrive as parallel lists; keep empty rows so error keys line up with the rows on screen.
+  const types = formData.getAll("machineType").map(String);
+  const quantities = formData.getAll("machineQuantity").map(String);
+  const machinery = types.map((type, i) => ({ type, quantity: quantities[i] ?? "" }));
+  const parsed = parseForm(manufacturerProfileSchema, { ...formObject(formData, ["categories", "production", "fabrics", "finishing"]), machinery });
   if (!parsed.ok) return parsed.state;
   const wasOnboarding = !actor.profileCompleted;
   const result = await runAction(async () => {

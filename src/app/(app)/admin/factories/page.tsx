@@ -3,12 +3,12 @@ import Link from "next/link";
 import { Factory, FileText } from "lucide-react";
 import type { VerificationStatus } from "@/generated/prisma/enums";
 import { requireUser } from "@/server/auth/session";
-import { listFactories } from "@/server/services/admin";
+import { countFactoriesByStatus, listFactories } from "@/server/services/admin";
 import { DataTable, EmptyState, MobileCard, MobileCardList, PageHeader, Pagination, StatusBadge } from "@/components/app/primitives";
 import { FilterBar } from "@/components/app/filter-bar";
 import { StatusTabs } from "@/components/orders/order-parts";
 import { Button } from "@/components/ui/button";
-import { VERIFICATION_STATUS } from "@/lib/labels";
+import { USER_STATUS, VERIFICATION_STATUS } from "@/lib/labels";
 import { formatDate, formatNumber } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Factory verification" };
@@ -24,8 +24,17 @@ export default async function AdminFactoriesPage({ searchParams }: { searchParam
   const sp = await searchParams;
   // The queue defaults to pending requests; "ALL" (or an empty filter) shows every factory.
   const status = (sp.status && sp.status in VERIFICATION_STATUS ? sp.status : sp.status === undefined ? "PENDING" : undefined) as VerificationStatus | undefined;
-  const data = await listFactories(actor, { status, q: sp.q, page: Number(sp.page) || 1 });
+  const [data, counts] = await Promise.all([listFactories(actor, { status, q: sp.q, page: Number(sp.page) || 1 }), countFactoriesByStatus(actor, { q: sp.q })]);
   const pendingView = status === "PENDING";
+  const allCount = Object.values(counts).reduce((s, n) => s + (n ?? 0), 0);
+
+  /** Verification status, plus the account status when the account cannot sign in (e.g. suspended). */
+  const statusBadges = (f: (typeof data.items)[number]) => (
+    <span className="inline-flex flex-wrap items-center gap-1.5">
+      <StatusBadge map={VERIFICATION_STATUS} value={f.verificationStatus} />
+      {f.user.status !== "ACTIVE" && <StatusBadge map={USER_STATUS} value={f.user.status} />}
+    </span>
+  );
 
   const waiting = (f: (typeof data.items)[number]) => {
     const days = f.verificationStatus === "PENDING" ? waitingDays(f.verificationRequestedAt) : null;
@@ -45,9 +54,11 @@ export default async function AdminFactoriesPage({ searchParams }: { searchParam
         label="Verification status"
         value={status}
         allValue="ALL"
-        allLabel="All factories"
+        allLabel="All"
+        allCount={allCount}
+        allPosition="end"
         params={{ q: sp.q }}
-        options={(["PENDING", "VERIFIED", "REJECTED", "UNSUBMITTED"] as const).map((v) => ({ value: v, label: VERIFICATION_STATUS[v].label }))}
+        options={(["PENDING", "VERIFIED", "REJECTED", "UNSUBMITTED"] as const).map((v) => ({ value: v, label: VERIFICATION_STATUS[v].label, count: counts[v] ?? 0, attention: v === "PENDING" }))}
       />
       <FilterBar basePath="/admin/factories" q={sp.q} searchLabel="Search factories" hidden={{ status: pendingView ? undefined : (status ?? "ALL") }} />
       {data.items.length === 0 ? (
@@ -74,7 +85,7 @@ export default async function AdminFactoriesPage({ searchParams }: { searchParam
                     key={f.id}
                     href={`/admin/factories/${f.id}`}
                     title={f.businessName}
-                    badge={<StatusBadge map={VERIFICATION_STATUS} value={f.verificationStatus} />}
+                    badge={statusBadges(f)}
                     meta={
                       <>
                         {f.city}, {f.country} · <span className="break-all">{f.user.email}</span>
@@ -128,9 +139,7 @@ export default async function AdminFactoriesPage({ searchParams }: { searchParam
                       <p className="tabular text-[13px] text-ink">{formatDate(f.verificationRequestedAt)}</p>
                       {waiting(f) && <p className="text-xs font-medium text-warning-strong">{waiting(f)}</p>}
                     </td>
-                    <td>
-                      <StatusBadge map={VERIFICATION_STATUS} value={f.verificationStatus} />
-                    </td>
+                    <td>{statusBadges(f)}</td>
                   </tr>
                 ))}
               </tbody>

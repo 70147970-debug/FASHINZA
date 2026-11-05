@@ -4,7 +4,7 @@ const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(
 
 /**
  * Long-form legal text set like a document: a paper sheet with hanging section numbers, ~68ch prose and
- * terracotta en-dash list markers, beside a sticky ruled table of contents on desktop.
+ * forest-green en-dash list markers, beside a sticky ruled table of contents on desktop.
  */
 export function LegalPage({ title, updated, intro, sections }: { title: string; updated: string; intro: string; sections: { heading: string; body: React.ReactNode }[] }) {
   return (

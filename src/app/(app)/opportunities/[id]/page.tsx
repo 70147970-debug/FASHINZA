@@ -10,12 +10,13 @@ import { DescriptionList, EmptyState, PageHeader, Panel, StatusBadge, Timeline }
 import { PageTabs, resolveTab, type PageTab } from "@/components/app/page-tabs";
 import { LegacyHashTab } from "@/components/app/legacy-hash-tab";
 import { AttachmentList } from "@/components/projects/attachment-list";
+import { RevisionChanges, revisionTitle } from "@/components/projects/revision-changes";
 import { ScoreBreakdownView, ScoreRing } from "@/components/projects/match-card";
 import { QuotationForm, WithdrawQuotationButton } from "@/components/quotations/quotation-form";
 import { BriefSummary, NextStepCard, TabLink, type BriefItem } from "@/components/quotations/opportunity-parts";
 import { Button } from "@/components/ui/button";
 import type { ScoreBreakdown } from "@/lib/matching";
-import { PROJECT_STATUS, QUOTATION_STATUS, categoryLabel } from "@/lib/labels";
+import { PROJECT_STATUS, QUOTATION_STATUS, categoryLabel, sampleRequestSummary } from "@/lib/labels";
 import { formatDate, formatDateTime, formatMoney, formatNumber, isoDateInDays, relativeDays } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Opportunity" };
@@ -54,6 +55,10 @@ export default async function OpportunityPage({
   const brand = project.brand.brandProfile;
   const score = Number(match.score);
   const targetPrice = project.targetUnitPrice ? `${formatMoney(project.targetUnitPrice, project.currency)} / unit` : "Not shared";
+  const samples = sampleRequestSummary(project);
+  // One fabric line: the brand's description, plus the fabric tags when they add something it does not say.
+  const fabricTags = project.fabrics.filter((f) => !(project.fabricRequirements ?? "").toLowerCase().includes(f.toLowerCase()));
+  const fabric = [project.fabricRequirements, fabricTags.join(", ")].filter(Boolean).join(" · ") || "—";
 
   // Changes the brand made after this factory last sent its quotation: worth a look before the brand decides.
   const lastSentAt = editable && sent?.submittedAt ? sent.submittedAt : null;
@@ -255,9 +260,10 @@ export default async function OpportunityPage({
     { label: "Quantity", value: project.quantity ? `${formatNumber(project.quantity)} units` : "—" },
     { label: "Deliver by", value: formatDate(project.deadline) },
     { label: "Target price", value: targetPrice },
-    { label: "Fabric", value: project.fabricRequirements || project.fabrics.join(", ") || "—" },
+    { label: "Fabric", value: fabric },
     { label: "Colours", value: project.colors || "—" },
     { label: "Sizes", value: project.sizes.join(", ") || "—" },
+    { label: "Samples", value: samples },
     { label: "Certifications", value: project.requiredCertifications.join(", ") || "None required" },
   ];
   const briefFooter = (
@@ -280,12 +286,20 @@ export default async function OpportunityPage({
               id="quote"
               title={quotation?.submittedAt ? `Revise quotation (currently v${quotation.version})` : "Your quotation"}
               description="Fashinza calculates the total from your breakdown. The brand sees every line."
-              actions={quotation ? <WithdrawQuotationButton quotationId={quotation.id} projectId={id} /> : undefined}
+              footer={
+                quotation ? (
+                  <div className="flex w-full flex-wrap items-center justify-between gap-x-4 gap-y-1">
+                    <p className="text-xs text-ink-muted">{quotation.submittedAt ? "No longer able to take this order?" : "Decided not to quote?"}</p>
+                    <WithdrawQuotationButton quotationId={quotation.id} projectId={id} isDraft={!quotation.submittedAt} />
+                  </div>
+                ) : undefined
+              }
             >
               <QuotationForm
                 projectId={id}
                 currency={project.currency}
                 hasBeenSent={!!quotation?.submittedAt}
+                sampleRequest={{ required: project.sampleRequired, summary: samples, notes: project.sampleNotes }}
                 defaults={{
                   quantity: quotation?.quantity || project.quantity || 0,
                   unitPrice: s(quotation?.unitPrice),
@@ -299,6 +313,8 @@ export default async function OpportunityPage({
                   productionDays: quotation?.productionDays ?? profile?.typicalLeadTimeDays ?? 45,
                   validUntil: quotation ? quotation.validUntil.toISOString().slice(0, 10) : isoDateInDays(30),
                   notes: quotation?.notes ?? "",
+                  sampleLeadTimeDays: quotation?.sampleLeadTimeDays ?? "",
+                  sampleNotes: quotation?.sampleNotes ?? "",
                 }}
               />
             </Panel>
@@ -317,6 +333,8 @@ export default async function OpportunityPage({
                 { label: "Total", value: <span className="tabular font-display text-xl font-medium text-ink">{formatMoney(sent.totalAmount, sent.currency)}</span> },
                 { label: "Quantity", value: formatNumber(sent.quantity) },
                 { label: "Production", value: `${sent.productionDays} days` },
+                { label: "Sample lead time", value: sent.sampleLeadTimeDays ? `${sent.sampleLeadTimeDays} days` : "Not stated" },
+                { label: "Sampling charge", value: formatMoney(sent.samplingCost ?? 0, sent.currency) },
                 { label: "Sent", value: formatDateTime(sent.submittedAt) },
                 { label: "Valid until", value: formatDate(sent.validUntil) },
                 { label: "Decided", value: formatDateTime(sent.decidedAt) },
@@ -352,17 +370,17 @@ export default async function OpportunityPage({
         <Panel id="requirements" title="Requirements">
           <DescriptionList
             items={[
-              { label: "Fabric", value: project.fabricRequirements || "—" },
-              { label: "Fabrics", value: project.fabrics.join(", ") || "—" },
+              { label: "Fabric", value: fabric },
               { label: "Colours", value: project.colors || "—" },
               { label: "Sizes", value: project.sizes.join(", ") || "—" },
               { label: "Target price", value: targetPrice },
               { label: "Processes", value: project.requiredCapabilities.join(", ") || "None specified" },
               { label: "Certifications", value: project.requiredCertifications.join(", ") || "None required" },
               { label: "Preferred country", value: project.preferredCountry ?? "No preference" },
+              { label: "Samples", value: samples },
             ]}
           />
-          {(project.description || project.sustainabilityNotes || project.additionalInstructions) && (
+          {(project.description || project.sustainabilityNotes || project.additionalInstructions || (project.sampleRequired && project.sampleNotes)) && (
             <div className="mt-5 space-y-3 border-t border-line-subtle pt-4 text-sm leading-6">
               {project.description && <p className="whitespace-pre-line text-ink">{project.description}</p>}
               {project.sustainabilityNotes && (
@@ -377,6 +395,12 @@ export default async function OpportunityPage({
                   {project.additionalInstructions}
                 </p>
               )}
+              {project.sampleRequired && project.sampleNotes && (
+                <p className="whitespace-pre-line">
+                  <span className="font-medium text-ink">Sample notes: </span>
+                  {project.sampleNotes}
+                </p>
+              )}
             </div>
           )}
         </Panel>
@@ -385,8 +409,9 @@ export default async function OpportunityPage({
             <Timeline
               items={project.revisions.map((r) => ({
                 id: r.id,
-                title: `${Object.keys(r.changes as object).join(", ")} changed${lastSentAt && r.createdAt > lastSentAt ? " · after your quotation" : ""}`,
+                title: `${revisionTitle(r.changes)}${lastSentAt && r.createdAt > lastSentAt ? " · after your quotation" : ""}`,
                 meta: formatDateTime(r.createdAt),
+                description: <RevisionChanges changes={r.changes} currency={project.currency} className="mt-1 space-y-0.5" />,
                 tone: "warning" as const,
               }))}
             />
@@ -402,7 +427,7 @@ export default async function OpportunityPage({
     );
   } else {
     section = (
-      <Panel title="Why you were matched" description={`Algorithm: ${match.algorithm}`}>
+      <Panel title="Why you were matched" description="How your profile scored against this brief.">
         <div className="mb-5 flex items-center gap-4 border-b border-line-subtle pb-5">
           <ScoreRing score={score} size="lg" />
           <p className="text-[13px] leading-5 text-ink-muted">

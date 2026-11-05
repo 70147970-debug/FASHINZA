@@ -1,4 +1,4 @@
-import { BadgeCheck, ChevronDown, MapPin } from "lucide-react";
+import { BadgeCheck, ChevronDown, Cog, MapPin } from "lucide-react";
 import type { ScoreBreakdown } from "@/lib/matching";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -38,7 +38,7 @@ const RING = {
   lg: { box: 68, stroke: 3, text: "text-[22px]" },
 };
 
-/** Circular score (0–100): a thin terracotta arc on a hairline track, Fraunces numeral in the middle. */
+/** Circular score (0–100): a thin accent arc on a hairline track, display-font numeral in the middle. */
 export function ScoreRing({ score, size = "md" }: { score: number; size?: keyof typeof RING }) {
   const pct = Math.max(0, Math.min(100, Math.round(score)));
   const { box, stroke, text } = RING[size];
@@ -76,9 +76,12 @@ export type MatchView = {
   profile: {
     businessName: string; city: string; country: string; verificationStatus: string; minOrderQuantity: number; maxMonthlyCapacity: number; typicalLeadTimeDays: number;
     certifications: string[];
+    machinery?: { type: string; quantity: number }[];
   } | null;
   quoteStatus?: string;
 };
+
+const MACHINES_SHOWN = 4;
 
 export function MatchCard({ m }: { m: MatchView }) {
   const p = m.profile;
@@ -110,6 +113,21 @@ export function MatchCard({ m }: { m: MatchView }) {
       )}
       {p && p.certifications.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-1">{p.certifications.map((c) => <Badge key={c} tone="success">{c} · verified</Badge>)}</div>
+      )}
+      {p?.machinery && p.machinery.length > 0 && (
+        <div className="mt-3 text-xs leading-5">
+          <p className="flex items-center gap-1.5 font-medium text-ink-muted">
+            <Cog className="size-3.5 shrink-0 text-ink-subtle" aria-hidden /> Machinery
+          </p>
+          <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-ink" aria-label={`Machinery at ${name}`}>
+            {p.machinery.slice(0, MACHINES_SHOWN).map((mc) => (
+              <li key={mc.type} className="min-w-0 break-words">
+                {mc.type} <span className="tabular text-ink-muted">× {formatNumber(mc.quantity)}</span>
+              </li>
+            ))}
+            {p.machinery.length > MACHINES_SHOWN && <li className="text-ink-muted">+{p.machinery.length - MACHINES_SHOWN} more</li>}
+          </ul>
+        </div>
       )}
       <details className="group mt-3">
         <summary className="flex cursor-pointer list-none items-center gap-1 rounded-sm text-[13px] font-medium text-accent-strong hover:underline hover:underline-offset-4 [&::-webkit-details-marker]:hidden">

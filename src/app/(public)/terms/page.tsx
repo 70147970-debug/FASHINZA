@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPage } from "@/components/site/legal";
 
-export const metadata: Metadata = { title: "Terms of Service", description: "The terms for using the Fashinza platform." };
+export const metadata: Metadata = { title: "Terms of Service", description: "The terms for using Fashinza to source, quote and track garment production." };
 
 export default function TermsPage() {
   return (
     <LegalPage
       title="Terms of Service"
       updated="23 October 2026"
-      intro="These terms describe how the Fashinza platform may be used. Fashinza is an academic project; it is provided as a working demonstration and not as a commercial service."
+      intro="These terms describe how Fashinza may be used. Fashinza is an academic project that connects fashion brands with garment manufacturers; it is provided as a working demonstration and not as a commercial service."
       sections={[
         {
           heading: "Accounts",
@@ -25,7 +25,7 @@ export default function TermsPage() {
           heading: "What Fashinza does and does not do",
           body: (
             <ul>
-              <li>Fashinza matches brands with verified factories, records quotations and orders, and tracks production, quality control and payment milestones.</li>
+              <li>Fashinza matches brands with verified garment factories, records quotations, samples and orders, and tracks production, quality inspection and payment milestones.</li>
               <li>Matching scores describe compatibility with your stated requirements. They are not a guarantee of quality, delivery or price.</li>
               <li>Verification confirms that an administrator reviewed a factory&apos;s documents. It is not an on-site audit.</li>
               <li>Fashinza is not a party to the supply contract between a brand and a factory and does not take title to goods.</li>
@@ -45,7 +45,7 @@ export default function TermsPage() {
           heading: "Payments",
           body: (
             <p>
-              Payment milestones are processed through a payment provider. In this build the provider is a sandbox and no real money is transferred.
+              Payment milestones are recorded against each order. For now payments are simulated and no real money is transferred.
               Fashinza does not hold funds and does not offer a regulated escrow service.
             </p>
           ),

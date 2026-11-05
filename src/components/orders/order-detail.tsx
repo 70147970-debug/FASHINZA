@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AlertTriangle, CalendarDays, MapPin, Package, RefreshCw } from "lucide-react";
 import { MetaItem, PageHeader, Panel, ProgressBar, StageStepper, StatusBadge, type Step } from "@/components/app/primitives";
 import { PageTabs, resolveTab, type PageTab } from "@/components/app/page-tabs";
@@ -10,7 +11,7 @@ import { ActivitySection, DetailsSection, MessagesSection, PaymentsSection, Samp
 import { orderView, type Actor, type Order } from "@/components/orders/order-view";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { ORDER_STATUS } from "@/lib/labels";
+import { DISPUTE_STATUS, ORDER_STATUS } from "@/lib/labels";
 import { STAGE_BY_KEY, stageLabel } from "@/lib/workflow";
 import { formatDate, formatMoney, formatNumber } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -29,9 +30,9 @@ const LEGACY_HASHES: Record<string, TabKey> = {
 };
 
 /** One fact in the progress card's footer strip. */
-function Fact({ label, children, hint }: { label: string; children: React.ReactNode; hint?: React.ReactNode }) {
+function Fact({ label, children, hint, className }: { label: string; children: React.ReactNode; hint?: React.ReactNode; className?: string }) {
   return (
-    <div className="min-w-0">
+    <div className={cn("min-w-0", className)}>
       <dt className="text-xs font-medium leading-4 text-ink-muted">{label}</dt>
       <dd className="mt-1 break-words text-sm font-medium leading-5 text-ink">{children}</dd>
       {hint && <dd className="mt-0.5 text-xs leading-4 text-ink-muted">{hint}</dd>}
@@ -40,10 +41,10 @@ function Fact({ label, children, hint }: { label: string; children: React.ReactN
 }
 
 /**
- * Order record page (brand, factory and admin). Top to bottom: header, one compact production-progress card
- * (stepper + delivery, value and shipment facts), the "Your next step" card (the only place the viewer acts),
- * then real tabs (`?tab=`) of which only the selected one is rendered: Production, Samples & QC, Payments,
- * Messages, Terms & files, Activity.
+ * Order record page (brand, factory and admin). Top to bottom: header, the "Your next step" card (the only place
+ * the viewer acts, first like on the project page), a notice when a dispute is open, one compact
+ * production-progress card (stepper + delivery, value and shipment facts), then real tabs (`?tab=`) of which only
+ * the selected one is rendered: Production, Samples & QC, Payments, Messages, Terms & files, Activity.
  */
 export function OrderDetail({ order, actor, sp }: { order: Order; actor: Actor; sp: { created?: string; payment?: string; tab?: string } }) {
   const view = orderView(order, actor);
@@ -51,6 +52,7 @@ export function OrderDetail({ order, actor, sp }: { order: Order; actor: Actor; 
   const tab = resolveTab<TabKey>(sp.tab, TAB_KEYS, "production");
   const basePath = `/orders/${order.id}`;
   const total = order.milestones.length;
+  const openIssues = order.issues.filter((i) => i.status === "OPEN" || i.status === "IN_REVIEW");
 
   const commentCounts = new Map<string, number>();
   order.messages.forEach((m) => m.milestoneId && commentCounts.set(m.milestoneId, (commentCounts.get(m.milestoneId) ?? 0) + 1));
@@ -100,12 +102,13 @@ export function OrderDetail({ order, actor, sp }: { order: Order; actor: Actor; 
         metaRow={
           <>
             <MetaItem icon={Package}>{formatNumber(order.quantity)} units</MetaItem>
-            {location && <MetaItem icon={MapPin}>{location}</MetaItem>}
+            {/* The factory knows where it is; the brand and admin see where the order is made. */}
+            {location && !isFactory && <MetaItem icon={MapPin}>{location}</MetaItem>}
             <MetaItem icon={CalendarDays}>Ordered {formatDate(order.createdAt)}</MetaItem>
-            {!closed && <MetaItem icon={RefreshCw}>Updates every 30 seconds</MetaItem>}
+            {!closed && <MetaItem icon={RefreshCw} className="max-sm:hidden">Updates every 30 seconds</MetaItem>}
           </>
         }
-        actions={actor.role !== "ADMIN" && !closed && <RaiseDisputeButton orderId={order.id} />}
+        actions={actor.role !== "ADMIN" && !closed && <RaiseDisputeButton orderId={order.id} quiet />}
       />
 
       {sp.created && (
@@ -114,7 +117,22 @@ export function OrderDetail({ order, actor, sp }: { order: Order; actor: Actor; 
           <a href="?tab=payments" className="font-medium underline underline-offset-4">Payments tab</a>.
         </Alert>
       )}
-      {sp.payment === "returned" && <Alert tone="info" className="mb-6">You returned from the sandbox checkout. The payment status updates when the provider&apos;s webhook is received.</Alert>}
+      {sp.payment === "returned" && <Alert tone="info" className="mb-6">You returned from the test checkout. The payment status updates when the payment provider confirms it.</Alert>}
+
+      <NextStepCard order={order} view={view} />
+
+      {openIssues.length > 0 && (
+        <Alert tone="warning" title={openIssues.length === 1 ? "A dispute is open on this order" : `${openIssues.length} disputes are open on this order`} className="mb-6">
+          <ul className="mt-0.5 space-y-0.5">
+            {openIssues.map((i) => (
+              <li key={i.id}>
+                <Link href={`/disputes/${i.id}`} className="font-medium text-ink underline underline-offset-4">{i.subject}</Link>
+                <span className="text-ink-muted"> · {DISPUTE_STATUS[i.status].label}</span>
+              </li>
+            ))}
+          </ul>
+        </Alert>
+      )}
 
       <Panel className="mb-6" bodyClassName="p-4 sm:px-6 sm:py-5">
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
@@ -138,7 +156,7 @@ export function OrderDetail({ order, actor, sp }: { order: Order; actor: Actor; 
           <ProgressBar value={doneCount} max={total} label={`${doneCount} of ${total} stages complete`} tone={currentLate ? "warning" : "accent"} className="mt-2 sm:hidden" />
         </div>
         <StageStepper stages={steps} label="Production stages" className="mt-5 hidden md:grid" />
-        <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 border-t border-line-subtle pt-4 min-[480px]:grid-cols-3 md:mt-5">
+        <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-line-subtle pt-4 min-[480px]:grid-cols-3 md:mt-5">
           <Fact
             label={closed ? (order.status === "DELIVERED" ? "Delivered" : "Closed") : "Estimated delivery"}
             hint={
@@ -154,13 +172,11 @@ export function OrderDetail({ order, actor, sp }: { order: Order; actor: Actor; 
           <Fact label="Order value" hint={`${formatMoney(order.unitPrice, order.currency)} / unit`}>
             <span className="tabular">{formatMoney(order.totalAmount, order.currency)}</span>
           </Fact>
-          <Fact label="Shipment" hint={order.shippedAt ? `Shipped ${formatDate(order.shippedAt)}` : undefined}>
+          <Fact label="Shipment" hint={order.shippedAt ? `Shipped ${formatDate(order.shippedAt)}` : undefined} className="max-[479px]:col-span-2">
             {order.trackingInfo ? order.trackingInfo : <span className="font-normal text-ink-muted">Not shipped yet</span>}
           </Fact>
         </dl>
       </Panel>
-
-      <NextStepCard order={order} view={view} />
 
       <PageTabs tabs={tabs} active={tab} basePath={basePath} label="Order sections" />
 

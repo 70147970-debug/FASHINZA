@@ -74,6 +74,7 @@ export async function getProjectMatches(actor: { id: string; role: string }, pro
               select: {
                 businessName: true, city: true, country: true, verificationStatus: true, minOrderQuantity: true, maxMonthlyCapacity: true, typicalLeadTimeDays: true,
                 documents: { where: { type: "CERTIFICATION", status: "VERIFIED" }, select: { certificationName: true } },
+                machinery: { orderBy: [{ sortOrder: "asc" }, { type: "asc" }], select: { type: true, quantity: true } },
               },
             },
           },
@@ -85,7 +86,7 @@ export async function getProjectMatches(actor: { id: string; role: string }, pro
   return { matches, lastRun: lastRun ? { at: lastRun.createdAt, summary: lastRun.metadata as unknown as MatchingSummary } : null };
 }
 
-export type MatchingSummary ={ reviewed: number; eligible: number; newlyInvited: number; exclusionReasons: Record<string, number> };
+export type MatchingSummary = { reviewed: number; eligible: number; newlyInvited: number; exclusionReasons: Record<string, number> };
 
 /** Groups exclusion reasons into short categories so brands see why factories were filtered out without exposing them. */
 function summariseExclusions(outcome: MatchOutcome) {

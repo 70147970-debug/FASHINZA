@@ -8,10 +8,10 @@ import { cn } from "@/lib/utils";
  * Crisp rectangular buttons (4px radius, no pills, no shadows). Sizes: sm 32px, md 36px, lg 44px (marketing);
  * below `sm` every size grows to at least 40px so it is a comfortable touch target. Variants:
  *  - primary  ink (ivory in dark), the default action on a page
- *  - accent   terracotta: the single most important action on a screen ("Create production project")
+ *  - accent   forest green: the single most important action on a screen ("Create production project")
  *  - outline  secondary actions (hairline border on surface)
  *  - ghost    tertiary / toolbar actions
- *  - subtle   quiet filled secondary (parchment)
+ *  - subtle   quiet filled secondary (muted surface)
  *  - danger   destructive confirmations
  *  - inverse  light button on bg-inverse bands
  *  - link     inline text action in accent-strong (no padding, no fixed height)

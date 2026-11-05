@@ -39,14 +39,14 @@ export default async function AdminQcPage() {
       <PageHeader
         eyebrow="Administration"
         title="Quality issues"
-        description={`Failed inspections, brand-rejected reports and open rework. ${d.pendingDecisions} passed report${d.pendingDecisions === 1 ? " is" : "s are"} waiting for brand decisions.`}
+        description="Failed inspections, brand-rejected reports and open rework."
       />
 
       <MetricStrip label="Quality summary" columns={4}>
         <Metric label="Open rework" value={d.openRework.length} href="#rework" icon={Wrench} tone={d.openRework.length ? "warning" : undefined} hint="Batches being reworked" />
-        <Metric label="Failed inspections" value={capped(d.failed.length)} href="#failed" icon={ClipboardX} tone={d.failed.length ? "danger" : undefined} hint="Over the AQL accept limits" />
+        <Metric label="Failed inspections" value={capped(d.failed.length)} href="#failed" icon={ClipboardX} tone={d.failed.length ? "danger" : undefined} hint="More defects than the sampling limit allows" />
         <Metric label="Rejected by brand" value={capped(d.rejectedByBrand.length)} href="#rejected" icon={ThumbsDown} hint="Passed reports the brand declined" />
-        <Metric label="Awaiting brand decision" value={d.pendingDecisions} icon={ScanSearch} hint="Passed reports not yet accepted" />
+        <Metric label="Awaiting brand decision" value={d.pendingDecisions} icon={ScanSearch} hint="Passed reports with the brand. No admin action needed" />
       </MetricStrip>
 
       <div className="space-y-6">
@@ -69,7 +69,7 @@ export default async function AdminQcPage() {
         </Panel>
 
         <div className="grid gap-6 xl:grid-cols-2">
-          <Panel id="failed" title="Failed inspections" description={`Latest ${CAP}, newest first.`} bodyClassName={d.failed.length ? "p-0 sm:p-0" : undefined}>
+          <Panel id="failed" title="Failed inspections" description={`Latest ${CAP} of all time, newest first. The overview counts the last 30 days.`} bodyClassName={d.failed.length ? "p-0 sm:p-0" : undefined}>
             {d.failed.length === 0 ? (
               <InlineEmpty icon={ClipboardX}>No failed inspections.</InlineEmpty>
             ) : (

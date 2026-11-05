@@ -14,6 +14,17 @@ import { formatDate } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Users" };
 
+/** Same words as the rest of the admin area ("Factory verification"). Keys stay the enum values. */
+const ROLE: Record<string, string> = { ...ROLE_LABEL, MANUFACTURER: "Factory" };
+
+function OrgLink({ profileId, org, className }: { profileId: string; org: string; className: string }) {
+  return (
+    <Link href={`/admin/factories/${profileId}`} className={className} aria-label={`${org}: open the factory record`}>
+      {org}
+    </Link>
+  );
+}
+
 export default async function AdminUsersPage({ searchParams }: { searchParams: Promise<{ q?: string; role?: string; status?: string; page?: string }> }) {
   const actor = await requireUser(["ADMIN"]);
   const sp = await searchParams;
@@ -41,7 +52,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
         q={sp.q}
         searchLabel="Search name, email or organisation"
         selects={[
-          { name: "role", label: "Role", value: role, options: Object.entries(ROLE_LABEL).map(([value, label]) => ({ value, label })) },
+          { name: "role", label: "Role", value: role, options: Object.entries(ROLE).map(([value, label]) => ({ value, label })) },
           { name: "status", label: "Status", value: status, options: Object.entries(USER_STATUS).map(([value, s]) => ({ value, label: s.label })) },
         ]}
       />
@@ -74,8 +85,17 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
                       meta={
                         <>
                           <span className="block break-all">{u.email}</span>
-                          {ROLE_LABEL[u.role]}
-                          {org ? ` · ${org}` : ""}
+                          {ROLE[u.role]}
+                          {u.manufacturerProfile && org ? (
+                            <>
+                              {" · "}
+                              <OrgLink profileId={u.manufacturerProfile.id} org={org} className="font-medium text-ink underline underline-offset-2" />
+                            </>
+                          ) : org ? (
+                            ` · ${org}`
+                          ) : (
+                            ""
+                          )}
                         </>
                       }
                     >
@@ -123,7 +143,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
                       <td className="text-[13px]">
                         {u.manufacturerProfile ? (
                           <span className="flex flex-wrap items-center gap-1.5">
-                            {org}
+                            <OrgLink profileId={u.manufacturerProfile.id} org={org ?? "Factory"} className="cell-primary rounded-sm" />
                             <StatusBadge map={VERIFICATION_STATUS} value={u.manufacturerProfile.verificationStatus} />
                           </span>
                         ) : (
@@ -131,7 +151,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
                         )}
                         {!u.profileCompleted && u.role !== "ADMIN" && <p className="mt-0.5 text-xs text-warning-strong">Profile incomplete</p>}
                       </td>
-                      <td className="text-[13px]">{ROLE_LABEL[u.role]}</td>
+                      <td className="text-[13px]">{ROLE[u.role]}</td>
                       <td className="tabular whitespace-nowrap text-[13px] text-ink-muted">{formatDate(u.createdAt)}</td>
                       <td className="tabular whitespace-nowrap text-[13px] text-ink-muted">{formatDate(u.lastLoginAt)}</td>
                       <td>

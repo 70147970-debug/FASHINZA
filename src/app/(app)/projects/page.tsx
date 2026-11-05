@@ -6,6 +6,7 @@ import { requireOnboardedUser } from "@/server/auth/session";
 import { listProjects } from "@/server/services/projects";
 import { DataTable, EmptyState, MobileCard, MobileCardList, PageHeader, Pagination, StatusBadge } from "@/components/app/primitives";
 import { FilterBar } from "@/components/app/filter-bar";
+import { StatusTabs } from "@/components/orders/order-parts";
 import { ProjectProgress } from "@/components/projects/project-progress";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
@@ -15,15 +16,30 @@ import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Projects" };
 
-/** Quick views shown above the filters (same URLs the status filter produces). */
-const VIEWS = [
-  { value: undefined, label: "All" },
+/**
+ * Status views (the list's only status filter). "Open" covers every status between submission and delivery,
+ * so each project is reachable from a tab; older links with another single status still filter and get a tab.
+ */
+const VIEWS: { value: string; label: string }[] = [
   { value: "ACTIVE", label: "Open" },
   { value: "DRAFT", label: "Drafts" },
   { value: "QUOTING", label: "Receiving quotes" },
   { value: "IN_PRODUCTION", label: "In production" },
   { value: "DELIVERED", label: "Delivered" },
-] as const;
+  { value: "CANCELLED", label: "Cancelled" },
+];
+
+type Row = Awaited<ReturnType<typeof listProjects>>["items"][number];
+
+/** Delivery column: closed projects show what happened instead of a deadline that now reads as "due". */
+function deliveryText(p: Row) {
+  const deliveredAt = p.order?.deliveredAt;
+  if (p.status === "DELIVERED") return deliveredAt ? `Delivered ${formatDate(deliveredAt)}` : "Delivered";
+  if (p.status === "CANCELLED") return "Cancelled";
+  return null;
+}
+
+const lowerFirst = (s: string | null) => (s ? s.charAt(0).toLowerCase() + s.slice(1) : null);
 
 export default async function ProjectsPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; page?: string; deleted?: string }> }) {
   const actor = await requireOnboardedUser(["BRAND", "ADMIN"]);
@@ -32,10 +48,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
   const data = await listProjects(actor, { q: sp.q, status, page: Number(sp.page) || 1 });
   const filtered = !!(sp.q || status);
   const href = (p: (typeof data.items)[number]) => (p.status === "DRAFT" ? `/projects/${p.id}/edit` : p.order ? `/orders/${p.order.id}` : `/projects/${p.id}`);
-  const viewHref = (v?: string) => {
-    const q = new URLSearchParams(Object.entries({ q: sp.q, status: v }).filter(([, x]) => x) as [string, string][]);
-    return q.size ? `/projects?${q}` : "/projects";
-  };
+  const views = status && !VIEWS.some((v) => v.value === status) ? [...VIEWS, { value: status, label: PROJECT_STATUS[status].label }] : VIEWS;
 
   return (
     <>
@@ -46,40 +59,14 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
       />
       {sp.deleted && <Alert tone="success" className="mb-4">The draft was deleted.</Alert>}
 
-      <nav aria-label="Project views" className="-mx-4 mb-4 overflow-x-auto border-b border-line px-4 sm:mx-0 sm:px-0">
-        <ul className="flex gap-5">
-          {VIEWS.map((v) => {
-            const active = (status ?? undefined) === v.value;
-            return (
-              <li key={v.label} className="shrink-0">
-                <Link
-                  href={viewHref(v.value)}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "-mb-px inline-flex h-10 items-center border-b-2 text-sm transition-colors duration-150",
-                    active ? "border-accent font-medium text-ink" : "border-transparent text-ink-muted hover:border-line-strong hover:text-ink",
-                  )}
-                >
-                  {v.label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
-
-      <FilterBar
-        basePath="/projects"
-        q={sp.q}
-        searchLabel="Search by project name"
-        selects={[{ name: "status", label: "Status", value: status, options: [{ value: "ACTIVE", label: "All open" }, ...Object.entries(PROJECT_STATUS).map(([value, s]) => ({ value, label: s.label }))] }]}
-      />
+      <StatusTabs basePath="/projects" label="Project views" value={status} options={views} params={{ q: sp.q }} />
+      <FilterBar basePath="/projects" q={sp.q} searchLabel="Search by project name" hidden={{ status }} />
       {data.items.length === 0 ? (
         <EmptyState
           icon={ClipboardList}
           title={filtered ? "No projects match these filters" : "No projects yet"}
           description={filtered ? "Try a different search or clear the filters." : "Create a production project to describe what you want made. You can save it as a draft and finish it later."}
-          action={filtered ? <Button asChild variant="outline"><Link href="/projects">Clear filters</Link></Button> : actor.role === "BRAND" && <Button asChild variant="accent"><Link href="/projects/new"><Plus /> Create production project</Link></Button>}
+          action={filtered ? <Button asChild variant="outline"><Link href="/projects">Show all projects</Link></Button> : actor.role === "BRAND" && <Button asChild variant="accent"><Link href="/projects/new"><Plus /> Create production project</Link></Button>}
         />
       ) : (
         <>
@@ -95,7 +82,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
                     badge={<StatusBadge map={PROJECT_STATUS} value={p.status} />}
                     meta={
                       <>
-                        {categoryLabel(p.category)} · {p.quantity ? `${formatNumber(p.quantity)} units` : "Quantity not set"} · due {formatDate(p.deadline)}
+                        {categoryLabel(p.category)} · {p.quantity ? `${formatNumber(p.quantity)} units` : "Quantity not set"} · {lowerFirst(deliveryText(p)) ?? `due ${formatDate(p.deadline)}`}
                         {(p._count.quotations > 0 || p._count.matchResults > 0) && (
                           <span className="block">{p._count.matchResults} matched · {p._count.quotations} open quote{p._count.quotations === 1 ? "" : "s"}</span>
                         )}
@@ -131,7 +118,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
                     <td><StatusBadge map={PROJECT_STATUS} value={p.status} /></td>
                     <td><ProjectProgress status={p.status} /></td>
                     <td className="num">{formatNumber(p.quantity)}</td>
-                    <td className="tabular whitespace-nowrap">{formatDate(p.deadline)}</td>
+                    <td className={cn("tabular whitespace-nowrap", deliveryText(p) && "text-ink-muted")}>{deliveryText(p) ?? formatDate(p.deadline)}</td>
                     <td className={cn("num", !p._count.matchResults && "text-ink-muted")}>{p._count.matchResults}</td>
                     <td className={cn("num", p._count.quotations ? "font-semibold text-warning-strong" : "text-ink-muted")}>{p._count.quotations}</td>
                     <td className="tabular whitespace-nowrap text-ink-muted">{formatDate(p.updatedAt)}</td>

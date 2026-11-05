@@ -14,8 +14,9 @@ import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { PAYMENT_STATUS, PROJECT_STATUS, VERIFICATION_STATUS, categoryLabel } from "@/lib/labels";
 import { formatDate, formatMoney, relativeDays } from "@/lib/format";
-import { STAGES, stageLabel } from "@/lib/workflow";
+import { STAGES, STAGE_BY_KEY, stageLabel } from "@/lib/workflow";
 import type { Actor } from "@/server/actor";
+import type { MilestoneStage } from "@/generated/prisma/enums";
 import { AttentionList, type AttentionItem } from "./attention-list";
 import { RecentNotifications } from "./recent-notifications";
 
@@ -26,6 +27,7 @@ function compact<T>(xs: (T | false)[]): T[] {
   return xs.filter((x): x is T => x !== false);
 }
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ welcome?: string; denied?: string }> }) {
   const actor = await requireOnboardedUser();
@@ -37,6 +39,39 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       {actor.role === "BRAND" ? <BrandHome actor={actor} welcome={!!sp.welcome} /> : <ManufacturerHome actor={actor} />}
     </>
   );
+}
+
+type MetricSpec = React.ComponentProps<typeof Metric> & { id: string };
+
+/**
+ * The dashboard's count strip. From sm up it is the full strip above the panels (`placement="top"`). On phones
+ * it moves under "Needs your attention" (`placement="phone"`) and keeps only the non-zero counts, so the first
+ * screen shows what to do rather than a grid of zeros.
+ */
+function SummaryStrip({ metrics, placement }: { metrics: MetricSpec[]; placement: "top" | "phone" }) {
+  if (placement === "top") {
+    return (
+      <MetricStrip label="Summary" className="max-sm:hidden">
+        {metrics.map(({ id, ...m }) => <Metric key={id} {...m} />)}
+      </MetricStrip>
+    );
+  }
+  const nonZero = metrics.filter((m) => m.value !== 0);
+  if (nonZero.length === 0) return null;
+  return (
+    <MetricStrip label="Summary" className="mb-0 sm:hidden">
+      {nonZero.map(({ id, ...m }) => <Metric key={id} {...m} />)}
+    </MetricStrip>
+  );
+}
+
+type MoneyRow = { orderId: string; currency: string; _count: number; _sum: { amount: { toString(): string } | null } };
+
+/** "€1,200.00" or "€1,200.00 + $300.00" when the rows span currencies. */
+function moneyText(rows: MoneyRow[]) {
+  const byCurrency = new Map<string, number>();
+  rows.forEach((r) => byCurrency.set(r.currency, (byCurrency.get(r.currency) ?? 0) + Number(r._sum.amount?.toString() ?? 0)));
+  return [...byCurrency].map(([c, n]) => formatMoney(n, c)).join(" + ");
 }
 
 function viewAll(href: string, label: string) {
@@ -85,18 +120,35 @@ async function BrandHome({ actor, welcome }: { actor: Actor; welcome: boolean })
     );
   }
 
-  const due = d.payments.filter((p) => p.status !== "PROCESSING");
-  const failed = d.payments.filter((p) => p.status === "FAILED");
+  // Uncapped totals of due and failed milestones (the "Upcoming payments" list below shows the first five).
+  const dueRows = d.openPayments.filter((r) => r.status === "DUE");
+  const failedRows = d.openPayments.filter((r) => r.status === "FAILED");
+  const countOf = (rows: MoneyRow[]) => rows.reduce((n, r) => n + r._count, 0);
+  const dueCount = countOf(dueRows);
+  const failedCount = countOf(failedRows);
+  const ordersOf = (rows: MoneyRow[]) => [...new Set(rows.map((r) => r.orderId))];
+  const reference = (orderId: string) => d.payments.find((p) => p.order.id === orderId)?.order.reference;
+  /** "ORD-1042" for a single order, otherwise "3 orders". */
+  const whereText = (rows: MoneyRow[]) => {
+    const ids = ordersOf(rows);
+    return ids.length === 1 ? (reference(ids[0]) ?? "one order") : plural(ids.length, "order");
+  };
+  /** A single order opens that order (its "Your next step" card holds the Pay buttons); several open the list. */
+  const payHref = (rows: MoneyRow[], status: string) => {
+    const ids = ordersOf(rows);
+    return ids.length === 1 ? `/orders/${ids[0]}` : `/payments?status=${status}`;
+  };
+  const nextDue = d.payments.find((p) => p.status === "DUE" && p.dueAt)?.dueAt;
   const attention = compact<AttentionItem>([
     d.delayedOrders > 0 && {
       key: "delayed", icon: Timer, tone: "danger", href: "/orders?delayed=1",
       title: `${plural(d.delayedOrders, "order")} behind schedule`,
       description: "A production stage or the delivery date has slipped. Check the plan with the factory.",
     },
-    failed.length > 0 && {
-      key: "failed", icon: CircleDollarSign, tone: "danger", href: "/payments",
-      title: `${plural(failed.length, "payment")} failed`,
-      description: "Retry the payment so production is not held up.",
+    failedCount > 0 && {
+      key: "failed", icon: CircleDollarSign, tone: "danger", href: payHref(failedRows, "FAILED"),
+      title: `${plural(failedCount, "payment")} failed`,
+      description: `Pay ${moneyText(failedRows)} on ${whereText(failedRows)} again so production is not held up.`,
     },
     d.pendingQuotations > 0 && {
       key: "quotes", icon: FileText, tone: "warning", href: "/projects?status=QUOTING",
@@ -113,10 +165,10 @@ async function BrandHome({ actor, welcome }: { actor: Actor; welcome: boolean })
       title: `${plural(d.pendingQc, "QC report")} to accept`,
       description: "The factory's inspection passed and is waiting for your decision.",
     },
-    due.length - failed.length > 0 && {
-      key: "due", icon: CircleDollarSign, tone: "warning", href: "/payments",
-      title: `${plural(due.length - failed.length, "payment milestone")} due`,
-      description: "Milestone payments are released as production stages complete.",
+    dueCount > 0 && {
+      key: "due", icon: CircleDollarSign, tone: "warning", href: payHref(dueRows, "DUE"),
+      title: `${plural(dueCount, "payment milestone")} due`,
+      description: `${moneyText(dueRows)} due on ${whereText(dueRows)}${nextDue ? `, the next one ${relativeDays(nextDue)}` : ""}.`,
     },
     d.drafts > 0 && {
       key: "drafts", icon: FilePen, tone: "neutral", href: "/projects?status=DRAFT",
@@ -125,17 +177,19 @@ async function BrandHome({ actor, welcome }: { actor: Actor; welcome: boolean })
     },
   ]);
 
+  const metrics: MetricSpec[] = [
+    { id: "quotes", label: "Seeking quotes", value: d.activeProjects, href: "/projects?status=QUOTING", icon: ClipboardList, hint: d.drafts ? plural(d.drafts, "draft") : undefined },
+    { id: "review", label: "Quotations to review", value: d.pendingQuotations, href: "/projects?status=QUOTING", icon: FileText, tone: d.pendingQuotations ? "warning" : undefined },
+    { id: "active", label: "Active orders", value: d.activeOrders, href: "/orders?status=ACTIVE", icon: PackageSearch },
+    { id: "delayed", label: "Delayed orders", value: d.delayedOrders, href: "/orders?delayed=1", icon: AlertTriangle, tone: d.delayedOrders ? "danger" : undefined },
+    { id: "due", label: "Payments due", value: dueCount + failedCount, href: failedCount ? "/payments" : "/payments?status=DUE", icon: CircleDollarSign, tone: dueCount + failedCount ? "warning" : undefined },
+  ];
+
   return (
     <>
       {header}
       {welcomeAlert}
-      <MetricStrip label="Summary">
-        <Metric label="Seeking quotes" value={d.activeProjects} href="/projects?status=QUOTING" icon={ClipboardList} hint={d.drafts ? plural(d.drafts, "draft") : undefined} />
-        <Metric label="Quotations to review" value={d.pendingQuotations} href="/projects?status=QUOTING" icon={FileText} tone={d.pendingQuotations ? "warning" : undefined} />
-        <Metric label="Active orders" value={d.activeOrders} href="/orders?status=ACTIVE" icon={PackageSearch} />
-        <Metric label="Delayed orders" value={d.delayedOrders} href="/orders?delayed=1" icon={AlertTriangle} tone={d.delayedOrders ? "danger" : undefined} />
-        <Metric label="Payments due" value={due.length} href="/payments" icon={CircleDollarSign} tone={due.length ? "warning" : undefined} />
-      </MetricStrip>
+      <SummaryStrip metrics={metrics} placement="top" />
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <div className="space-y-6">
@@ -146,6 +200,8 @@ async function BrandHome({ actor, welcome }: { actor: Actor; welcome: boolean })
           >
             <AttentionList items={attention} clear="You are all caught up. New quotations, samples and payments will appear here." />
           </Panel>
+
+          <SummaryStrip metrics={metrics} placement="phone" />
 
           <Panel title="Recent projects" actions={viewAll("/projects", "All projects")} bodyClassName="p-0 sm:p-0">
             {recent.items.length === 0 ? (
@@ -253,22 +309,40 @@ function BrandOnboarding({ create }: { create: React.ReactNode }) {
  * Manufacturer
  * -----------------------------------------------------------------------------------------------*/
 
+type StageState = { currentStage: MilestoneStage; milestones: { stage: MilestoneStage; status: string; isDelayed: boolean }[] };
+
+/** Whose move it is on an open order: behind schedule, waiting on the brand's decision, or the factory's turn. */
+function turnOf(o: StageState): "delayed" | "brand" | "factory" {
+  const m = o.milestones.find((x) => x.stage === o.currentStage);
+  return m?.isDelayed ? "delayed" : m?.status === "AWAITING_APPROVAL" ? "brand" : "factory";
+}
+
 async function ManufacturerHome({ actor }: { actor: Actor }) {
   const d = await manufacturerDashboard(actor);
   const status = d.profile?.verificationStatus;
   const verified = status === "VERIFIED";
-  const awaitingBrand = d.actionOrders.filter((o) => o.milestones.find((m) => m.stage === o.currentStage)?.status === "AWAITING_APPROVAL").length;
+  // Whose move it is on every open order before delivery (uncapped), so the count and the row badges agree.
+  const yourTurn = d.stageStates.filter((o) => turnOf(o) === "factory").length;
+  const awaitingBrand = d.stageStates.filter((o) => turnOf(o) === "brand").length;
 
   const attention = compact<AttentionItem>([
     !verified && status !== "PENDING" && {
       key: "verify", icon: ShieldCheck, tone: status === "REJECTED" ? "danger" : "accent", href: "/factory#verification",
       title: status === "REJECTED" ? "Update your verification documents" : "Get your factory verified",
-      description: "Only verified factories are matched to brand projects.",
+      description:
+        status === "REJECTED"
+          ? `Not approved: ${d.profile?.verificationNote ?? "see the notes on your factory profile"}. Fix the documents and request verification again.`
+          : "Only verified factories are matched to brand projects.",
     },
     d.delayedOrders > 0 && {
       key: "delayed", icon: Timer, tone: "danger", href: "/orders?delayed=1",
       title: `${plural(d.delayedOrders, "order")} behind schedule`,
       description: "Update the stage evidence or tell the brand about the new date.",
+    },
+    yourTurn > 0 && {
+      key: "production", icon: PackageSearch, tone: "accent", href: "/orders?status=ACTIVE",
+      title: `${plural(yourTurn, "order")} ${yourTurn === 1 ? "needs" : "need"} a production update`,
+      description: "Upload stage evidence, a sample, the QC report or the shipment details.",
     },
     d.revisionRequests > 0 && {
       key: "revisions", icon: FilePen, tone: "warning", href: "/quotations?status=REVISION_REQUESTED",
@@ -280,12 +354,14 @@ async function ManufacturerHome({ actor }: { actor: Actor }) {
       title: `Quote on ${plural(d.newOpportunities, "new opportunity", "new opportunities")}`,
       description: "Matched projects you have not quoted on yet.",
     },
-    awaitingBrand > 0 && {
-      key: "awaiting", icon: ClipboardCheck, tone: "neutral", href: "/orders?status=ACTIVE",
-      title: `${plural(awaitingBrand, "order")} waiting on the brand`,
-      description: "A sample or inspection is with the brand for a decision.",
-    },
   ]);
+  const metrics: MetricSpec[] = [
+    { id: "new", label: "New opportunities", value: d.newOpportunities, href: "/opportunities?filter=new", icon: FileSearch },
+    { id: "quotes", label: "Quotes awaiting brand", value: d.openQuotes, href: "/quotations?status=SUBMITTED", icon: FileText },
+    { id: "revisions", label: "Revision requests", value: d.revisionRequests, href: "/quotations?status=REVISION_REQUESTED", icon: FilePen, tone: d.revisionRequests ? "warning" : undefined },
+    { id: "active", label: "Active orders", value: d.activeOrders, href: "/orders?status=ACTIVE", icon: PackageSearch },
+    { id: "delayed", label: "Delayed orders", value: d.delayedOrders, href: "/orders?delayed=1", icon: Timer, tone: d.delayedOrders ? "danger" : undefined },
+  ];
 
   return (
     <>
@@ -294,26 +370,14 @@ async function ManufacturerHome({ actor }: { actor: Actor }) {
         title={d.profile?.businessName ?? "Dashboard"}
         description="Opportunities, quotations and the production work waiting for you."
         meta={d.profile && <StatusBadge map={VERIFICATION_STATUS} value={d.profile.verificationStatus} />}
-        actions={<Button asChild variant="accent"><Link href="/opportunities"><FileSearch /> View opportunities</Link></Button>}
+        actions={<Button asChild variant="outline"><Link href="/opportunities"><FileSearch /> View opportunities</Link></Button>}
       />
-      {!verified && (
-        <Alert tone={status === "REJECTED" ? "error" : "info"} className="mb-6">
-          {status === "PENDING"
-            ? "Your verification request is being reviewed. You will start receiving matched projects once it is approved."
-            : status === "REJECTED"
-              ? `Verification was not approved: ${d.profile?.verificationNote ?? "see your factory profile"}. `
-              : "Your factory is not verified yet, so you are not matched to projects. "}
-          {status !== "PENDING" && <Link href="/factory#verification" className="font-medium underline underline-offset-2">Go to verification</Link>}
+      {status === "PENDING" && (
+        <Alert tone="info" className="mb-6">
+          Your verification request is being reviewed. You will start receiving matched projects once it is approved.
         </Alert>
       )}
-
-      <MetricStrip label="Summary">
-        <Metric label="New opportunities" value={d.newOpportunities} href="/opportunities?filter=new" icon={FileSearch} tone={d.newOpportunities ? "accent" : undefined} />
-        <Metric label="Quotes awaiting brand" value={d.openQuotes} href="/quotations?status=SUBMITTED" icon={FileText} />
-        <Metric label="Revision requests" value={d.revisionRequests} href="/quotations?status=REVISION_REQUESTED" icon={FilePen} tone={d.revisionRequests ? "warning" : undefined} />
-        <Metric label="Active orders" value={d.activeOrders} href="/orders?status=ACTIVE" icon={PackageSearch} />
-        <Metric label="Delayed orders" value={d.delayedOrders} href="/orders?delayed=1" icon={Timer} tone={d.delayedOrders ? "danger" : undefined} />
-      </MetricStrip>
+      <SummaryStrip metrics={metrics} placement="top" />
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <div className="space-y-6">
@@ -322,17 +386,24 @@ async function ManufacturerHome({ actor }: { actor: Actor }) {
             description={attention.length ? `${plural(attention.length, "item")} waiting on you` : undefined}
             bodyClassName="p-0 sm:p-0"
           >
-            <AttentionList items={attention} clear="You are all caught up. New opportunities and revision requests will appear here." />
+            <AttentionList items={attention} clear="You are all caught up. Production updates, new opportunities and revision requests will appear here." />
           </Panel>
 
-          <Panel title="Production work" description="Active orders, soonest delivery first." actions={viewAll("/orders", "All orders")} bodyClassName="p-0 sm:p-0">
+          <SummaryStrip metrics={metrics} placement="phone" />
+
+          <Panel
+            title="Production work"
+            description={`Active orders, soonest delivery first.${awaitingBrand ? ` ${plural(awaitingBrand, "order")} ${awaitingBrand === 1 ? "is" : "are"} waiting on the brand.` : ""}`}
+            actions={viewAll("/orders", "All orders")}
+            bodyClassName="p-0 sm:p-0"
+          >
             {d.actionOrders.length === 0 ? (
               <EmptyState
                 variant="plain"
                 className="py-8"
                 icon={PackageSearch}
                 title="No active orders"
-                description={verified ? "When a brand accepts one of your quotations, the order and its production plan appear here." : "Get verified to start receiving matched projects."}
+                description={verified ? "When a brand accepts one of your quotations, the order and its production plan appear here." : "Orders appear here once your factory is verified and a brand accepts a quotation."}
                 action={verified && <Button asChild variant="outline" size="sm"><Link href="/opportunities">Browse opportunities</Link></Button>}
               />
             ) : (
@@ -340,6 +411,7 @@ async function ManufacturerHome({ actor }: { actor: Actor }) {
                 {d.actionOrders.map((o) => {
                   const current = o.milestones.find((m) => m.stage === o.currentStage);
                   const done = o.milestones.filter((m) => m.completedAt).length;
+                  const turn = turnOf(o);
                   return (
                     <li key={o.id}>
                       <Link
@@ -351,6 +423,9 @@ async function ManufacturerHome({ actor }: { actor: Actor }) {
                           <span className="tabular block truncate text-xs leading-5 text-ink-muted">
                             {o.reference}{current?.plannedEnd ? ` · stage due ${formatDate(current.plannedEnd)}` : ""}
                           </span>
+                          {turn === "factory" && (
+                            <span className="block truncate text-xs leading-5 text-ink-muted">Needed: {lowerFirst(STAGE_BY_KEY[o.currentStage].requirement)}</span>
+                          )}
                         </span>
                         <span className="col-span-2 row-start-2 min-w-0 sm:col-span-1 sm:row-start-auto">
                           <ProgressBar value={done} max={STAGES.length} label={`${done} of ${STAGES.length} stages complete`} tone={current?.isDelayed ? "danger" : "accent"} />
@@ -360,12 +435,12 @@ async function ManufacturerHome({ actor }: { actor: Actor }) {
                           </span>
                         </span>
                         <span className="col-start-2 row-start-1 justify-self-end sm:col-start-auto sm:row-start-auto">
-                          {current?.isDelayed ? (
+                          {turn === "delayed" ? (
                             <Badge tone="danger" dot>Delayed</Badge>
-                          ) : current?.status === "AWAITING_APPROVAL" ? (
+                          ) : turn === "brand" ? (
                             <Badge tone="warning" dot>Awaiting brand</Badge>
                           ) : (
-                            <Badge tone="info" dot>On track</Badge>
+                            <Badge tone="accent" dot>Your turn</Badge>
                           )}
                         </span>
                       </Link>
@@ -389,7 +464,7 @@ async function ManufacturerHome({ actor }: { actor: Actor }) {
               </ul>
             )}
             <p className="mt-3 flex items-start gap-1.5 border-t border-line-subtle pt-3 text-xs leading-5 text-ink-muted">
-              <BadgeCheck className="mt-0.5 size-3.5 shrink-0 text-ink-subtle" aria-hidden /> Sandbox payments — no real money is transferred in this build.
+              <BadgeCheck className="mt-0.5 size-3.5 shrink-0 text-ink-subtle" aria-hidden /> Test payments for now: no real money is transferred.
             </p>
           </Panel>
           <Panel title="Recent notifications" actions={viewAll("/notifications", "View all")} bodyClassName="p-0 sm:p-0">

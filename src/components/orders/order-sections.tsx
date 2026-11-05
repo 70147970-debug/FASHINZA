@@ -19,7 +19,21 @@ import { cn } from "@/lib/utils";
  * optional, not next steps).
  */
 
-type Terms = Record<string, string | number | null>;
+type Terms = Record<string, string | number | boolean | string[] | null | undefined>;
+
+/** "2 pieces · size M · in 12 days" from the sample terms copied onto the order (older orders have none). */
+function sampleTerms(terms: Terms): string | null {
+  if (terms.sampleRequired === undefined) return null;
+  if (terms.sampleRequired === false) return "Not requested (pre-production sample only)";
+  const qty = typeof terms.sampleQuantity === "number" ? terms.sampleQuantity : null;
+  const sizes = Array.isArray(terms.sampleSizes) ? terms.sampleSizes : [];
+  const parts = [
+    qty ? `${formatNumber(qty)} ${qty === 1 ? "piece" : "pieces"}` : "Requested",
+    sizes.length ? `${sizes.length === 1 ? "size" : "sizes"} ${sizes.join(", ")}` : null,
+    terms.sampleLeadTimeDays ? `in ${terms.sampleLeadTimeDays} days` : null,
+  ];
+  return parts.filter(Boolean).join(" · ");
+}
 
 const ToNextStep = ({ children }: { children: React.ReactNode }) => (
   <a href="#next-step" className="rounded-sm font-medium text-accent-strong underline-offset-4 hover:underline">{children}</a>
@@ -186,7 +200,7 @@ export function PaymentsSection({ order, view }: { order: Order; view: OrderView
       id="payments"
       title="Payment schedule"
       actions={<SandboxBadge />}
-      description="Processed by a sandbox provider: no real money moves and Fashinza does not hold funds in escrow."
+      description="Payments are simulated for now: no real money moves and Fashinza does not hold funds in escrow."
       bodyClassName="p-0 sm:p-0"
       footer={
         view.isBrand && !view.paymentsLocked && !view.closed ? (
@@ -296,6 +310,7 @@ export function MessagesSection({ order, view, actor }: { order: Order; view: Or
 /** Terms & files: agreed terms, the tech pack, the parties and any disputes. */
 export function DetailsSection({ order, view }: { order: Order; view: OrderView }) {
   const terms = (order.agreedTerms ?? {}) as Terms;
+  const sample = sampleTerms(terms);
   return (
     <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
       <Panel id="terms" title="Agreed terms" description={`From quotation version ${terms.quotationVersion ?? "—"}.`}>
@@ -308,20 +323,27 @@ export function DetailsSection({ order, view }: { order: Order; view: OrderView 
             { label: "Fabric / unit", value: <span className="tabular">{formatMoney(terms.fabricCostPerUnit as string, order.currency)}</span> },
             { label: "Finishing / unit", value: <span className="tabular">{formatMoney(terms.finishingCostPerUnit as string, order.currency)}</span> },
             { label: "Packaging / unit", value: <span className="tabular">{formatMoney(terms.packagingCostPerUnit as string, order.currency)}</span> },
+            ...(sample ? [{ label: "Samples", value: sample }] : []),
             { label: "Sampling", value: <span className="tabular">{formatMoney(terms.samplingCost as string, order.currency)}</span> },
             { label: "Logistics", value: <span className="tabular">{formatMoney(terms.logisticsCost as string, order.currency)}</span> },
             { label: "Tax", value: <span className="tabular">{`${terms.taxPercent ?? 0}% · ${formatMoney(terms.taxAmount as string, order.currency)}`}</span> },
             { label: "Total", value: <span className="tabular font-display text-base font-medium text-ink">{formatMoney(terms.totalAmount as string, order.currency)}</span> },
           ]}
         />
+        {(terms.sampleRequestNotes || terms.sampleNotes) && (
+          <div className="mt-4 space-y-2 border-t border-line-subtle pt-3 text-[13px] leading-5 text-ink-muted">
+            {terms.sampleRequestNotes && <p><span className="font-medium text-ink">Brand&apos;s sample notes:</span> {String(terms.sampleRequestNotes)}</p>}
+            {terms.sampleNotes && <p><span className="font-medium text-ink">Factory&apos;s sample approach:</span> {String(terms.sampleNotes)}</p>}
+          </div>
+        )}
         {terms.notes && <p className="mt-4 border-t border-line-subtle pt-3 text-[13px] leading-5 text-ink-muted">{String(terms.notes)}</p>}
       </Panel>
 
       <div className="space-y-6">
         <Panel
           id="files"
-          title="Tech pack"
-          description="The highest version is the one to produce against."
+          title="Tech pack and files"
+          description="Produce against the highest tech pack version."
           actions={view.isBrand && !view.closed ? <Link href={`/projects/${order.projectId}?tab=files`} className="rounded-sm text-[13px] font-medium text-accent-strong underline-offset-4 hover:underline">Upload a new version</Link> : undefined}
         >
           <AttachmentList items={order.project.attachments} projectId={order.projectId} />

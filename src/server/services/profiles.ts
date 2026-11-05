@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import type { z } from "zod";
-import type { brandProfileSchema, ManufacturerProfileInput } from "@/lib/validation/profile";
+import type { brandProfileSchema, MachineryInput, ManufacturerProfileInput } from "@/lib/validation/profile";
 import type { Actor } from "@/server/actor";
 import { assertRole } from "@/server/access";
 import { conflict, invalid, notFound } from "@/server/errors";
@@ -16,9 +16,13 @@ export async function saveBrandProfile(actor: Actor, input: z.infer<typeof brand
   ]);
 }
 
-export async function saveManufacturerProfile(actor: Actor, input: ManufacturerProfileInput) {
+/**
+ * Saves the factory profile with its capabilities and machinery. Capabilities and machinery are replaced as
+ * a whole; when `machinery` is omitted (older callers such as the seed script) the stored list is kept.
+ */
+export async function saveManufacturerProfile(actor: Actor, input: Omit<ManufacturerProfileInput, "machinery"> & { machinery?: MachineryInput }) {
   assertRole(actor, "MANUFACTURER");
-  const { production, fabrics, finishing, ...fields } = input;
+  const { production, fabrics, finishing, machinery, ...fields } = input;
   const capabilities = [
     ...production.map((name) => ({ kind: "PRODUCTION" as const, name })),
     ...fabrics.map((name) => ({ kind: "FABRIC" as const, name })),
@@ -28,6 +32,10 @@ export async function saveManufacturerProfile(actor: Actor, input: ManufacturerP
     const profile = await tx.manufacturerProfile.upsert({ where: { userId: actor.id }, create: { userId: actor.id, ...fields }, update: fields });
     await tx.manufacturerCapability.deleteMany({ where: { profileId: profile.id } });
     await tx.manufacturerCapability.createMany({ data: capabilities.map((c) => ({ ...c, profileId: profile.id })), skipDuplicates: true });
+    if (machinery) {
+      await tx.manufacturerMachine.deleteMany({ where: { profileId: profile.id } });
+      await tx.manufacturerMachine.createMany({ data: machinery.map((m, i) => ({ profileId: profile.id, type: m.type, quantity: m.quantity, sortOrder: i })) });
+    }
     await tx.user.update({ where: { id: actor.id }, data: { profileCompleted: true } });
   });
 }
@@ -118,4 +126,9 @@ export async function revokeVerification(actor: Actor, profileId: string, reason
     await audit(tx, { actorId: actor.id, action: "FACTORY_VERIFICATION_REVOKED", targetType: "ManufacturerProfile", targetId: profileId, reason });
     await notify(tx, profile.userId, "VERIFICATION_DECISION", "Verification revoked", reason, "/factory");
   });
+}
+
+/** Machinery listed on a factory profile, in the order the factory entered it. */
+export async function listMachinery(profileId: string) {
+  return db.manufacturerMachine.findMany({ where: { profileId }, orderBy: [{ sortOrder: "asc" }, { type: "asc" }], select: { type: true, quantity: true } });
 }

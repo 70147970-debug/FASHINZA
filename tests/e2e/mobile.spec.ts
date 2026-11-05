@@ -18,9 +18,16 @@ for (const width of [320, 375]) {
 
 test("the public menu opens as a drawer on phones", async ({ page }) => {
   await page.goto("/");
+  // Returning users can sign in without opening the menu.
+  await expect(page.getByRole("banner").getByRole("link", { name: "Login" })).toBeVisible();
   await page.getByRole("button", { name: "Open menu" }).click();
-  await expect(page.getByRole("dialog", { name: "Menu" })).toBeVisible();
-  await page.getByRole("dialog").getByRole("link", { name: "How It Works" }).click();
+  const menu = page.getByRole("dialog", { name: "Menu" });
+  await expect(menu).toBeVisible();
+  // Both audiences have a way in from the drawer.
+  await expect(menu.locator('a[href="/register?role=brand"]').first()).toBeVisible();
+  await expect(menu.locator('a[href="/register?role=manufacturer"]').first()).toBeVisible();
+  await expect(menu.getByRole("link", { name: "FAQ" })).toBeVisible();
+  await menu.getByRole("link", { name: "How It Works" }).click();
   await expect(page).toHaveURL(/how-it-works/);
 });
 

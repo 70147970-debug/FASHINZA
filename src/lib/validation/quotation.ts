@@ -11,6 +11,19 @@ const int = (label: string, min: number, max: number) =>
     z.number({ required_error: `Enter the ${label}.`, invalid_type_error: `Enter the ${label} as a number.` }).int(`Enter the ${label} as a whole number.`).min(min, `The ${label} must be at least ${min}.`).max(max),
   );
 
+export const MAX_SAMPLE_LEAD_DAYS = 120;
+
+const optionalInt = (label: string, min: number, max: number) =>
+  z.preprocess(
+    (v) => (v === "" || v === undefined || v === null ? undefined : Number(v)),
+    z
+      .number({ invalid_type_error: `Enter the ${label} as a number.` })
+      .int(`Enter the ${label} as a whole number.`)
+      .min(min, `The ${label} must be at least ${min}.`)
+      .max(max, `The ${label} cannot be more than ${max}.`)
+      .optional(),
+  );
+
 export const quotationSchema = z
   .object({
     quantity: int("quoted quantity", 1, 1_000_000),
@@ -28,6 +41,9 @@ export const quotationSchema = z
     productionDays: int("production duration", 7, 365),
     validUntil: z.coerce.date({ errorMap: () => ({ message: "Choose the date this quotation expires." }) }),
     notes: z.string().trim().max(3000).optional().transform((v) => v || undefined),
+    /** Sample proposal. Required by the service when the brand asked for samples and the quotation is sent. */
+    sampleLeadTimeDays: optionalInt("sample lead time", 1, MAX_SAMPLE_LEAD_DAYS),
+    sampleNotes: z.string().trim().max(1000, "Keep the sample notes under 1,000 characters.").optional().transform((v) => v || undefined),
   })
   .superRefine((d, ctx) => {
     if (d.minQuantity > d.quantity) ctx.addIssue({ code: "custom", path: ["minQuantity"], message: "Minimum quantity cannot exceed the quoted quantity." });

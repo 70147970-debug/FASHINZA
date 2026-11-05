@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { CalendarDays, Check, CircleDashed, Clock, FileText, Globe, Mail, MapPin, Phone, UserRound } from "lucide-react";
 import { requireUser } from "@/server/auth/session";
 import { getFactory } from "@/server/services/admin";
+import { listMachinery } from "@/server/services/profiles";
 import { isAppError } from "@/server/errors";
 import { DescriptionList, EmptyState, MetaItem, PageHeader, Panel, StatusBadge, Timeline } from "@/components/app/primitives";
 import { DocumentReviewButtons, RevokeVerificationButton, UserStatusButton, VerificationDecision } from "@/components/admin/admin-forms";
@@ -52,10 +53,13 @@ export default async function AdminFactoryPage({ params }: { params: Promise<{ i
     if (isAppError(e)) notFound();
     throw e;
   });
+  const machinery = await listMachinery(p.id);
   const caps = (k: string) => p.capabilities.filter((c) => c.kind === k).map((c) => c.name);
   const regVerified = p.documents.some((d) => d.type === "BUSINESS_REGISTRATION" && d.status === "VERIFIED");
   const hasReg = p.documents.some((d) => d.type === "BUSINESS_REGISTRATION");
   const reviewed = p.documents.filter((d) => d.status !== "PENDING").length;
+  // History is newest first, so this is the suspension currently in force.
+  const suspension = p.user.status === "SUSPENDED" ? history.find((h) => h.action === "USER_SUSPENDED") : undefined;
 
   return (
     <>
@@ -81,20 +85,39 @@ export default async function AdminFactoryPage({ params }: { params: Promise<{ i
         }
         actions={
           <>
-            {p.verificationStatus === "PENDING" && <VerificationDecision profileId={p.id} name={p.businessName} />}
+            {p.verificationStatus === "PENDING" && <VerificationDecision profileId={p.id} name={p.businessName} canApprove={regVerified} blockedReasonId="approve-blocked" />}
             {p.verificationStatus === "VERIFIED" && <RevokeVerificationButton profileId={p.id} name={p.businessName} />}
             <UserStatusButton userId={p.user.id} name={p.businessName} suspended={p.user.status === "SUSPENDED"} size="md" />
           </>
         }
       />
+      {p.user.status === "SUSPENDED" && (
+        <Alert tone="warning" title="Account suspended" className="mb-6">
+          {p.user.statusReason ?? suspension?.reason ?? "No reason was recorded."}
+          {suspension && (
+            <span className="text-ink-muted">
+              {" · "}
+              {suspension.actor.name}, {formatDateTime(suspension.createdAt)}
+            </span>
+          )}
+          <span className="block text-ink-muted">Check the reason before reactivating the account.</span>
+        </Alert>
+      )}
       {p.verificationStatus === "PENDING" && !regVerified && (
-        <Alert tone="warning" className="mb-6">
-          Verify the business registration document before approving the factory.
+        <Alert tone="warning" id="approve-blocked" className="mb-6">
+          {hasReg ? (
+            <>
+              Approve is unavailable until the business registration is verified.{" "}
+              <a href="#documents" className="font-medium text-accent-strong underline underline-offset-4">Review it in Documents</a>.
+            </>
+          ) : (
+            "This factory has not uploaded a business registration, so it can't be approved yet. Reject with a reason to ask for it."
+          )}
         </Alert>
       )}
       {p.verificationNote && (
         <Alert tone="info" className="mb-6">
-          Last decision note: {p.verificationNote}
+          Last verification note: {p.verificationNote}
         </Alert>
       )}
 
@@ -149,8 +172,11 @@ export default async function AdminFactoryPage({ params }: { params: Promise<{ i
             )}
           </Panel>
 
-          <Panel title="Review history" description="Decisions on this factory and its documents, newest first.">
-            <Timeline items={history.map((h) => auditTimelineItem(h, formatDateTime(h.createdAt)))} empty="No decisions recorded yet." />
+          <Panel title="Review history" description="Decisions on this factory, its documents and its account, newest first.">
+            <Timeline
+              items={history.map((h) => auditTimelineItem(h, formatDateTime(h.createdAt), { selfIds: [p.id, p.user.id], href: `/admin/factories/${p.id}` }))}
+              empty="No decisions recorded yet."
+            />
           </Panel>
         </div>
 
@@ -164,6 +190,14 @@ export default async function AdminFactoryPage({ params }: { params: Promise<{ i
                 { label: "Typical lead time", value: <span className="tabular">{p.typicalLeadTimeDays} days</span> },
               ]}
             />
+          </Panel>
+
+          <Panel title="Machinery" description={machinery.length ? `${machinery.length} machine type${machinery.length === 1 ? "" : "s"} listed by the factory.` : undefined}>
+            {machinery.length ? (
+              <DescriptionList layout="rows" items={machinery.map((m) => ({ label: m.type, value: <span className="tabular">× {formatNumber(m.quantity)}</span> }))} />
+            ) : (
+              <p className="text-sm text-ink-muted">No machinery listed.</p>
+            )}
           </Panel>
 
           <Panel title="Capabilities">

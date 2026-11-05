@@ -1,12 +1,14 @@
-import { BadgeCheck, Camera, Check, ChevronRight, CircleDollarSign, Factory, MapPin, Minus, Ruler, Scissors } from "lucide-react";
+import { BadgeCheck, Camera, Check, ChevronRight, Factory, MapPin, Minus, Ruler, Scissors } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ProgressBar, StageStepper, Timeline, type Step } from "@/components/app/primitives";
+import { STAGES as ORDER_STAGES } from "@/lib/workflow";
 import { ExampleBadge, MockFrame } from "./marketing";
 import { cn } from "@/lib/utils";
 
 /*
- * Composed product-UI mocks for the marketing site. Every mock shows an "Example data" badge and a caption:
- * the names, figures and dates are illustrative, not real customers or orders.
+ * Composed previews of the order, matching and quotation screens for the public website. Every preview shows an
+ * "Example data" badge and a caption: the names, figures and dates are illustrative, not real customers,
+ * factories or orders. Stage and payment names match the ones brands and factories meet in the app.
  */
 
 const CAPTION = "Illustrative example built from the product's own components. Names, figures and dates are not real.";
@@ -15,7 +17,7 @@ function MockCard({ className, children }: { className?: string; children: React
   return <div className={cn("overflow-hidden rounded-lg border border-line-strong bg-surface", className)}>{children}</div>;
 }
 
-/** Fake app chrome: breadcrumb trail + example badge. */
+/** Simplified app chrome: breadcrumb trail + example badge. */
 function MockBar({ trail }: { trail: string[] }) {
   return (
     <div className="flex items-center justify-between gap-3 border-b border-line bg-canvas px-4 py-2.5">
@@ -39,12 +41,12 @@ function Fact({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="min-w-0 px-2.5 py-2.5 sm:px-4">
       <dt className="text-xs text-ink-muted">{label}</dt>
-      <dd className="tabular mt-1 break-words font-display text-[15px] font-medium text-ink sm:text-base">{value}</dd>
+      <dd className="tabular mt-1 break-words text-[15px] font-medium text-ink sm:text-base">{value}</dd>
     </div>
   );
 }
 
-/** 8 segments: done (ink), current (terracotta), upcoming (hairline). */
+/** One segment per production milestone: done (charcoal), current (forest green), upcoming (hairline). */
 function SegmentBar({ done, total }: { done: number; total: number }) {
   return (
     <div className="mt-2.5 grid gap-1" style={{ gridTemplateColumns: `repeat(${total}, minmax(0, 1fr))` }} aria-hidden>
@@ -55,63 +57,52 @@ function SegmentBar({ done, total }: { done: number; total: number }) {
   );
 }
 
-/** Homepage hero: an order overview. */
-export function OrderOverviewMock() {
+/** The example order is in its fourth milestone (stitching). */
+const CURRENT_STAGE = 3;
+
+/** Home page: a compact order status — current milestone, progress through the eight milestones, latest updates. */
+export function ProductionSnapshotMock() {
+  const current = ORDER_STAGES[CURRENT_STAGE];
   return (
-    <MockFrame label="Example order overview with illustrative data" caption={CAPTION}>
-      <div className="relative lg:pb-12 lg:pr-8">
-        <MockCard>
-          <MockBar trail={["Orders", "FZ-DEMO-0001"]} />
-          <div className="p-5 sm:p-6">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="label-caps text-ink-muted">Order · FZ-DEMO-0001</p>
-                <p className="mt-1 font-display text-xl font-medium leading-7 tracking-[-0.015em] text-ink">Organic cotton crew-neck tee</p>
-                <p className="mt-0.5 flex items-center gap-1 text-[13px] text-ink-muted">
-                  <Factory className="size-3.5" aria-hidden /> Example Knit Unit A · Lahore
-                </p>
-              </div>
-              <Badge tone="info" dot>In production</Badge>
+    <MockFrame label="Example order status with illustrative data" caption={CAPTION}>
+      <MockCard>
+        <MockBar trail={["Orders", "FZ-DEMO-0001"]} />
+        <div className="p-5 sm:p-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="label-caps text-ink-muted">Order · FZ-DEMO-0001</p>
+              <p className="mt-1 font-display text-xl font-medium leading-7 tracking-[-0.015em] text-ink">Organic cotton crew-neck tee</p>
+              <p className="mt-0.5 flex items-center gap-1 text-[13px] text-ink-muted">
+                <Factory className="size-3.5 shrink-0" aria-hidden /> Example Knit Unit A · 500 pcs
+              </p>
             </div>
-            <dl className="mt-5 grid grid-cols-3 divide-x divide-line border-y border-line">
-              <Fact label="Quantity" value="500 pcs" />
-              <Fact label="Unit price" value="USD 6.40" />
-              <Fact label="Due" value="12 Apr" />
-            </dl>
-            <div className="mt-5">
-              <div className="flex items-baseline justify-between gap-3 text-[13px]">
-                <span className="font-medium text-ink">Stitching</span>
-                <span className="tabular text-ink-muted">Stage 4 of 8</span>
-              </div>
-              <SegmentBar done={3} total={8} />
-              <div className="mt-2 flex justify-between text-xs text-ink-muted">
-                <span>Fabric sourcing</span>
-                <span>Delivery</span>
-              </div>
+            <Badge tone="info" dot>In production</Badge>
+          </div>
+          <div className="mt-5">
+            <div className="flex items-baseline justify-between gap-3 text-[13px]">
+              <span className="font-medium text-ink">{current.label}</span>
+              <span className="tabular text-ink-muted">
+                Stage {CURRENT_STAGE + 1} of {ORDER_STAGES.length}
+              </span>
+            </div>
+            <SegmentBar done={CURRENT_STAGE} total={ORDER_STAGES.length} />
+            <div className="mt-2 flex justify-between gap-3 text-xs text-ink-muted">
+              <span>{ORDER_STAGES[0].label}</span>
+              <span className="text-right">{ORDER_STAGES[ORDER_STAGES.length - 1].label}</span>
             </div>
           </div>
-          <div className="border-t border-line-subtle px-5 py-4 sm:px-6">
-            <p className="label-caps mb-3 text-ink-muted">Recent activity</p>
-            <Timeline
-              items={[
-                { id: "a", title: "Stitching started", meta: "Today · Example Knit Unit A", tone: "info", icon: Scissors },
-                { id: "b", title: "Cutting completed with 3 evidence photos", meta: "14 Mar", tone: "success", icon: Camera },
-                { id: "c", title: "Sample approved by the brand", meta: "10 Mar", tone: "success", icon: Ruler },
-              ]}
-            />
-          </div>
-        </MockCard>
-        <div className="absolute bottom-0 right-0 hidden w-64 rounded-lg border border-line-strong bg-surface-raised p-4 shadow-pop lg:block">
-          <div className="flex items-center justify-between gap-2">
-            <p className="flex items-center gap-1.5 text-xs font-medium text-ink-muted">
-              <CircleDollarSign className="size-3.5 text-accent" aria-hidden /> Next payment
-            </p>
-            <Badge tone="warning" dot>Due</Badge>
-          </div>
-          <p className="tabular mt-2 font-display text-2xl font-[450] tracking-[-0.02em] text-ink">USD 1,280.00</p>
-          <p className="text-xs text-ink-muted">Production milestone · 40%</p>
         </div>
-      </div>
+        <div className="border-t border-line-subtle px-5 py-4 sm:px-6">
+          <p className="label-caps mb-3 text-ink-muted">Latest updates</p>
+          <Timeline
+            items={[
+              { id: "a", title: "Stitching started on the line", meta: "Today · Example Knit Unit A", tone: "info", icon: Scissors },
+              { id: "b", title: "Cutting completed with 3 evidence photos", meta: "14 Mar", tone: "success", icon: Camera },
+              { id: "c", title: "Sample approved by the brand", meta: "10 Mar", tone: "success", icon: Ruler },
+            ]}
+          />
+        </div>
+      </MockCard>
     </MockFrame>
   );
 }
@@ -139,7 +130,7 @@ const MATCHES = [
   },
 ];
 
-/** Factory matching result with reasons. */
+/** Factory sourcing result with the reasons behind each score. */
 export function MatchMock() {
   return (
     <MockFrame label="Example factory matching result with illustrative data" caption={CAPTION}>
@@ -160,7 +151,7 @@ export function MatchMock() {
                   </p>
                   <p className="mt-0.5 flex items-center gap-1 text-xs text-ink-muted"><MapPin className="size-3" aria-hidden />{m.place}</p>
                 </div>
-                <p className="tabular shrink-0 font-display text-[1.75rem] font-[450] leading-none tracking-[-0.02em] text-ink">
+                <p className="tabular shrink-0 text-[1.625rem] font-medium leading-none tracking-[-0.025em] text-ink">
                   {m.score}<span className="ml-0.5 text-xs font-medium text-ink-muted">/100</span>
                 </p>
               </div>
@@ -188,24 +179,23 @@ export function MatchMock() {
   );
 }
 
-const STAGES: Step[] = [
-  { key: "fabric", label: "Fabric sourcing", state: "done", hint: "3 Mar" },
-  { key: "sampling", label: "Sampling", state: "done", hint: "10 Mar" },
-  { key: "cutting", label: "Cutting", state: "done", hint: "14 Mar" },
-  { key: "stitching", label: "Stitching", state: "current", hint: "In progress" },
-  { key: "finishing", label: "Finishing", state: "upcoming" },
-  { key: "qc", label: "Quality control", state: "upcoming" },
-  { key: "shipping", label: "Shipping", state: "upcoming" },
-  { key: "delivery", label: "Delivery", state: "upcoming" },
-];
+const STAGE_HINTS = ["3 Mar", "10 Mar", "14 Mar", "In progress"];
 
+const STAGES: Step[] = ORDER_STAGES.map((s, i) => ({
+  key: s.stage,
+  label: s.label,
+  state: i < CURRENT_STAGE ? "done" : i === CURRENT_STAGE ? "current" : "upcoming",
+  hint: STAGE_HINTS[i],
+}));
+
+/** The app's default schedule: 30% on sample approval, 40% on QC approval, 30% on delivery confirmation. */
 const PAYMENTS = [
-  { label: "Deposit · 30%", amount: "USD 960.00", tone: "success" as const, status: "Paid" },
-  { label: "Production · 40%", amount: "USD 1,280.00", tone: "warning" as const, status: "Due" },
-  { label: "Balance · 30%", amount: "USD 960.00", tone: "neutral" as const, status: "Scheduled" },
+  { label: "Sample approval · 30%", amount: "USD 960.00", tone: "success" as const, status: "Paid" },
+  { label: "QC approval · 40%", amount: "USD 1,280.00", tone: "neutral" as const, status: "Scheduled" },
+  { label: "Delivery · 30%", amount: "USD 960.00", tone: "neutral" as const, status: "Scheduled" },
 ];
 
-/** Production tracking: stage stepper, AQL inspection plan and milestone payments. */
+/** Production tracking: milestone stepper, AQL inspection plan and milestone payments. */
 export function TrackingMock() {
   return (
     <MockFrame label="Example production tracking view with illustrative data" caption={CAPTION}>
@@ -213,10 +203,10 @@ export function TrackingMock() {
         <MockBar trail={["Orders", "FZ-DEMO-0001", "Production"]} />
         <div className="border-b border-line-subtle p-5 sm:p-6">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
-            <p className="font-display text-lg font-medium tracking-[-0.01em] text-ink">Production stages</p>
+            <p className="font-display text-lg font-medium tracking-[-0.01em] text-ink">Production milestones</p>
             <span className="text-xs text-ink-muted">Planned delivery 12 Apr</span>
           </div>
-          <StageStepper stages={STAGES} label="Example production stages" />
+          <StageStepper stages={STAGES} label="Example production milestones" />
         </div>
         <div className="grid sm:grid-cols-2 sm:divide-x sm:divide-line-subtle">
           <div className="p-5 sm:p-6">
@@ -240,7 +230,7 @@ export function TrackingMock() {
             </dl>
           </div>
           <div className="border-t border-line-subtle p-5 sm:border-t-0 sm:p-6">
-            <p className="font-display text-base font-medium text-ink">Payment schedule</p>
+            <p className="font-display text-base font-medium text-ink">Milestone payments</p>
             <ul className="mt-3 divide-y divide-line-subtle text-[13px]">
               {PAYMENTS.map((p) => (
                 <li key={p.label} className="flex items-center justify-between gap-3 py-2">
@@ -252,6 +242,7 @@ export function TrackingMock() {
                 </li>
               ))}
             </ul>
+            <p className="mt-3 text-xs leading-5 text-ink-muted">Each payment falls due when its milestone is approved.</p>
           </div>
         </div>
       </MockCard>
@@ -330,7 +321,7 @@ export function OpportunityMock() {
           <div className="mt-5 rounded-md border border-line bg-canvas p-4">
             <div className="flex items-baseline justify-between gap-3">
               <p className="text-[13px] font-medium text-ink">Your match score</p>
-              <p className="tabular font-display text-2xl font-[450] tracking-[-0.02em] text-ink">88<span className="ml-0.5 text-xs font-medium text-ink-muted">/100</span></p>
+              <p className="tabular text-2xl font-medium tracking-[-0.025em] text-ink">88<span className="ml-0.5 text-xs font-medium text-ink-muted">/100</span></p>
             </div>
             <ProgressBar value={88} label="Match score 88 of 100" className="mt-2" />
             <ul className="mt-3 grid gap-1 text-xs leading-5 text-ink">
@@ -364,7 +355,7 @@ export function CertificationMock() {
           </ul>
           <div className="mt-5 flex items-baseline justify-between gap-3">
             <p className="text-[13px] font-medium text-ink">Eligible verified factories</p>
-            <p className="tabular font-display text-2xl font-[450] tracking-[-0.02em] text-ink">2<span className="text-sm font-medium text-ink-muted"> of 5</span></p>
+            <p className="tabular text-2xl font-medium tracking-[-0.025em] text-ink">2<span className="text-sm font-medium text-ink-muted"> of 5</span></p>
           </div>
           <ProgressBar value={2} max={5} label="2 of 5 factories eligible" className="mt-2" />
         </div>
@@ -374,7 +365,7 @@ export function CertificationMock() {
             {[
               { name: "Example Knit Unit C", reason: "GOTS certificate awaiting review", tone: "warning" as const, status: "Pending" },
               { name: "Example Denim Works", reason: "No GOTS certificate uploaded", tone: "danger" as const, status: "Missing" },
-              { name: "Example Apparel Co.", reason: "OEKO-TEX certificate expired", tone: "danger" as const, status: "Expired" },
+              { name: "Example Apparel Co.", reason: "OEKO-TEX certificate rejected on review", tone: "danger" as const, status: "Rejected" },
             ].map((f) => (
               <li key={f.name} className="flex items-center justify-between gap-3 py-2.5">
                 <div className="min-w-0">

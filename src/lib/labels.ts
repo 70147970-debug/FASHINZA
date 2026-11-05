@@ -1,11 +1,12 @@
 import { GARMENT_CATEGORIES } from "./constants";
+import { formatDate, formatMoney, formatNumber } from "./format";
 
 /**
  * Status tones, one mapping used everywhere (see docs/design-system.md#status):
  *  neutral  not started, draft, closed, withdrawn
  *  info     moving normally: in progress, in production, in transit
- *  accent   open in the marketplace, waiting for factories (submitted, receiving quotes) — terracotta is
- *           used sparingly, so only these statuses get it
+ *  accent   open in the marketplace, waiting for factories (submitted, receiving quotes) — the forest-green
+ *           accent is used sparingly, so only these statuses get it
  *  success  complete, approved, paid, verified
  *  warning  waiting on a decision or due
  *  danger   failed, rejected, blocked, cancelled, suspended
@@ -119,4 +120,78 @@ export const DOCUMENT_TYPE: Record<string, string> = {
 
 export function categoryLabel(value: string) {
   return GARMENT_CATEGORIES.find((c) => c.value === value)?.label ?? value;
+}
+
+/** Readable names for project fields, used wherever requirement changes are shown. */
+export const PROJECT_FIELD_LABEL: Record<string, string> = {
+  name: "Project name",
+  category: "Category",
+  description: "Product description",
+  quantity: "Quantity",
+  maxMoq: "MOQ limit",
+  targetUnitPrice: "Target price",
+  currency: "Currency",
+  deadline: "Delivery date",
+  fabricRequirements: "Fabric",
+  fabrics: "Fabrics",
+  sizes: "Sizes",
+  colors: "Colours",
+  additionalInstructions: "Instructions",
+  requiredCapabilities: "Processes",
+  preferredCountry: "Preferred country",
+  requiredCertifications: "Certifications",
+  sustainabilityNotes: "Sustainability notes",
+  sampleRequired: "Samples requested",
+  sampleQuantity: "Sample pieces",
+  sampleSizes: "Sample sizes",
+  sampleNotes: "Sample notes",
+};
+
+/** Label for a project field; unknown keys are turned from camelCase into a sentence-case label. */
+export function fieldLabel(key: string) {
+  if (PROJECT_FIELD_LABEL[key]) return PROJECT_FIELD_LABEL[key];
+  const words = key.replace(/([a-z0-9])([A-Z])/g, "$1 $2").toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+const LONG_TEXT_FIELDS = new Set(["description", "additionalInstructions", "sustainabilityNotes", "fabricRequirements", "sampleNotes"]);
+
+/**
+ * One side of a stored requirement change (ProjectRevision.changes stores strings: ISO dates, JSON arrays,
+ * numbers as text) formatted for people. `null` means the field was empty ("not set").
+ */
+export function formatRevisionValue(field: string, raw: string | null | undefined, currency = "USD") {
+  if (raw === null || raw === undefined || raw === "") return "not set";
+  switch (field) {
+    case "deadline":
+      return formatDate(raw);
+    case "targetUnitPrice":
+      return Number.isFinite(Number(raw)) ? formatMoney(raw, currency) : raw;
+    case "quantity":
+    case "maxMoq":
+    case "sampleQuantity":
+      return Number.isFinite(Number(raw)) ? formatNumber(Number(raw)) : raw;
+    case "category":
+      return categoryLabel(raw);
+    case "sampleRequired":
+      return raw === "true" ? "Yes" : raw === "false" ? "No" : raw;
+  }
+  if (raw.startsWith("[")) {
+    try {
+      const list = JSON.parse(raw) as unknown;
+      if (Array.isArray(list)) return list.length ? list.map(String).join(", ") : "none";
+    } catch {
+      /* not JSON: show as text */
+    }
+  }
+  if (LONG_TEXT_FIELDS.has(field) && raw.length > 80) return `${raw.slice(0, 79).trimEnd()}…`;
+  return raw;
+}
+
+/** "2 pieces · sizes M, L", or that no samples were requested. Used on the brief, the quote form and the comparison. */
+export function sampleRequestSummary(p: { sampleRequired: boolean; sampleQuantity: number | null; sampleSizes: string[] }) {
+  if (!p.sampleRequired) return "Not requested (pre-production sample only)";
+  const pieces = p.sampleQuantity ? `${formatNumber(p.sampleQuantity)} ${p.sampleQuantity === 1 ? "piece" : "pieces"}` : "Requested";
+  const sizes = p.sampleSizes.length ? `${p.sampleSizes.length === 1 ? "size" : "sizes"} ${p.sampleSizes.join(", ")}` : null;
+  return [pieces, sizes].filter(Boolean).join(" · ");
 }

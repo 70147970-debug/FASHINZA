@@ -1,29 +1,31 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowRight, Pencil, Send } from "lucide-react";
+import { ArrowRight, Check, Circle, Pencil, Send } from "lucide-react";
 import { requireOnboardedUser } from "@/server/auth/session";
 import { getProject } from "@/server/services/projects";
 import { isAppError } from "@/server/errors";
 import { DescriptionList, PageHeader, Panel, StatusBadge } from "@/components/app/primitives";
-import { BasicsStep, QuantityStep, SpecificationsStep, SustainabilityStep, type WizardProject } from "@/components/projects/wizard";
+import { BasicsStep, QuantityStep, SamplesStep, SpecificationsStep, SustainabilityStep, type WizardProject } from "@/components/projects/wizard";
 import { STEP_INFO, WizardSteps } from "@/components/projects/wizard-steps";
 import { FileUploader } from "@/components/projects/file-uploader";
 import { AttachmentList } from "@/components/projects/attachment-list";
 import { DeleteDraftButton, SubmitProjectForm } from "@/components/projects/project-buttons";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { projectSubmitSchema, PROJECT_STEPS } from "@/lib/validation/project";
-import { PROJECT_STATUS, categoryLabel } from "@/lib/labels";
+import { FILES_STEP, LAST_FIELD_STEP, projectSubmitSchema, PROJECT_STEPS, REVIEW_STEP } from "@/lib/validation/project";
+import { ATTACHMENT_KINDS } from "@/lib/constants";
+import { PROJECT_FIELD_LABEL, PROJECT_STATUS, categoryLabel } from "@/lib/labels";
+import { cn } from "@/lib/utils";
 import { formatDate, formatMoney, formatNumber } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Edit project" };
 
 const FIELD_STEP: Record<string, number> = Object.fromEntries(PROJECT_STEPS.flatMap((s) => s.fields.map((f) => [f, s.step])));
-const FIELD_LABEL: Record<string, string> = {
-  name: "Project name", category: "Category", description: "Product description", fabricRequirements: "Fabric type and composition", colors: "Colours", sizes: "Sizes",
-  quantity: "Quantity", deadline: "Delivery date", maxMoq: "MOQ limit", techPack: "Tech pack",
-};
+const FIELD_LABEL: Record<string, string> = { ...PROJECT_FIELD_LABEL, fabricRequirements: "Fabric type and composition", techPack: "Tech pack" };
+
+/** What the files step asks for, per kind: the tech pack is required, the rest help factories quote. */
+const FILE_EXPECTATION: Partial<Record<string, string>> = { TECH_PACK: "Required", MEASUREMENT_CHART: "Recommended", REFERENCE_IMAGE: "Optional" };
 
 export default async function EditProjectPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ step?: string; saved?: string }> }) {
   const actor = await requireOnboardedUser(["BRAND"]);
@@ -35,7 +37,7 @@ export default async function EditProjectPage({ params, searchParams }: { params
   });
   const isDraft = project.status === "DRAFT";
   if (!isDraft && !["SUBMITTED", "QUOTING"].includes(project.status)) redirect(`/projects/${id}`);
-  const maxStep = isDraft ? 6 : 4;
+  const maxStep = isDraft ? REVIEW_STEP : LAST_FIELD_STEP;
   const step = Math.min(Math.max(Number(sp.step) || (isDraft ? project.wizardStep : 1), 1), maxStep);
 
   const wp: WizardProject = {
@@ -61,6 +63,7 @@ export default async function EditProjectPage({ params, searchParams }: { params
     </Button>
   );
   const techPacks = project.attachments.filter((a) => a.kind === "TECH_PACK").length;
+  const fileCount = (kind: string) => project.attachments.filter((a) => a.kind === kind).length;
 
   return (
     <div className="max-w-5xl">
@@ -75,26 +78,50 @@ export default async function EditProjectPage({ params, searchParams }: { params
       {sp.saved && <Alert tone="success" className="mb-6">Draft saved. You can leave and continue later from your projects list.</Alert>}
 
       <div className="grid gap-6 lg:grid-cols-[13.5rem_minmax(0,1fr)] lg:gap-10">
-        <WizardSteps projectId={id} current={step} reached={isDraft ? (project.wizardStep >= 5 && techPacks > 0 ? 6 : project.wizardStep) : 4} submitted={!isDraft} />
+        <WizardSteps
+          projectId={id}
+          current={step}
+          reached={isDraft ? (project.wizardStep >= FILES_STEP && techPacks > 0 ? REVIEW_STEP : project.wizardStep) : LAST_FIELD_STEP}
+          submitted={!isDraft}
+        />
 
         <div className="min-w-0">
           {step === 1 && stepPanel(1, <BasicsStep project={wp} />)}
           {step === 2 && stepPanel(2, <SpecificationsStep project={wp} />)}
           {step === 3 && stepPanel(3, <QuantityStep project={wp} />)}
           {step === 4 && stepPanel(4, <SustainabilityStep project={wp} />)}
+          {step === LAST_FIELD_STEP && stepPanel(LAST_FIELD_STEP, <SamplesStep project={wp} />)}
 
-          {step === 5 && (
+          {step === FILES_STEP && (
             <Panel
               title="Tech pack and files"
-              description="Upload your tech pack (required to submit) plus any sketches. Every new tech pack upload becomes the next version; earlier versions are kept."
+              description="Upload your tech pack (required to submit), a measurement chart and any reference images or sketches. Every new tech pack upload becomes the next version; earlier versions are kept."
               footer={
                 <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-xs text-ink-muted">{techPacks ? `${techPacks} tech pack version${techPacks === 1 ? "" : "s"} uploaded` : "A tech pack is required before you can submit."}</p>
-                  <Button asChild variant="accent"><Link href={`/projects/${id}/edit?step=6`}>Continue to review <ArrowRight /></Link></Button>
+                  <Button asChild variant="accent"><Link href={`/projects/${id}/edit?step=${REVIEW_STEP}`}>Continue to review <ArrowRight /></Link></Button>
                 </div>
               }
             >
               <div className="space-y-6">
+                <ul aria-label="Files factories look for" className="grid gap-2 sm:grid-cols-3">
+                  {ATTACHMENT_KINDS.filter((k) => FILE_EXPECTATION[k.value]).map((k) => {
+                    const n = fileCount(k.value);
+                    return (
+                      <li key={k.value} className={cn("flex items-start gap-2.5 rounded-md border px-3 py-2.5", n ? "border-line bg-surface" : "border-line-strong border-dashed bg-surface-muted/60")}>
+                        {n ? (
+                          <span className="mt-0.5 grid size-4 shrink-0 place-items-center rounded-full bg-primary text-primary-fg" aria-hidden><Check className="size-2.5" strokeWidth={3} /></span>
+                        ) : (
+                          <Circle className="mt-0.5 size-4 shrink-0 text-ink-subtle" aria-hidden />
+                        )}
+                        <span className="min-w-0 text-[13px] leading-5">
+                          <span className="block font-medium text-ink">{k.label}</span>
+                          <span className="block text-ink-muted">{n ? `${n} uploaded` : FILE_EXPECTATION[k.value]}</span>
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
                 <FileUploader projectId={id} />
                 <div className="border-t border-line-subtle pt-5">
                   <AttachmentList items={project.attachments} canDelete projectId={id} />
@@ -103,7 +130,7 @@ export default async function EditProjectPage({ params, searchParams }: { params
             </Panel>
           )}
 
-          {step === 6 && (
+          {step === REVIEW_STEP && (
             <div className="space-y-6">
               {issues.length > 0 ? (
                 <Alert tone="error">
@@ -111,7 +138,7 @@ export default async function EditProjectPage({ params, searchParams }: { params
                   <ul className="mt-2 space-y-1">
                     {issues.map((i) => (
                       <li key={i.field + i.message}>
-                        <Link href={`/projects/${id}/edit?step=${i.field === "techPack" ? 5 : (FIELD_STEP[i.field] ?? 1)}`} className="font-medium underline underline-offset-2">
+                        <Link href={`/projects/${id}/edit?step=${i.field === "techPack" ? FILES_STEP : (FIELD_STEP[i.field] ?? 1)}`} className="font-medium underline underline-offset-2">
                           {FIELD_LABEL[i.field] ?? i.field}
                         </Link>
                         : {i.message}
@@ -155,7 +182,23 @@ export default async function EditProjectPage({ params, searchParams }: { params
                       n: 4, label: "sustainability",
                       items: [{ label: "Required certifications", value: project.requiredCertifications.join(", ") || "None" }],
                     },
-                    { n: 5, label: "files", items: [{ label: "Files", value: `${project.attachments.length} uploaded` }] },
+                    {
+                      n: LAST_FIELD_STEP, label: "samples",
+                      items: project.sampleRequired
+                        ? [
+                            { label: "Samples", value: project.sampleQuantity ? `${formatNumber(project.sampleQuantity)} piece${project.sampleQuantity === 1 ? "" : "s"}` : "Requested" },
+                            { label: "Sample sizes", value: project.sampleSizes.join(", ") || "Not specified" },
+                            ...(project.sampleNotes ? [{ label: "Sample notes", value: <span className="whitespace-pre-line">{project.sampleNotes}</span>, full: true }] : []),
+                          ]
+                        : [{ label: "Samples", value: "Not requested — pre-production sample only", full: true }],
+                    },
+                    {
+                      n: FILES_STEP, label: "files",
+                      items: ATTACHMENT_KINDS.filter((k) => k.value === "TECH_PACK" || fileCount(k.value) > 0 || FILE_EXPECTATION[k.value]).map((k) => ({
+                        label: k.group,
+                        value: fileCount(k.value) ? `${fileCount(k.value)} uploaded` : k.value === "TECH_PACK" ? "None yet" : "None",
+                      })),
+                    },
                   ].map((g) => (
                     <div key={g.n} className="grid gap-3 px-4 py-5 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-6 sm:px-5">
                       <div className="flex items-start justify-between gap-3 sm:block">

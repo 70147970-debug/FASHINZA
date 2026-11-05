@@ -2,7 +2,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Shared control styling: 36px high (40px on phones), 4px radius, 1px line-control border (≥3:1), terracotta
+ * Shared control styling: 36px high (40px on phones), 4px radius, 1px line-control border (≥3:1), accent
  * focus border + soft ring, brick red when aria-invalid.
  */
 export const fieldClass =

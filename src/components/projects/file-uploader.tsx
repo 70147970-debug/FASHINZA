@@ -6,8 +6,9 @@ import { UploadCloud, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
 import { toast } from "@/components/ui/toaster";
-import { UPLOAD_LIMITS } from "@/lib/constants";
+import { ATTACHMENT_KINDS, UPLOAD_LIMITS, attachmentKind } from "@/lib/constants";
 import { formatBytes } from "@/lib/format";
+import type { AttachmentKind } from "@/generated/prisma/enums";
 
 type Upload = { name: string; size: number; progress: number; error?: string };
 
@@ -16,21 +17,23 @@ type Upload = { name: string; size: number; progress: number; error?: string };
  * byte-level progress can be shown. Type and size are checked here for fast feedback and again
  * on the server (including the file signature) before anything is stored.
  */
-export function FileUploader({ projectId, defaultKind = "TECH_PACK" }: { projectId: string; defaultKind?: "TECH_PACK" | "SKETCH" | "OTHER" }) {
+export function FileUploader({ projectId, defaultKind = "TECH_PACK" }: { projectId: string; defaultKind?: AttachmentKind }) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
-  const [kind, setKind] = useState(defaultKind);
+  const [kind, setKind] = useState<AttachmentKind>(defaultKind);
   const [notes, setNotes] = useState("");
   const [uploads, setUploads] = useState<Upload[]>([]);
   const busy = uploads.some((u) => u.progress < 100 && !u.error);
-  const accept = kind === "SKETCH" ? UPLOAD_LIMITS.allowedMime.filter((m) => m.startsWith("image/")) : UPLOAD_LIMITS.allowedMime;
+  const def = attachmentKind(kind);
+  const accept = def.imagesOnly ? UPLOAD_LIMITS.allowedMime.filter((m) => m.startsWith("image/")) : UPLOAD_LIMITS.allowedMime;
+  const formats = def.imagesOnly ? "PNG, JPEG or WebP" : "PDF, PNG, JPEG or WebP";
 
   const update = (i: number, patch: Partial<Upload>) => setUploads((u) => u.map((x, j) => (j === i ? { ...x, ...patch } : x)));
 
   function send(file: File, index: number) {
     return new Promise<void>((resolve) => {
       if (!accept.includes(file.type)) {
-        update(index, { error: kind === "SKETCH" ? "Sketches must be PNG, JPEG or WebP images." : "Use a PDF, PNG, JPEG or WebP file." });
+        update(index, { error: def.imagesOnly ? `${def.group} must be PNG, JPEG or WebP images.` : "Use a PDF, PNG, JPEG or WebP file." });
         return resolve();
       }
       if (file.size > UPLOAD_LIMITS.maxBytes) {
@@ -47,8 +50,8 @@ export function FileUploader({ projectId, defaultKind = "TECH_PACK" }: { project
       xhr.onload = () => {
         if (xhr.status >= 200 && xhr.status < 300) {
           update(index, { progress: 100 });
-          const res = JSON.parse(xhr.responseText) as { version: number | null; fileName: string };
-          toast.success(res.version ? `Tech pack version ${res.version} uploaded.` : `${res.fileName} uploaded.`);
+          const res = JSON.parse(xhr.responseText) as { version: number | null; fileName: string; kind?: string };
+          toast.success(res.version ? `Tech pack version ${res.version} uploaded.` : `${attachmentKind(res.kind ?? kind).label} uploaded: ${res.fileName}.`);
         } else {
           let msg = "Upload failed.";
           try { msg = (JSON.parse(xhr.responseText) as { error?: string }).error ?? msg; } catch { /* keep default */ }
@@ -77,23 +80,22 @@ export function FileUploader({ projectId, defaultKind = "TECH_PACK" }: { project
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-[200px_1fr]">
+      <div className="grid gap-4 sm:grid-cols-[220px_1fr]">
         <div>
           <label htmlFor="upload-kind" className="mb-1.5 block text-sm font-medium text-ink">File type</label>
-          <Select id="upload-kind" value={kind} onChange={(e) => setKind(e.target.value as typeof kind)} disabled={busy}>
-            <option value="TECH_PACK">Tech pack (versioned)</option>
-            <option value="SKETCH">Design sketch</option>
-            <option value="OTHER">Other document</option>
+          <Select id="upload-kind" value={kind} onChange={(e) => setKind(e.target.value as AttachmentKind)} disabled={busy} aria-describedby="upload-kind-hint">
+            {ATTACHMENT_KINDS.map((k) => <option key={k.value} value={k.value}>{k.option}</option>)}
           </Select>
+          <p id="upload-kind-hint" className="mt-1.5 text-xs leading-4 text-ink-muted">{def.description}</p>
         </div>
         <div>
-          <label htmlFor="upload-notes" className="mb-1.5 block text-sm font-medium text-ink">Version note <span className="font-normal text-ink-muted">(optional)</span></label>
+          <label htmlFor="upload-notes" className="mb-1.5 block text-sm font-medium text-ink">{kind === "TECH_PACK" ? "Version note" : "Note"} <span className="font-normal text-ink-muted">(optional)</span></label>
           <Input
             id="upload-notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             maxLength={300}
-            placeholder={kind === "TECH_PACK" ? "What changed in this version?" : "Short description"}
+            placeholder={kind === "TECH_PACK" ? "What changed in this version?" : kind === "MEASUREMENT_CHART" ? "For example: graded XS–XL, tolerances ±1 cm" : "Short description"}
             disabled={busy}
           />
         </div>
@@ -108,7 +110,7 @@ export function FileUploader({ projectId, defaultKind = "TECH_PACK" }: { project
       >
         <UploadCloud className="size-6 text-accent" strokeWidth={1.5} aria-hidden />
         <span className="text-sm font-medium text-ink">Drop files here or choose files</span>
-        <span className="text-xs text-ink-muted">{kind === "SKETCH" ? "PNG, JPEG or WebP" : "PDF, PNG, JPEG or WebP"} · up to {UPLOAD_LIMITS.maxBytes / 1024 / 1024} MB each · stored privately</span>
+        <span className="text-xs text-ink-muted">{def.label}: {formats} · up to {UPLOAD_LIMITS.maxBytes / 1024 / 1024} MB each · stored privately</span>
         <input ref={input} type="file" multiple accept={accept.join(",")} className="sr-only" disabled={busy} onChange={(e) => void onFiles(e.target.files)} />
       </label>
       {uploads.length > 0 && (

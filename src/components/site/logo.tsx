@@ -2,8 +2,8 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 /**
- * Serif "Fashinza" wordmark with a small terracotta full stop (matches the app shell).
- * `inverted` sets it in ivory for bg-inverse bands.
+ * Playfair "Fashinza" wordmark with a small forest-green full stop (matches the app shell).
+ * `inverted` sets it in ivory for bg-inverse bands and photographs.
  */
 export function Logo({ className, inverted = false, href = "/" }: { className?: string; inverted?: boolean; href?: string }) {
   return (
@@ -21,7 +21,7 @@ export function Logo({ className, inverted = false, href = "/" }: { className?: 
         >
           Fashinza
         </span>
-        <span className="ml-0.5 size-[5px] translate-y-[-1px] rounded-full bg-accent" />
+        <span className={cn("ml-0.5 size-[5px] translate-y-[-1px] rounded-full", inverted ? "bg-accent-inverse" : "bg-accent")} />
       </span>
     </Link>
   );

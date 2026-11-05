@@ -17,6 +17,9 @@ const PendingContext = React.createContext(false);
 /**
  * Form bound to a server action. Field errors flow to <Field> through context, a summary
  * alert is shown for errors, and success shows a toast (and can reset or call onSuccess).
+ * After a failed submit the user is taken to the problem, wherever they are on a long form: the first
+ * invalid control is scrolled to the middle of the screen and focused (its error is announced through
+ * aria-describedby); without field errors the summary alert is scrolled into view and focused.
  */
 export function ActionForm({
   action,
@@ -49,7 +52,28 @@ export function ActionForm({
   );
   const [state, formAction, pending] = useActionState(run, initialFormState);
   const ref = useRef<HTMLFormElement>(null);
+  const summary = useRef<HTMLDivElement>(null);
   const handled = useRef<FormState | null>(null);
+  const shownError = useRef<FormState | null>(null);
+  useEffect(() => {
+    if (state.status !== "error" || shownError.current === state) return;
+    shownError.current = state;
+    const form = ref.current;
+    if (!form) return;
+    const smooth = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+    const invalid = form.querySelector<HTMLElement>('[aria-invalid="true"]');
+    if (invalid) {
+      invalid.scrollIntoView({ block: "center", behavior: smooth });
+      invalid.focus({ preventScroll: true });
+      return;
+    }
+    // Errors on groups without a single control (file pickers, chip sets) carry data-field-error.
+    const groupError = form.querySelector<HTMLElement>("[data-field-error]");
+    const target = groupError ?? summary.current;
+    if (!target) return;
+    target.scrollIntoView({ block: "center", behavior: smooth });
+    if (!groupError) summary.current?.focus({ preventScroll: true });
+  }, [state]);
   useEffect(() => {
     if (state.status !== "success" || handled.current === state) return;
     handled.current = state;
@@ -79,7 +103,11 @@ export function ActionForm({
         }}
         {...props}
       >
-        {state.status === "error" && state.message && <Alert tone="error" className="mb-4">{state.message}</Alert>}
+        {state.status === "error" && state.message && (
+          <Alert ref={summary} tabIndex={-1} tone="error" className="mb-4 scroll-mt-24 outline-none">
+            {state.message}
+          </Alert>
+        )}
         {showSuccessAlert && state.status === "success" && state.message && <Alert tone="success" className="mb-4">{state.message}</Alert>}
         <PendingContext.Provider value={pending}>{children}</PendingContext.Provider>
       </form>

@@ -6,12 +6,15 @@ import { requireUser } from "@/server/auth/session";
 import { listOrders, refreshDelays } from "@/server/services/orders";
 import { EmptyState, PageHeader, Pagination } from "@/components/app/primitives";
 import { FilterBar } from "@/components/app/filter-bar";
+import { StatusTabs } from "@/components/orders/order-parts";
 import { OrderTable } from "@/components/orders/order-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ORDER_STATUS } from "@/lib/labels";
 
 export const metadata: Metadata = { title: "Order monitoring" };
+
+const VIEWS = [{ value: "ACTIVE", label: "Active" }, ...Object.entries(ORDER_STATUS).map(([value, s]) => ({ value, label: s.label }))];
 
 export default async function AdminOrdersPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; delayed?: string; page?: string }> }) {
   const actor = await requireUser(["ADMIN"]);
@@ -20,6 +23,8 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
   const status = sp.status && (sp.status === "ACTIVE" || sp.status in ORDER_STATUS) ? (sp.status as OrderStatus | "ACTIVE") : undefined;
   const delayed = sp.delayed === "1";
   const data = await listOrders(actor, { q: sp.q, status, delayed, page: Number(sp.page) || 1, pageSize: 20 });
+  const keep = new URLSearchParams(Object.entries({ q: sp.q, status }).filter((e): e is [string, string] => !!e[1]));
+  const withoutDelayed = keep.size ? `/admin/orders?${keep}` : "/admin/orders";
   return (
     <>
       <PageHeader
@@ -30,7 +35,7 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
         actions={
           delayed ? (
             <Button asChild variant="outline">
-              <Link href={sp.status ? `/admin/orders?status=${encodeURIComponent(sp.status)}` : "/admin/orders"}>
+              <Link href={withoutDelayed}>
                 <X /> Clear delayed filter
               </Link>
             </Button>
@@ -43,13 +48,8 @@ export default async function AdminOrdersPage({ searchParams }: { searchParams: 
           )
         }
       />
-      <FilterBar
-        basePath="/admin/orders"
-        q={sp.q}
-        searchLabel="Search by reference or project"
-        hidden={{ delayed: delayed ? "1" : undefined }}
-        selects={[{ name: "status", label: "Status", value: status, options: [{ value: "ACTIVE", label: "All active" }, ...Object.entries(ORDER_STATUS).map(([value, s]) => ({ value, label: s.label }))] }]}
-      />
+      <StatusTabs basePath="/admin/orders" label="Order status" value={status} options={VIEWS} params={{ q: sp.q, delayed: delayed ? "1" : undefined }} />
+      <FilterBar basePath="/admin/orders" q={sp.q} searchLabel="Search by reference or project" hidden={{ status, delayed: delayed ? "1" : undefined }} />
       {data.items.length === 0 ? (
         <EmptyState
           icon={PackageSearch}

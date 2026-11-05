@@ -6,15 +6,16 @@ import { ThemeSync } from "@/components/theme/theme-sync";
 import { THEME_INIT_SCRIPT } from "@/components/theme/theme";
 
 export const metadata: Metadata = {
-  title: { default: "Fashinza — Apparel manufacturing, managed", template: "%s | Fashinza" },
+  title: { default: "Fashinza — Garment manufacturing for fashion brands", template: "%s | Fashinza" },
   description:
-    "Fashinza connects fashion brands with clothing manufacturers: submit requirements, compare quotations, and track production and quality control in one place.",
+    "Fashinza connects fashion brands, clothing startups and designers with garment manufacturers: share tech packs, develop samples, compare quotations, and follow apparel production and quality inspection in one place.",
 };
 
 export const viewport: Viewport = {
+  // Browser chrome matches the page canvas: warm ivory (light) and charcoal (dark).
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F6F1EA" },
-    { media: "(prefers-color-scheme: dark)", color: "#151210" },
+    { media: "(prefers-color-scheme: light)", color: "#F8F6F1" },
+    { media: "(prefers-color-scheme: dark)", color: "#161616" },
   ],
 };
 

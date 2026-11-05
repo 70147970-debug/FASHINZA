@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MACHINERY_LIMITS } from "@/lib/constants";
 
 const optionalText = (max: number) => z.string().trim().max(max).optional().transform((v) => v || undefined);
 const optionalUrl = z
@@ -27,6 +28,40 @@ const CATEGORY_VALUES = [
   "T_SHIRTS", "SHIRTS", "DRESSES", "DENIM", "TROUSERS", "ACTIVEWEAR", "OUTERWEAR", "KNITWEAR", "HOODIES_SWEATSHIRTS", "KIDSWEAR", "SLEEPWEAR", "ACCESSORIES",
 ] as const;
 
+/**
+ * One machinery row from the profile form. A row left completely empty is ignored; a half-filled row is
+ * an error on the missing part. Errors are keyed `machinery.<row>.type` / `machinery.<row>.quantity`.
+ */
+const machineRow = z
+  .object({
+    type: z.string().trim().max(80, "Keep the machine type under 80 characters.").default(""),
+    quantity: z.union([z.string(), z.number()]).optional().transform((v) => (v === undefined ? "" : String(v).trim())),
+  })
+  .superRefine((r, ctx) => {
+    if (!r.type && !r.quantity) return;
+    if (r.type.length < 2) ctx.addIssue({ code: "custom", path: ["type"], message: "Enter the machine type." });
+    const n = Number(r.quantity);
+    if (!r.quantity) ctx.addIssue({ code: "custom", path: ["quantity"], message: "Enter how many." });
+    else if (!Number.isInteger(n) || n < 1 || n > MACHINERY_LIMITS.quantity) {
+      ctx.addIssue({ code: "custom", path: ["quantity"], message: `Enter a whole number from 1 to ${MACHINERY_LIMITS.quantity.toLocaleString("en-GB")}.` });
+    }
+  });
+
+export const machinerySchema = z
+  .array(machineRow)
+  .max(MACHINERY_LIMITS.rows, `List up to ${MACHINERY_LIMITS.rows} machine types.`)
+  .default([])
+  .superRefine((rows, ctx) => {
+    const seen = new Map<string, number>();
+    rows.forEach((r, i) => {
+      const key = r.type.toLowerCase().replace(/\s+/g, " ");
+      if (!key) return;
+      if (seen.has(key)) ctx.addIssue({ code: "custom", path: [i, "type"], message: "Already listed above. Add the quantities together in one row." });
+      else seen.set(key, i);
+    });
+  })
+  .transform((rows) => rows.filter((r) => r.type && r.quantity).map((r) => ({ type: r.type.replace(/\s+/g, " "), quantity: Number(r.quantity) })));
+
 export const manufacturerProfileSchema = z
   .object({
     businessName: z.string().trim().min(2, "Enter your factory or business name.").max(150),
@@ -44,11 +79,13 @@ export const manufacturerProfileSchema = z
     contactEmail: z.string().trim().toLowerCase().email("Enter a valid email address.").max(200),
     contactPhone: optionalText(40),
     website: optionalUrl,
+    machinery: machinerySchema,
   })
   .refine((d) => d.production.length > 0, { path: ["production"], message: "Choose at least one production capability." })
   .refine((d) => d.maxMonthlyCapacity >= d.minOrderQuantity, { path: ["maxMonthlyCapacity"], message: "Monthly capacity must be at least your minimum order quantity." });
 
 export type ManufacturerProfileInput = z.infer<typeof manufacturerProfileSchema>;
+export type MachineryInput = ManufacturerProfileInput["machinery"];
 
 export const documentSchema = z
   .object({

@@ -6,14 +6,21 @@ import { FAQ } from "@/lib/faq";
 import { FaqList } from "@/components/site/faq-list";
 import { Button } from "@/components/ui/button";
 
-export const metadata: Metadata = { title: "FAQ", description: "Answers to common questions from brands and manufacturers using Fashinza." };
+export const metadata: Metadata = {
+  title: "FAQ",
+  description: "Answers to common questions from fashion brands and garment manufacturers about sourcing, quotations, sampling, quality inspection and payments on Fashinza.",
+};
 
 export default function FaqPage() {
   const groups = ["Brands", "Manufacturers", "Platform"] as const;
   const title = (g: (typeof groups)[number]) => `For ${g === "Platform" ? "everyone" : g.toLowerCase()}`;
   return (
     <>
-      <PageHero eyebrow="FAQ" title="Frequently asked questions" description="How matching, quotations, production tracking, quality control and payments work on Fashinza." />
+      <PageHero
+        eyebrow="FAQ"
+        title="Frequently asked questions"
+        description="How factory sourcing, quotations, sample development, production tracking, quality inspection and payments work on Fashinza."
+      />
       <section className="bg-canvas py-12 lg:py-20">
         <div className="container-page grid gap-10 lg:grid-cols-12 lg:gap-10">
           <aside className="hidden lg:col-span-3 lg:block">
@@ -48,7 +55,7 @@ export default function FaqPage() {
                 <MessageSquare className="mt-1 size-5 shrink-0 text-accent" strokeWidth={1.5} aria-hidden />
                 <div>
                   <p className="font-display text-lg font-medium text-ink">Still have a question?</p>
-                  <p className="text-sm text-ink-muted">The team replies by email.</p>
+                  <p className="text-sm text-ink-muted">Ask about briefing a garment, listing your factory or verification. The team replies by email.</p>
                 </div>
               </div>
               <Button asChild variant="outline"><Link href="/contact">Contact the Fashinza team</Link></Button>

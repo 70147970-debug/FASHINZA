@@ -11,15 +11,23 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { cn } from "@/lib/utils";
 
 /**
- * Marketing header: ivory bar over a hairline, serif wordmark, quiet nav whose active item is ink with a
- * terracotta rule on the header line. Theme toggle sits beside the actions (and the phone menu button).
+ * Public header: ivory bar over a hairline, Playfair wordmark, quiet nav whose active item is ink with a
+ * forest-green rule on the header line. The sign-up action follows the audience of the page (manufacturer
+ * pages invite factories, everything else invites brands). On phones Login stays visible next to the menu.
  */
 export function SiteHeader({ home }: { home?: string | null }) {
   const pathname = usePathname();
+  const factory = pathname.startsWith("/for-manufacturers");
+  const cta = factory
+    ? { href: "/register?role=manufacturer", label: "Join as a Manufacturer", short: "Join as a factory" }
+    : { href: "/register?role=brand", label: "Start a Project", short: "Start a Project" };
+  const other = factory
+    ? { href: "/register?role=brand", label: "Sourcing for a brand? Start a project" }
+    : { href: "/register?role=manufacturer", label: "Run a garment factory? Join as a manufacturer" };
 
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-canvas/90 backdrop-blur supports-[backdrop-filter]:bg-canvas/80">
-      <div className="container-page flex h-16 items-center justify-between gap-4">
+      <div className="container-page flex h-16 items-center justify-between gap-3 lg:gap-4">
         <Logo />
         <nav aria-label="Main" className="hidden h-full items-stretch gap-1 lg:flex">
           {PUBLIC_NAV.map((item) => {
@@ -30,7 +38,7 @@ export function SiteHeader({ home }: { home?: string | null }) {
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative inline-flex items-center px-3 text-sm transition-colors duration-150",
+                  "relative inline-flex shrink-0 items-center whitespace-nowrap px-2.5 text-sm transition-colors duration-150 xl:px-3",
                   active ? "font-medium text-ink" : "text-ink-muted hover:text-ink",
                 )}
               >
@@ -38,7 +46,7 @@ export function SiteHeader({ home }: { home?: string | null }) {
                 <span
                   aria-hidden
                   className={cn(
-                    "absolute inset-x-3 -bottom-px h-0.5 transition-colors duration-150",
+                    "absolute inset-x-2.5 -bottom-px h-0.5 transition-colors duration-150 xl:inset-x-3",
                     active ? "bg-accent" : "bg-transparent",
                   )}
                 />
@@ -46,10 +54,13 @@ export function SiteHeader({ home }: { home?: string | null }) {
             );
           })}
         </nav>
-        <div className="flex items-center gap-1 lg:gap-2">
+        <div className="flex items-center gap-0.5 sm:gap-1 lg:gap-2">
           <ThemeToggle />
           <span aria-hidden className="mx-1 hidden h-5 w-px bg-line lg:block" />
           <div className="hidden items-center gap-2 lg:flex">
+            <Button asChild variant="ghost" className="hidden xl:inline-flex">
+              <Link href="/contact" aria-current={pathname === "/contact" ? "page" : undefined}>Contact</Link>
+            </Button>
             {home ? (
               <Button asChild>
                 <Link href={home}>Go to dashboard</Link>
@@ -60,11 +71,25 @@ export function SiteHeader({ home }: { home?: string | null }) {
                   <Link href="/login">Login</Link>
                 </Button>
                 <Button asChild>
-                  <Link href="/register?role=brand">Start a Project</Link>
+                  <Link href={cta.href}>
+                    <span className="xl:hidden">{cta.short}</span>
+                    <span className="hidden xl:inline">{cta.label}</span>
+                  </Link>
                 </Button>
               </>
             )}
           </div>
+          {/* Returning users reach their account in one tap on phones. */}
+          <Button asChild variant="ghost" size="sm" className="shrink-0 px-2.5 lg:hidden">
+            {home ? (
+              <Link href={home}>
+                <span className="max-[359px]:hidden">Dashboard</span>
+                <span className="min-[360px]:hidden">Account</span>
+              </Link>
+            ) : (
+              <Link href="/login">Login</Link>
+            )}
+          </Button>
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="-mr-2 lg:hidden" aria-label="Open menu">
@@ -73,7 +98,7 @@ export function SiteHeader({ home }: { home?: string | null }) {
             </SheetTrigger>
             <SheetContent title="Menu" className="bg-canvas">
               <nav aria-label="Mobile" className="flex flex-col">
-                <p className="label-caps border-b border-line pb-2 text-ink-muted">Platform</p>
+                <p className="label-caps border-b border-line pb-2 text-ink-muted">Explore</p>
                 {PUBLIC_NAV.map((item) => (
                   <MobileLink key={item.href} href={item.href} active={pathname === item.href}>{item.label}</MobileLink>
                 ))}
@@ -92,14 +117,22 @@ export function SiteHeader({ home }: { home?: string | null }) {
                 ) : (
                   <>
                     <SheetClose asChild>
-                      <Button asChild variant="accent" size="lg">
-                        <Link href="/register?role=brand">Start a Project <ArrowRight /></Link>
+                      <Button asChild variant="accent" size="lg" className="h-auto min-h-11 whitespace-normal py-2.5 text-center">
+                        <Link href={cta.href}>{cta.label} <ArrowRight /></Link>
                       </Button>
                     </SheetClose>
                     <SheetClose asChild>
                       <Button asChild variant="outline" size="lg">
                         <Link href="/login">Login</Link>
                       </Button>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <Link
+                        href={other.href}
+                        className="inline-flex min-h-11 items-center justify-center rounded-md px-2 text-center text-sm leading-5 text-ink-muted underline-offset-4 transition-colors duration-150 hover:text-ink hover:underline"
+                      >
+                        {other.label}
+                      </Link>
                     </SheetClose>
                   </>
                 )}

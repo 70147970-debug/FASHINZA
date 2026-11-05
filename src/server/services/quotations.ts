@@ -15,20 +15,25 @@ export async function expireQuotations(where: Prisma.QuotationWhereInput = {}) {
   await db.quotation.updateMany({ where: { ...where, status: { in: [...OPEN, "DRAFT"] }, validUntil: { lt: new Date() } }, data: { status: "EXPIRED" } });
 }
 
-function snapshot(q: { quantity: number; unitPrice: unknown; fabricCostPerUnit: unknown; finishingCostPerUnit: unknown; packagingCostPerUnit: unknown; samplingCost: unknown; logisticsCost: unknown; taxPercent: unknown; subtotal: unknown; taxAmount: unknown; totalAmount: unknown; minQuantity: number; productionDays: number; validUntil: Date; notes: string | null; currency: string }) {
+function snapshot(q: {
+  quantity: number; unitPrice: unknown; fabricCostPerUnit: unknown; finishingCostPerUnit: unknown; packagingCostPerUnit: unknown; samplingCost: unknown; logisticsCost: unknown;
+  taxPercent: unknown; subtotal: unknown; taxAmount: unknown; totalAmount: unknown; minQuantity: number; productionDays: number; validUntil: Date; notes: string | null; currency: string;
+  sampleLeadTimeDays: number | null; sampleNotes: string | null;
+}) {
   const s = (v: unknown) => (v === null || v === undefined ? null : String(v));
   return {
     quantity: q.quantity, minQuantity: q.minQuantity, productionDays: q.productionDays, currency: q.currency,
     unitPrice: s(q.unitPrice), fabricCostPerUnit: s(q.fabricCostPerUnit), finishingCostPerUnit: s(q.finishingCostPerUnit), packagingCostPerUnit: s(q.packagingCostPerUnit),
     samplingCost: s(q.samplingCost), logisticsCost: s(q.logisticsCost), taxPercent: s(q.taxPercent), subtotal: s(q.subtotal), taxAmount: s(q.taxAmount), totalAmount: s(q.totalAmount),
-    validUntil: q.validUntil.toISOString(), notes: q.notes,
+    validUntil: q.validUntil.toISOString(), notes: q.notes, sampleLeadTimeDays: q.sampleLeadTimeDays, sampleNotes: q.sampleNotes,
   };
 }
 
 /**
  * Manufacturer saves (submit = false) or sends (submit = true) a quotation. Totals are always
  * calculated here, never trusted from the browser. Re-sending a quotation the brand has already
- * seen bumps the version and archives the previous terms in QuotationRevision.
+ * seen bumps the version and archives the previous terms in QuotationRevision. When the brand asked
+ * for samples, a sent quotation must include the sample lead time (the sample proposal).
  */
 export async function saveQuotation(actor: Actor, projectId: string, input: QuotationInput, submit: boolean) {
   assertRole(actor, "MANUFACTURER");
@@ -40,6 +45,10 @@ export async function saveQuotation(actor: Actor, projectId: string, input: Quot
     if (profile?.verificationStatus !== "VERIFIED") throw conflict("Only verified factories can send quotations.");
     const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } });
     if (!["SUBMITTED", "QUOTING"].includes(project.status)) throw conflict("This project is no longer accepting quotations.");
+    if (submit && project.sampleRequired && !input.sampleLeadTimeDays) {
+      const message = "The brand asked for samples. Enter how many days you need to make them.";
+      throw invalid(message, { sampleLeadTimeDays: message });
+    }
 
     const data = {
       quantity: input.quantity,
@@ -58,6 +67,8 @@ export async function saveQuotation(actor: Actor, projectId: string, input: Quot
       productionDays: input.productionDays,
       validUntil: input.validUntil,
       notes: input.notes ?? null,
+      sampleLeadTimeDays: input.sampleLeadTimeDays ?? null,
+      sampleNotes: input.sampleNotes ?? null,
     };
 
     const existing = await tx.quotation.findUnique({ where: { projectId_manufacturerId: { projectId, manufacturerId: actor.id } } });

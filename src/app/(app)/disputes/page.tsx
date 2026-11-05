@@ -6,17 +6,14 @@ import type { IssueStatus } from "@/generated/prisma/enums";
 import { requireOnboardedUser } from "@/server/auth/session";
 import { listDisputes } from "@/server/services/disputes";
 import { DataTable, EmptyState, MobileCard, MobileCardList, PageHeader, Pagination, StatusBadge } from "@/components/app/primitives";
+import { StatusTabs } from "@/components/orders/order-parts";
 import { Button } from "@/components/ui/button";
 import { DISPUTE_CATEGORY, DISPUTE_STATUS, ROLE_LABEL } from "@/lib/labels";
 import { formatDate } from "@/lib/format";
-import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Disputes" };
 
-const VIEWS: { value?: IssueStatus; label: string }[] = [
-  { value: undefined, label: "All" },
-  ...Object.entries(DISPUTE_STATUS).map(([value, s]) => ({ value: value as IssueStatus, label: s.label })),
-];
+const VIEWS = Object.entries(DISPUTE_STATUS).map(([value, s]) => ({ value, label: s.label }));
 
 export default async function DisputesPage({ searchParams }: { searchParams: Promise<{ status?: string; page?: string }> }) {
   const actor = await requireOnboardedUser();
@@ -30,27 +27,7 @@ export default async function DisputesPage({ searchParams }: { searchParams: Pro
     <>
       <PageHeader title="Disputes" description="Disputes you raised or that concern your orders. Raise a new one from the order page." />
 
-      <nav aria-label="Dispute status" className="-mx-4 mb-5 overflow-x-auto border-b border-line px-4 sm:mx-0 sm:px-0">
-        <ul className="flex gap-5">
-          {VIEWS.map((v) => {
-            const active = status === v.value;
-            return (
-              <li key={v.label} className="shrink-0">
-                <Link
-                  href={v.value ? `/disputes?status=${v.value}` : "/disputes"}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "-mb-px inline-flex h-10 items-center border-b-2 text-sm transition-colors duration-150",
-                    active ? "border-accent font-medium text-ink" : "border-transparent text-ink-muted hover:border-line-strong hover:text-ink",
-                  )}
-                >
-                  {v.label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
+      <StatusTabs basePath="/disputes" label="Dispute status" value={status} options={VIEWS} />
 
       {data.items.length === 0 ? (
         <EmptyState

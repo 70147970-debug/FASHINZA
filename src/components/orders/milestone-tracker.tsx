@@ -171,9 +171,41 @@ function CurrentStage({ m, note }: { m: TrackerMilestone; note?: React.ReactNode
 }
 
 /**
+ * Completed stages folded into one "N completed stages · Show history" row (collapsed by default), with the
+ * number that finished late. `total` turns the summary into "N of 8 stages completed" when production stopped
+ * early (a cancelled order).
+ */
+function StageHistory({ items, total }: { items: TrackerMilestone[]; total?: number }) {
+  const late = items.filter((m) => m.isDelayed).length;
+  const label = total !== undefined && items.length < total ? `${items.length} of ${total} stages completed` : `${items.length} completed stage${items.length === 1 ? "" : "s"}`;
+  return (
+    <details className="group rounded-md border border-line bg-surface">
+      <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 rounded-md px-3.5 py-2.5 text-[13px] transition-colors duration-150 hover:bg-surface-hover [&::-webkit-details-marker]:hidden">
+        <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
+          <span className="grid size-5 shrink-0 place-items-center rounded-full bg-primary text-primary-fg" aria-hidden>
+            <Check className="size-3" strokeWidth={3} />
+          </span>
+          <span className="font-medium text-ink">{label}</span>
+          {late > 0 && <span className="text-xs text-warning-strong">· {late} finished late</span>}
+        </span>
+        <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-accent-strong">
+          <span className="group-open:hidden">Show history</span>
+          <span className="hidden group-open:inline">Hide history</span>
+          <ChevronDown className="size-4 transition-transform duration-150 group-open:rotate-180" aria-hidden />
+        </span>
+      </summary>
+      <ol className="divide-y divide-line-subtle border-t border-line px-3.5 py-3.5">
+        {items.map((m) => (m.status === "COMPLETED" ? <DoneRow key={m.id} m={m} /> : <UpcomingRow key={m.id} m={m} />))}
+      </ol>
+    </details>
+  );
+}
+
+/**
  * Production milestones (history view). While an order is open the stage in progress comes first, the
  * completed stages fold into a "history" disclosure and upcoming stages follow as compact rows. Closed orders
- * show the full history. Only the current stage carries aria-current="step".
+ * fold their completed stages the same way (the stepper above already shows them); a cancelled order lists the
+ * stages it never reached under "Not reached". Only the current stage carries aria-current="step".
  * The stage controls are not rendered here: they live in the page's "Your next step" card, and
  * `currentNote` points there.
  */
@@ -191,43 +223,30 @@ export function MilestoneTracker({
   const currentIndex = closed ? -1 : milestones.findIndex((m) => m.stage === currentStage);
 
   if (currentIndex < 0) {
+    const done = milestones.filter((m) => m.status === "COMPLETED");
+    const rest = milestones.filter((m) => m.status !== "COMPLETED");
     return (
-      <ol className="divide-y divide-line-subtle">
-        {milestones.map((m) => (m.status === "COMPLETED" ? <DoneRow key={m.id} m={m} /> : <UpcomingRow key={m.id} m={m} />))}
-      </ol>
+      <div className="space-y-4">
+        {done.length > 0 && <StageHistory items={done} total={milestones.length} />}
+        {rest.length > 0 && (
+          <div>
+            <p className="label-caps mb-1 border-b border-line-subtle pb-2 text-ink-muted">Not reached</p>
+            <ol className="divide-y divide-line-subtle">
+              {rest.map((m) => <UpcomingRow key={m.id} m={m} />)}
+            </ol>
+          </div>
+        )}
+      </div>
     );
   }
 
   const before = milestones.slice(0, currentIndex);
   const current = milestones[currentIndex];
   const after = milestones.slice(currentIndex + 1);
-  const late = before.filter((m) => m.isDelayed).length;
 
   return (
     <div className="space-y-4">
-      {before.length > 0 && (
-        <details className="group rounded-md border border-line bg-surface">
-          <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 rounded-md px-3.5 py-2.5 text-[13px] transition-colors duration-150 hover:bg-surface-hover [&::-webkit-details-marker]:hidden">
-            <span className="flex min-w-0 items-center gap-2">
-              <span className="grid size-5 shrink-0 place-items-center rounded-full bg-primary text-primary-fg" aria-hidden>
-                <Check className="size-3" strokeWidth={3} />
-              </span>
-              <span className="font-medium text-ink">
-                {before.length} completed stage{before.length === 1 ? "" : "s"}
-              </span>
-              {late > 0 && <span className="text-xs text-warning-strong">· {late} finished late</span>}
-            </span>
-            <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-accent-strong">
-              <span className="group-open:hidden">Show history</span>
-              <span className="hidden group-open:inline">Hide history</span>
-              <ChevronDown className="size-4 transition-transform duration-150 group-open:rotate-180" aria-hidden />
-            </span>
-          </summary>
-          <ol className="divide-y divide-line-subtle border-t border-line px-3.5 py-3.5">
-            {before.map((m) => (m.status === "COMPLETED" ? <DoneRow key={m.id} m={m} /> : <UpcomingRow key={m.id} m={m} />))}
-          </ol>
-        </details>
-      )}
+      {before.length > 0 && <StageHistory items={before} />}
       <ol start={currentIndex + 1} className="space-y-0">
         <CurrentStage m={current} note={currentNote} />
       </ol>
@@ -240,7 +259,6 @@ export function MilestoneTracker({
           </ol>
         </div>
       )}
-
     </div>
   );
 }

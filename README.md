@@ -53,9 +53,12 @@ npm run db:seed                  # create the admin (and demo organisations when
 npm run dev                      # http://localhost:3000
 ```
 
-Sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env`. With `SEED_DEMO=1` the seed also creates
-`demo-brand@fashinza.test` and three verified demo factories (`demo-factory-knits@…`, `-denim@…`, `-wovens@…`),
-all using `SEED_DEMO_PASSWORD`. Demo organisations are labelled “(Demo)”; no orders, payments or reviews are invented.
+Sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env`. With `SEED_DEMO=1` the seed also creates three demo
+brands (`demo-brand@fashinza.test`, `demo-brand-womenswear@…`, `demo-brand-activewear@…`) and four verified demo
+factories (`demo-factory-knits@…`, `-denim@…`, `-wovens@…`, `-activewear@…`), all using `SEED_DEMO_PASSWORD`.
+It then builds five demo projects (a draft, quoting projects, an order in production and a delivered order) by
+calling the real services, with test payments through the sandbox provider. Every demo organisation is labelled
+“(Demo)” and every demo file is a placeholder that says so; no reviews or real businesses are invented.
 
 ## Environment variables
 

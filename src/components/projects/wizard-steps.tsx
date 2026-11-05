@@ -9,14 +9,15 @@ export const STEP_INFO: Record<number, string> = {
   2: "Fabric, colours, sizes and the processes it needs.",
   3: "Units, target price and when you need delivery.",
   4: "Certifications and sustainability requirements.",
-  5: "Upload your tech pack and supporting files.",
-  6: "Check the brief and send it to matched factories.",
+  5: "Whether you need samples before bulk, and which.",
+  6: "Tech pack, measurement chart and reference images.",
+  7: "Check the brief and send it to matched factories.",
 };
 
 /**
  * Step indicator for the project wizard: a vertical rail from lg (sticky beside the form), a compact
  * "Step x of y" summary plus a horizontally scrolling list of steps below that.
- * Completed = ink check, current = terracotta ring with a soft halo, upcoming = numbered hairline circle.
+ * Completed = ink check, current = accent ring with a soft halo, upcoming = numbered hairline circle.
  */
 export function WizardSteps({ projectId, current, reached, submitted }: { projectId?: string; current: number; reached: number; submitted: boolean }) {
   const steps = submitted ? PROJECT_STEPS.filter((s) => s.fields.length > 0) : PROJECT_STEPS;

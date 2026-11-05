@@ -17,7 +17,11 @@ export default async function FactoryPage({ searchParams }: { searchParams: Prom
   const { welcome } = await searchParams;
   const p = await db.manufacturerProfile.findUniqueOrThrow({
     where: { userId: actor.id },
-    include: { capabilities: true, documents: { orderBy: { createdAt: "desc" } } },
+    include: {
+      capabilities: true,
+      documents: { orderBy: { createdAt: "desc" } },
+      machinery: { orderBy: [{ sortOrder: "asc" }, { type: "asc" }], select: { type: true, quantity: true } },
+    },
   });
   const caps = (kind: string) => p.capabilities.filter((c) => c.kind === kind).map((c) => c.name);
   const hasRegistration = p.documents.some((d) => d.type === "BUSINESS_REGISTRATION" && d.status !== "REJECTED");
@@ -49,6 +53,7 @@ export default async function FactoryPage({ searchParams }: { searchParams: Prom
               production: caps("PRODUCTION"),
               fabrics: caps("FABRIC"),
               finishing: caps("FINISHING"),
+              machinery: p.machinery,
             }}
           />
         </Panel>
@@ -68,7 +73,15 @@ export default async function FactoryPage({ searchParams }: { searchParams: Prom
               <div className={cn("space-y-4 text-sm", p.verificationStatus === "REJECTED" && "mt-4")}>
                 <p className="text-ink-muted">Only verified factories are matched to brand projects. To request verification:</p>
                 <ol className="space-y-3">
-                  <ChecklistItem n={1} done={hasRegistration}>Upload your business registration document</ChecklistItem>
+                  <ChecklistItem n={1} done={hasRegistration}>
+                    {hasRegistration ? (
+                      "Upload your business registration document"
+                    ) : (
+                      <a href="#upload-document" className="rounded-xs font-medium text-accent-strong underline-offset-4 hover:underline">
+                        Upload your business registration document
+                      </a>
+                    )}
+                  </ChecklistItem>
                   <ChecklistItem n={2}>Optionally upload certifications (GOTS, OEKO-TEX…). Each is checked individually.</ChecklistItem>
                   <ChecklistItem n={3}>Send the request.</ChecklistItem>
                 </ol>
@@ -111,9 +124,10 @@ export default async function FactoryPage({ searchParams }: { searchParams: Prom
                 ))}
               </ul>
             )}
-            <div className="border-t border-line bg-surface-muted px-4 py-4 sm:px-5">
+            <div id="upload-document" className="scroll-mt-24 border-t border-line bg-surface-muted px-4 py-4 sm:px-5">
               <h3 className="label-caps mb-3 text-ink-muted">Add a document</h3>
-              <UploadDocumentForm />
+              {/* Remounts once a registration exists, so the next upload defaults to a certificate. */}
+              <UploadDocumentForm key={hasRegistration ? "cert" : "reg"} defaultType={hasRegistration ? "CERTIFICATION" : "BUSINESS_REGISTRATION"} />
             </div>
           </Panel>
         </div>

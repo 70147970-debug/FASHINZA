@@ -13,6 +13,7 @@ type Row = {
   status: string;
   currentStage: MilestoneStage;
   expectedCompletionDate: Date;
+  deliveredAt: Date | null;
   project: { name: string };
   brand: { brandProfile: { companyName: string } | null };
   manufacturer: { manufacturerProfile: { businessName: string } | null };
@@ -30,6 +31,16 @@ function isClosed(o: Row) {
 function delayed(o: Row) {
   if (isClosed(o)) return false;
   return o.milestones.some((m) => m.isDelayed && !m.completedAt) || o.expectedCompletionDate < new Date();
+}
+
+/**
+ * The date that matters for the order's state: when it was delivered, the date it was due when it was cancelled,
+ * or the agreed delivery date while it is open (never a future-sounding "Due" on a finished order).
+ */
+function dateCell(o: Row): { label: string; date: Date | null } {
+  if (o.status === "DELIVERED") return { label: "Delivered", date: o.deliveredAt };
+  if (o.status === "CANCELLED") return { label: "Was due", date: o.expectedCompletionDate };
+  return { label: "Due", date: o.expectedCompletionDate };
 }
 
 function DelayedFlag() {
@@ -85,7 +96,7 @@ export function OrderTable({ items, counterpart }: { items: Row[]; counterpart: 
           <span className="flex items-end justify-between gap-3">
             <Stage o={o} />
             <span className="shrink-0 text-right text-xs text-ink-muted">
-              <span className="block">Due {formatDate(o.expectedCompletionDate)}</span>
+              <span className="block">{dateCell(o).label} {formatDate(dateCell(o).date)}</span>
               {delayed(o) && <DelayedFlag />}
             </span>
           </span>
@@ -102,7 +113,7 @@ export function OrderTable({ items, counterpart }: { items: Row[]; counterpart: 
             <th scope="col">Order</th>
             <th scope="col">{counterpart === "brand" ? "Brand" : counterpart === "factory" ? "Factory" : "Parties"}</th>
             <th scope="col">Stage</th>
-            <th scope="col">Due</th>
+            <th scope="col">Delivery</th>
             <th scope="col">Status</th>
           </tr>
         </thead>
@@ -122,7 +133,8 @@ export function OrderTable({ items, counterpart }: { items: Row[]; counterpart: 
                   <Stage o={o} />
                 </td>
                 <td className="whitespace-nowrap">
-                  <p className={cn("tabular text-[13px]", late ? "font-medium text-danger-strong" : "text-ink")}>{formatDate(o.expectedCompletionDate)}</p>
+                  {isClosed(o) && <p className="text-xs text-ink-muted">{dateCell(o).label}</p>}
+                  <p className={cn("tabular text-[13px]", late ? "font-medium text-danger-strong" : isClosed(o) ? "text-ink-muted" : "text-ink")}>{formatDate(dateCell(o).date)}</p>
                   {late && <DelayedFlag />}
                 </td>
                 <td>

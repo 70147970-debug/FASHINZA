@@ -1,13 +1,18 @@
 @import "tailwindcss";
-/* Fraunces (variable: weight + optical size, roman and italic). Inter is imported in app/layout.tsx. */
-@import "@fontsource-variable/fraunces/opsz.css";
-@import "@fontsource-variable/fraunces/opsz-italic.css";
+/* Playfair Display (variable weight 400–900, roman and italic) for editorial headings. Inter is imported in
+   app/layout.tsx. Playfair ships lining figures only via `lnum` (its default figures are old-style) and has no
+   tabular figures, so headings, font-display and .tabular below switch lining figures on. */
+@import "@fontsource-variable/playfair-display/wght.css";
+@import "@fontsource-variable/playfair-display/wght-italic.css";
 
 /*
- * Fashinza design tokens — "Editorial Atelier". Full reference: docs/design-system.md.
+ * Fashinza design tokens — "Atelier". Full reference: docs/design-system.md.
  *
- * Fashion-magazine meets precise operations tool: ink on warm ivory, Fraunces display type, hairline rules,
- * sharp tailored geometry and one disciplined terracotta accent.
+ * A fashion-manufacturing house style: deep charcoal on warm ivory, white cards, Playfair Display editorial
+ * headings over Inter, muted taupe rules and one disciplined forest-green accent. Real garment photography
+ * (components/ui/photo.tsx) carries the imagery; colour stays quiet.
+ *
+ * Brand palette: charcoal #202020 · warm ivory #F8F6F1 · muted taupe #B7A895 · forest green #536B55 · white.
  *
  * THEMING. Every colour is a SEMANTIC token (bg-surface, text-ink-muted, border-line, bg-accent-soft …). The
  * light values live in @theme below; the dark values override the same CSS variables on
@@ -16,9 +21,10 @@
  * automatically. `dark:` targets [data-theme=dark] for the rare case a token cannot express.
  *
  * Contrast (WCAG 2.1 AA, verified with a script — ratios in docs/design-system.md):
- *  - ink / ink-muted pass 4.5:1 on canvas, surface, surface-muted and every *-soft tint in both themes.
+ *  - ink / ink-muted pass 4.5:1 on canvas, every surface and every *-soft tint in both themes.
  *  - ink-subtle is ≥3:1: decorative icons and glyphs only, never small text. Placeholders use ink-placeholder.
- *  - accent (terracotta) is for fills, borders, indicators, focus; small accent TEXT uses accent-strong.
+ *  - accent (forest green) is for fills, borders, indicators, focus; accent TEXT and links use accent-strong.
+ *  - taupe is ~2.1:1 on ivory: rules and decoration on light backgrounds, TEXT only on dark bands / photos.
  *  - status: {tone} = fills, dots, icons (≥3:1); {tone}-strong = text (≥4.5:1 on surface and on {tone}-soft).
  *  - line-control (form-control borders) is ≥3:1 on surface and canvas.
  */
@@ -27,73 +33,81 @@
 
 @theme static {
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Fraunces Variable", ui-serif, Georgia, "Times New Roman", serif;
-  --font-serif: "Fraunces Variable", ui-serif, Georgia, "Times New Roman", serif;
+  --font-display: "Playfair Display Variable", ui-serif, Georgia, "Times New Roman", serif;
+  --font-serif: "Playfair Display Variable", ui-serif, Georgia, "Times New Roman", serif;
 
   /* ---------------------------------------------------------------------------------------------
    * SEMANTIC COLOUR TOKENS (light values; dark values below under [data-theme="dark"])
    * -------------------------------------------------------------------------------------------*/
   /* Surfaces */
-  --color-canvas: #f6f1ea; /* page background (warm ivory) */
-  --color-surface: #fffdf9; /* cards, panels, sidebar items, inputs */
-  --color-surface-muted: #efe8de; /* parchment: table header wells, footers, neutral badges, tracks */
-  --color-surface-sunken: #ebe3d7; /* inset wells, image boxes */
-  --color-surface-raised: #fffdf9; /* popovers, dialogs, toasts (lifts in dark) */
-  --color-surface-hover: #f3ede4; /* hover tint for rows, items, ghost buttons */
+  --color-canvas: #f8f6f1; /* page background (warm ivory) */
+  --color-surface: #ffffff; /* cards, panels, tables, inputs (white) */
+  --color-surface-muted: #f0ece5; /* taupe-tinted wells: card footers, neutral badges, tracks */
+  --color-surface-sunken: #e9e4dc; /* inset wells, image boxes, photo placeholders */
+  --color-surface-raised: #ffffff; /* popovers, dialogs, toasts (lifts in dark) */
+  --color-surface-hover: #f4f1eb; /* hover tint for rows, items, ghost buttons */
 
   /* Text */
-  --color-ink: #1c1917; /* primary text, headings */
-  --color-ink-muted: #6b5e4f; /* secondary text (taupe) */
-  --color-ink-subtle: #8f8170; /* ≥3:1 only: large text, decorative icons */
-  --color-ink-placeholder: #7a6c5b; /* input placeholders (≥4.5:1 on surface) */
-  --color-ink-inverse: #f6f1ea; /* text on bg-inverse bands */
-  --color-ink-inverse-muted: #b3a898; /* secondary text on bg-inverse bands */
+  --color-ink: #202020; /* primary text, headings (deep charcoal) */
+  --color-ink-muted: #5e5850; /* secondary text (warm grey) */
+  --color-ink-subtle: #8a8378; /* ≥3:1 only: large text, decorative icons */
+  --color-ink-placeholder: #736c62; /* input placeholders (≥4.5:1 on surface) */
+  --color-ink-inverse: #f8f6f1; /* text on bg-inverse bands and on photos (ivory in both themes) */
+  --color-ink-inverse-muted: #c9beaf; /* secondary text on bg-inverse bands and photos */
 
   /* Lines */
-  --color-line: #e4dcd0; /* default hairline border / divider */
-  --color-line-subtle: #ece5da; /* row dividers inside cards and tables */
-  --color-line-strong: #cfc4b5; /* emphasised rules, outline buttons, upcoming steps */
-  --color-line-control: #968876; /* form-control borders, checkbox outlines (≥3:1) */
+  --color-line: #e5e0d7; /* default hairline border / divider */
+  --color-line-subtle: #eeeae3; /* row dividers inside cards and tables */
+  --color-line-strong: #cfc6b8; /* emphasised rules, outline buttons, upcoming steps (light taupe) */
+  --color-line-control: #8f877b; /* form-control borders, checkbox outlines (≥3:1) */
 
-  /* Primary action (ink) */
-  --color-primary: #1c1917;
-  --color-primary-hover: #3a322b;
-  --color-primary-fg: #fffdf9;
+  /* Primary action (charcoal) */
+  --color-primary: #202020;
+  --color-primary-hover: #3a3835;
+  --color-primary-fg: #f8f6f1;
 
-  /* Accent (terracotta) */
-  --color-accent: #b4532a; /* fills, indicators, focus, progress, accent button */
-  --color-accent-hover: #97431f;
-  --color-accent-strong: #97431f; /* accent TEXT and links */
-  --color-accent-soft: #f5e6dc; /* selected / active backgrounds */
-  --color-accent-line: #e5c3af; /* border around accent-soft areas */
-  --color-accent-fg: #fffdf9; /* text on bg-accent */
+  /* Accent (forest green) */
+  --color-accent: #536b55; /* fills, indicators, focus, progress, accent button */
+  --color-accent-hover: #445946;
+  --color-accent-strong: #435a45; /* accent TEXT and links */
+  --color-accent-soft: #e6ebe6; /* selected / active backgrounds */
+  --color-accent-line: #c5d1c4; /* border around accent-soft areas */
+  --color-accent-fg: #ffffff; /* text on bg-accent */
+  --color-accent-inverse: #a9c0aa; /* accent text / marks on bg-inverse bands and photos (both themes) */
 
-  /* Status: base = fill/dot/icon, -strong = text, -soft = tint, -line = border on tint */
-  --color-success: #4d7a35;
-  --color-success-strong: #3b6328;
-  --color-success-soft: #e9efdf;
-  --color-success-line: #c9d8b6;
-  --color-warning: #b98222;
-  --color-warning-strong: #82560d;
-  --color-warning-soft: #f7ecd6;
-  --color-warning-line: #e8d2a4;
-  --color-danger: #b23b2e;
-  --color-danger-strong: #9a2f24;
-  --color-danger-soft: #f7e3de;
-  --color-danger-line: #e9c1b8;
-  --color-danger-fg: #fffdf9; /* text on bg-danger (danger button) */
+  /* Brand taupe: decorative rules and marks; as TEXT only on bg-inverse / photos (eyebrows). */
+  --color-taupe: #b7a895;
+
+  /* Status: base = fill/dot/icon, -strong = text, -soft = tint, -line = border on tint.
+     success is a brighter olive-leaf green so it never reads as the muted forest accent. */
+  --color-success: #4b7a1c;
+  --color-success-strong: #3b6114;
+  --color-success-soft: #eef3d6;
+  --color-success-line: #c9d9ac;
+  --color-warning: #b07a1a;
+  --color-warning-strong: #7e530c;
+  --color-warning-soft: #f7eedb;
+  --color-warning-line: #e6d3a8;
+  --color-danger: #b03a2e;
+  --color-danger-strong: #962e24;
+  --color-danger-soft: #f8e5e0;
+  --color-danger-line: #eac4bb;
+  --color-danger-fg: #ffffff; /* text on bg-danger (danger button) */
   --color-info: #4a6684;
-  --color-info-strong: #3b5672;
-  --color-info-soft: #e5eaf0;
-  --color-info-line: #c5d0dc;
+  --color-info-strong: #3a5571;
+  --color-info-soft: #e7ecf1;
+  --color-info-line: #c6d1dd;
 
-  /* Inverse band (marketing CTA band, footer) */
-  --color-inverse: #1c1917;
+  /* Inverse band (marketing CTA band, footer): charcoal in both themes */
+  --color-inverse: #202020;
+
+  /* Photo scrim: the base of overlay gradients that put ivory text on photographs (both themes) */
+  --color-scrim: #141414;
 
   /* Focus, overlay, shadow tint */
-  --color-focus: #b4532a;
-  --color-overlay: rgb(28 25 23 / 0.42);
-  --color-shadow: rgb(60 42 26 / 0.1);
+  --color-focus: #536b55;
+  --color-overlay: rgb(32 32 32 / 0.45);
+  --color-shadow: rgb(40 34 26 / 0.1);
 
   /* Radii: tailored. Controls 4px (rounded-md), cards 6px (rounded-lg), dialogs 8px (rounded-xl). */
   --radius-xs: 2px;
@@ -119,107 +133,107 @@
 }
 
 /* ---------------------------------------------------------------------------------------------
- * DARK THEME — warm near-black. Keep the two blocks below identical (the second covers the moment
- * before the theme script runs / no-JS visitors whose OS is dark).
+ * DARK THEME — charcoal. Keep the two blocks below identical (the second covers the moment before the
+ * theme script runs / no-JS visitors whose OS is dark). taupe, accent-inverse and scrim do not change.
  * -------------------------------------------------------------------------------------------*/
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --color-canvas: #151210;
-  --color-surface: #1d1915;
-  --color-surface-muted: #231e19;
-  --color-surface-sunken: #181411;
-  --color-surface-raised: #241f1a;
-  --color-surface-hover: #2a241e;
-  --color-ink: #f1ebe3;
-  --color-ink-muted: #b3a898;
-  --color-ink-subtle: #857a6c;
-  --color-ink-placeholder: #958978;
-  --color-ink-inverse: #f1ebe3;
-  --color-ink-inverse-muted: #b3a898;
-  --color-line: #342d26;
-  --color-line-subtle: #2a241f;
-  --color-line-strong: #4a4138;
-  --color-line-control: #766a5a;
-  --color-primary: #f1ebe3;
-  --color-primary-hover: #dcd3c7;
-  --color-primary-fg: #1c1917;
-  --color-accent: #e0794a;
-  --color-accent-hover: #eb8d60;
-  --color-accent-strong: #ee9467;
-  --color-accent-soft: #3a2419;
-  --color-accent-line: #6a3b25;
-  --color-accent-fg: #1c1917;
-  --color-success: #86ae6e;
-  --color-success-strong: #a3c68c;
-  --color-success-soft: #1f2a1a;
-  --color-success-line: #3a4d2f;
+  --color-canvas: #161616;
+  --color-surface: #1e1e1e;
+  --color-surface-muted: #252422;
+  --color-surface-sunken: #121212;
+  --color-surface-raised: #262626;
+  --color-surface-hover: #2b2a28;
+  --color-ink: #f8f6f1;
+  --color-ink-muted: #b8b1a6;
+  --color-ink-subtle: #847d73;
+  --color-ink-placeholder: #9a9388;
+  --color-ink-inverse: #f8f6f1;
+  --color-ink-inverse-muted: #c9beaf;
+  --color-line: #33312e;
+  --color-line-subtle: #292826;
+  --color-line-strong: #4a4641;
+  --color-line-control: #7a746b;
+  --color-primary: #f8f6f1;
+  --color-primary-hover: #e3dfd6;
+  --color-primary-fg: #202020;
+  --color-accent: #8fab91;
+  --color-accent-hover: #a2bca4;
+  --color-accent-strong: #a7c2a9;
+  --color-accent-soft: #1e2820;
+  --color-accent-line: #3a4d3c;
+  --color-accent-fg: #161616;
+  --color-success: #9cc45f;
+  --color-success-strong: #b6d686;
+  --color-success-soft: #252e12;
+  --color-success-line: #3c4f24;
   --color-warning: #d9a441;
   --color-warning-strong: #e8be6a;
-  --color-warning-soft: #2f2614;
-  --color-warning-line: #5a4620;
+  --color-warning-soft: #2d2513;
+  --color-warning-line: #594620;
   --color-danger: #e0705f;
   --color-danger-strong: #f0907f;
-  --color-danger-soft: #36191a;
-  --color-danger-line: #663029;
-  --color-danger-fg: #1c1917;
+  --color-danger-soft: #331a18;
+  --color-danger-line: #64302a;
+  --color-danger-fg: #161616;
   --color-info: #8fa8c4;
   --color-info-strong: #afc3da;
-  --color-info-soft: #1b2330;
+  --color-info-soft: #1a212b;
   --color-info-line: #34445a;
-  --color-inverse: #2a2420;
-  --color-focus: #e0794a;
-  --color-overlay: rgb(8 6 5 / 0.62);
-  --color-shadow: rgb(6 5 4 / 0.45);
+  --color-inverse: #262524;
+  --color-focus: #8fab91;
+  --color-overlay: rgb(0 0 0 / 0.62);
+  --color-shadow: rgb(0 0 0 / 0.5);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
     color-scheme: dark;
-    --color-canvas: #151210;
-    --color-surface: #1d1915;
-    --color-surface-muted: #231e19;
-    --color-surface-sunken: #181411;
-    --color-surface-raised: #241f1a;
-    --color-surface-hover: #2a241e;
-    --color-ink: #f1ebe3;
-    --color-ink-muted: #b3a898;
-    --color-ink-subtle: #857a6c;
-  --color-ink-placeholder: #958978;
-    --color-ink-inverse: #f1ebe3;
-    --color-ink-inverse-muted: #b3a898;
-    --color-line: #342d26;
-    --color-line-subtle: #2a241f;
-    --color-line-strong: #4a4138;
-    --color-line-control: #766a5a;
-    --color-primary: #f1ebe3;
-    --color-primary-hover: #dcd3c7;
-    --color-primary-fg: #1c1917;
-    --color-accent: #e0794a;
-    --color-accent-hover: #eb8d60;
-    --color-accent-strong: #ee9467;
-    --color-accent-soft: #3a2419;
-    --color-accent-line: #6a3b25;
-    --color-accent-fg: #1c1917;
-    --color-success: #86ae6e;
-    --color-success-strong: #a3c68c;
-    --color-success-soft: #1f2a1a;
-    --color-success-line: #3a4d2f;
+    --color-canvas: #161616;
+    --color-surface: #1e1e1e;
+    --color-surface-muted: #252422;
+    --color-surface-sunken: #121212;
+    --color-surface-raised: #262626;
+    --color-surface-hover: #2b2a28;
+    --color-ink: #f8f6f1;
+    --color-ink-muted: #b8b1a6;
+    --color-ink-subtle: #847d73;
+    --color-ink-placeholder: #9a9388;
+    --color-ink-inverse: #f8f6f1;
+    --color-ink-inverse-muted: #c9beaf;
+    --color-line: #33312e;
+    --color-line-subtle: #292826;
+    --color-line-strong: #4a4641;
+    --color-line-control: #7a746b;
+    --color-primary: #f8f6f1;
+    --color-primary-hover: #e3dfd6;
+    --color-primary-fg: #202020;
+    --color-accent: #8fab91;
+    --color-accent-hover: #a2bca4;
+    --color-accent-strong: #a7c2a9;
+    --color-accent-soft: #1e2820;
+    --color-accent-line: #3a4d3c;
+    --color-accent-fg: #161616;
+    --color-success: #9cc45f;
+    --color-success-strong: #b6d686;
+    --color-success-soft: #252e12;
+    --color-success-line: #3c4f24;
     --color-warning: #d9a441;
     --color-warning-strong: #e8be6a;
-    --color-warning-soft: #2f2614;
-    --color-warning-line: #5a4620;
+    --color-warning-soft: #2d2513;
+    --color-warning-line: #594620;
     --color-danger: #e0705f;
     --color-danger-strong: #f0907f;
-    --color-danger-soft: #36191a;
-    --color-danger-line: #663029;
-    --color-danger-fg: #1c1917;
+    --color-danger-soft: #331a18;
+    --color-danger-line: #64302a;
+    --color-danger-fg: #161616;
     --color-info: #8fa8c4;
     --color-info-strong: #afc3da;
-    --color-info-soft: #1b2330;
+    --color-info-soft: #1a212b;
     --color-info-line: #34445a;
-    --color-inverse: #2a2420;
-    --color-focus: #e0794a;
-    --color-overlay: rgb(8 6 5 / 0.62);
-    --color-shadow: rgb(6 5 4 / 0.45);
+    --color-inverse: #262524;
+    --color-focus: #8fab91;
+    --color-overlay: rgb(0 0 0 / 0.62);
+    --color-shadow: rgb(0 0 0 / 0.5);
   }
 }
 
@@ -257,7 +271,8 @@
     outline: 2px solid var(--color-focus);
     outline-offset: 2px;
   }
-  /* Headings are Fraunces, regular-to-medium weight; add `font-sans` for tiny label-style headings. */
+  /* Headings are Playfair Display, regular-to-medium weight; add `font-sans` for tiny label-style headings.
+     Lining figures: Playfair's default figures are old-style, which reads oddly in references and amounts. */
   h1,
   h2,
   h3,
@@ -265,8 +280,11 @@
     color: var(--color-ink);
     font-family: var(--font-display);
     font-weight: 500;
-    letter-spacing: -0.01em;
-    font-optical-sizing: auto;
+    letter-spacing: -0.005em;
+    font-variant-numeric: lining-nums;
+  }
+  .font-display {
+    font-variant-numeric: lining-nums;
   }
   /* Grid items may shrink below their content's min-content width (long nowrap/truncated text would
      otherwise widen the track and cause page-level horizontal scroll on phones). Utilities still win. */
@@ -278,9 +296,10 @@
   main .overflow-x-auto {
     position: relative;
   }
-  /* Numeric data lines up in tables and metrics. */
+  /* Numeric data lines up in tables and metrics (Inter). Lining is kept for Playfair numerals, which have
+     no tabular figures. Declared after .font-display so `font-display tabular` keeps lining figures. */
   .tabular {
-    font-variant-numeric: tabular-nums;
+    font-variant-numeric: lining-nums tabular-nums;
   }
   /* Set for one frame by the theme switcher so a theme change does not animate every element. */
   .fz-theme-switching,
@@ -303,66 +322,65 @@
  * Type utilities. They set size, line height, weight, tracking and family, but never colour, so pair them
  * with a text-* colour where needed (headings are ink by default).
  */
-/* Marketing display: Fraunces 40px on phones, 64px from lg. */
+/* Marketing display: Playfair Display 40px on phones, 64px from lg. */
 @utility type-display {
   font-family: var(--font-display);
   font-weight: 500;
   font-size: 2.5rem;
-  line-height: 1.06;
-  letter-spacing: -0.025em;
-  font-optical-sizing: auto;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  font-variant-numeric: lining-nums;
   @media (min-width: 1024px) {
     font-size: 4rem;
-    line-height: 1.02;
-    letter-spacing: -0.035em;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
   }
 }
-/* Marketing section title: Fraunces 30px on phones, 44px from lg. */
+/* Marketing section title: Playfair Display 30px on phones, 44px from lg. */
 @utility type-section {
   font-family: var(--font-display);
   font-weight: 500;
   font-size: 1.875rem;
-  line-height: 1.12;
-  letter-spacing: -0.02em;
-  font-optical-sizing: auto;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  font-variant-numeric: lining-nums;
   @media (min-width: 1024px) {
     font-size: 2.75rem;
-    line-height: 1.08;
-    letter-spacing: -0.03em;
+    line-height: 1.1;
+    letter-spacing: -0.015em;
   }
 }
-/* App page title: Fraunces 26px on phones, 32px from sm. */
+/* App page title: Playfair Display 26px on phones, 32px from sm. */
 @utility type-title {
   font-family: var(--font-display);
   font-weight: 500;
   font-size: 1.625rem;
   line-height: 2rem;
-  letter-spacing: -0.02em;
-  font-optical-sizing: auto;
+  letter-spacing: -0.01em;
+  font-variant-numeric: lining-nums;
   @media (min-width: 640px) {
     font-size: 2rem;
-    line-height: 2.375rem;
-    letter-spacing: -0.025em;
+    line-height: 2.5rem;
+    letter-spacing: -0.015em;
   }
 }
-/* Card / panel / section title: Fraunces 18px medium. */
+/* Card / panel / section title: Playfair Display 18px medium. */
 @utility type-heading {
   font-family: var(--font-display);
   font-weight: 500;
   font-size: 1.125rem;
   line-height: 1.5rem;
-  letter-spacing: -0.012em;
-  font-optical-sizing: auto;
+  letter-spacing: 0;
+  font-variant-numeric: lining-nums;
 }
-/* Metric value: Fraunces 30px, tabular lining figures. */
+/* Metric value: Inter 30px medium, tabular lining figures (data, so the interface face). */
 @utility type-metric {
-  font-family: var(--font-display);
-  font-weight: 450;
+  font-family: var(--font-sans);
+  font-weight: 500;
   font-size: 1.875rem;
   line-height: 2.25rem;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
   font-variant-numeric: lining-nums tabular-nums;
-  font-optical-sizing: auto;
 }
 /* 11px Inter uppercase eyebrow with wide tracking, above titles and sections (pair with a colour). */
 @utility eyebrow {

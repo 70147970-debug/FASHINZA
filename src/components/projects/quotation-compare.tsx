@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { BadgeCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/app/primitives";
@@ -16,6 +17,8 @@ export type QuoteRow = {
   finishingCostPerUnit: Money;
   packagingCostPerUnit: Money;
   samplingCost: Money | null;
+  sampleLeadTimeDays: number | null;
+  sampleNotes: string | null;
   logisticsCost: Money;
   taxPercent: Money;
   taxAmount: Money;
@@ -36,15 +39,18 @@ const OPEN = ["SUBMITTED", "REVISION_REQUESTED"];
 
 /**
  * Side-by-side comparison. Columns are quotations so each factory's full cost breakdown reads
- * top to bottom; the lowest total and the shortest production time are highlighted.
+ * top to bottom; the lowest total and the shortest production time are highlighted. The decision
+ * buttons sit straight under the summary (total, price, quantity, production time) they depend on.
  */
-export function QuotationCompare({ quotes, projectId, canDecide }: { quotes: QuoteRow[]; projectId: string; canDecide: boolean }) {
+export function QuotationCompare({ quotes, projectId, canDecide, samplesRequested = true }: { quotes: QuoteRow[]; projectId: string; canDecide: boolean; samplesRequested?: boolean }) {
   const open = quotes.filter((q) => OPEN.includes(q.status));
   const lowest = open.length > 1 ? open.reduce((a, b) => (Number(a.totalAmount) <= Number(b.totalAmount) ? a : b)).id : null;
   const fastest = open.length > 1 ? open.reduce((a, b) => (a.productionDays <= b.productionDays ? a : b)).id : null;
   const perUnit = (q: QuoteRow) => Number(q.totalAmount) / q.quantity;
 
-  type Row = { label: string; render: (q: QuoteRow) => React.ReactNode; strong?: boolean };
+  type Row = { label: string; render: (q: QuoteRow) => React.ReactNode; strong?: boolean; top?: boolean };
+  // The sample group is shown when the brand asked for samples, or a factory proposed one anyway.
+  const showSamples = samplesRequested || quotes.some((q) => q.sampleLeadTimeDays || q.sampleNotes);
   const groups: { title: string; rows: Row[] }[] = [
     {
       title: "Summary",
@@ -68,9 +74,45 @@ export function QuotationCompare({ quotes, projectId, canDecide }: { quotes: Quo
         { label: "Tax", render: (q) => `${Number(q.taxPercent)}% · ${formatMoney(q.taxAmount, q.currency)}` },
       ],
     },
+    ...(showSamples ? [{
+      title: "Sample proposal",
+      rows: [
+        {
+          label: "Sample lead time",
+          render: (q: QuoteRow) => (q.sampleLeadTimeDays ? `${q.sampleLeadTimeDays} days` : <span className="text-ink-muted">{samplesRequested ? "Not stated" : "—"}</span>),
+        },
+        {
+          label: "How they will sample",
+          top: true,
+          render: (q: QuoteRow) => (q.sampleNotes ? <span className="block whitespace-pre-line text-xs leading-5">{q.sampleNotes}</span> : <span className="text-ink-muted">—</span>),
+        },
+      ],
+    }] : []),
     { title: "Terms", rows: [{ label: "Valid until", render: (q) => formatDate(q.validUntil) }] },
   ];
   const highlight = (q: QuoteRow) => (q.id === lowest || q.id === fastest ? "bg-accent-soft/40" : "");
+  const decisionBody = canDecide ? (
+    <tbody>
+      <tr>
+        <th scope="row" className="sticky left-0 z-10 border-t border-line-strong bg-surface-muted py-3.5 pl-4 pr-3 text-left text-[13px] font-medium text-ink sm:pl-5">Decision</th>
+        {quotes.map((q) => (
+          <td key={q.id} className="border-l border-t border-l-line-subtle border-t-line-strong bg-surface-muted px-4 py-3.5 align-top">
+            {OPEN.includes(q.status) ? (
+              <QuotationDecisionButtons
+                quotationId={q.id}
+                projectId={projectId}
+                factory={q.manufacturer.manufacturerProfile?.businessName ?? "this factory"}
+                total={formatMoney(q.totalAmount, q.currency)}
+                canAccept={q.status === "SUBMITTED"}
+              />
+            ) : (
+              <span className="text-xs text-ink-muted">No action</span>
+            )}
+          </td>
+        ))}
+      </tr>
+    </tbody>
+  ) : null;
   const rowHead = "sticky left-0 z-10 border-t border-line-subtle bg-surface py-2.5 pl-4 pr-3 text-left text-[13px] font-normal text-ink-muted sm:pl-5";
   const cell = "border-l border-t border-line-subtle px-4 py-2.5";
 
@@ -103,70 +145,52 @@ export function QuotationCompare({ quotes, projectId, canDecide }: { quotes: Quo
             </tr>
           </thead>
           {groups.map((g, gi) => (
-            <tbody key={g.title}>
-              <tr>
-                <th scope="rowgroup" className={`eyebrow sticky left-0 z-10 bg-surface pb-2 pl-4 pr-3 pt-5 text-left text-accent-strong sm:pl-5 ${gi ? "border-t border-line" : ""}`}>{g.title}</th>
-                <td colSpan={quotes.length} className={gi ? "border-t border-line" : undefined} />
-              </tr>
-              {g.rows.map((r) => (
-                <tr key={r.label}>
-                  <th scope="row" className={rowHead}>{r.label}</th>
-                  {quotes.map((q) => (
-                    <td key={q.id} className={`tabular ${cell} ${highlight(q)} ${r.strong ? "font-display text-lg font-medium tracking-[-0.01em] text-ink" : "text-ink"}`}>{r.render(q)}</td>
-                  ))}
-                </tr>
-              ))}
-              {g.title === "Terms" && (
+            <Fragment key={g.title}>
+              <tbody>
                 <tr>
-                  <th scope="row" className={`${rowHead} align-top`}>Terms</th>
-                  {quotes.map((q) => (
-                    <td key={q.id} className={`${cell} ${highlight(q)} align-top text-xs leading-5 text-ink`}>
-                      {q.notes ?? <span className="text-ink-muted">—</span>}
-                      {q.status === "REVISION_REQUESTED" && q.revisionRequest && <p className="mt-2 rounded-sm border border-warning-line bg-warning-soft px-2 py-1.5 text-warning-strong">You asked: {q.revisionRequest}</p>}
-                      {q.revisions.length > 0 && (
-                        <details className="mt-2">
-                          <summary className="cursor-pointer font-medium text-accent-strong hover:underline hover:underline-offset-4">History ({q.revisions.length} earlier version{q.revisions.length === 1 ? "" : "s"})</summary>
-                          <ul className="mt-1.5 space-y-1 text-ink-muted">
-                            {q.revisions.map((r) => {
-                              const s = (r.snapshot ?? {}) as { totalAmount?: string; productionDays?: number; quantity?: number };
-                              return (
-                                <li key={r.version} className="tabular">
-                                  v{r.version} · {formatDate(r.createdAt)}: {s.totalAmount ? formatMoney(s.totalAmount, q.currency) : "—"}
-                                  {s.productionDays ? `, ${s.productionDays} days` : ""}{s.quantity ? `, ${formatNumber(s.quantity)} units` : ""}
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        </details>
-                      )}
-                    </td>
-                  ))}
+                  <th scope="rowgroup" className={`eyebrow sticky left-0 z-10 bg-surface pb-2 pl-4 pr-3 pt-5 text-left text-accent-strong sm:pl-5 ${gi ? "border-t border-line" : ""}`}>{g.title}</th>
+                  <td colSpan={quotes.length} className={gi ? "border-t border-line" : undefined} />
                 </tr>
-              )}
-            </tbody>
-          ))}
-          {canDecide && (
-            <tbody>
-              <tr>
-                <th scope="row" className={`${rowHead} border-t-line-strong bg-surface-muted py-3.5`}>Decision</th>
-                {quotes.map((q) => (
-                  <td key={q.id} className="border-l border-t border-l-line-subtle border-t-line-strong bg-surface-muted px-4 py-3.5 align-top">
-                    {OPEN.includes(q.status) ? (
-                      <QuotationDecisionButtons
-                        quotationId={q.id}
-                        projectId={projectId}
-                        factory={q.manufacturer.manufacturerProfile?.businessName ?? "this factory"}
-                        total={formatMoney(q.totalAmount, q.currency)}
-                        canAccept={q.status === "SUBMITTED"}
-                      />
-                    ) : (
-                      <span className="text-xs text-ink-muted">No action</span>
-                    )}
-                  </td>
+                {g.rows.map((r) => (
+                  <tr key={r.label}>
+                    <th scope="row" className={rowHead}>{r.label}</th>
+                    {quotes.map((q) => (
+                      <td key={q.id} className={`tabular ${cell} ${highlight(q)} ${r.top ? "align-top" : ""} ${r.strong ? "font-display text-lg font-medium tracking-[-0.01em] text-ink" : "text-ink"}`}>{r.render(q)}</td>
+                    ))}
+                  </tr>
                 ))}
-              </tr>
-            </tbody>
-          )}
+                {g.title === "Terms" && (
+                  <tr>
+                    <th scope="row" className={`${rowHead} align-top`}>Terms</th>
+                    {quotes.map((q) => (
+                      <td key={q.id} className={`${cell} ${highlight(q)} align-top text-xs leading-5 text-ink`}>
+                        {q.notes ?? <span className="text-ink-muted">—</span>}
+                        {q.status === "REVISION_REQUESTED" && q.revisionRequest && <p className="mt-2 rounded-sm border border-warning-line bg-warning-soft px-2 py-1.5 text-warning-strong">You asked: {q.revisionRequest}</p>}
+                        {q.revisions.length > 0 && (
+                          <details className="mt-2">
+                            <summary className="cursor-pointer font-medium text-accent-strong hover:underline hover:underline-offset-4">History ({q.revisions.length} earlier version{q.revisions.length === 1 ? "" : "s"})</summary>
+                            <ul className="mt-1.5 space-y-1 text-ink-muted">
+                              {q.revisions.map((r) => {
+                                const s = (r.snapshot ?? {}) as { totalAmount?: string; productionDays?: number; quantity?: number; sampleLeadTimeDays?: number | null };
+                                return (
+                                  <li key={r.version} className="tabular">
+                                    v{r.version} · {formatDate(r.createdAt)}: {s.totalAmount ? formatMoney(s.totalAmount, q.currency) : "—"}
+                                    {s.productionDays ? `, ${s.productionDays} days` : ""}{s.quantity ? `, ${formatNumber(s.quantity)} units` : ""}
+                                    {s.sampleLeadTimeDays ? `, sample in ${s.sampleLeadTimeDays} days` : ""}
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </details>
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                )}
+              </tbody>
+              {g.title === "Summary" && decisionBody}
+            </Fragment>
+          ))}
         </table>
       </div>
     </div>
