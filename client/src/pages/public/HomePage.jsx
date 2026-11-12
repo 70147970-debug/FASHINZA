@@ -240,7 +240,7 @@ export default function HomePage() {
           split
         >
           <Button asChild variant="link">
-            <Link to="/how-it-works">
+            <Link to="/user-guide">
               See all nine steps <ArrowRight />
             </Link>
           </Button>
@@ -343,7 +343,7 @@ export default function HomePage() {
               ))}
             </ul>
             <Button asChild variant="link" className="mt-6">
-              <Link to="/how-it-works">
+              <Link to="/user-guide">
                 How production tracking works <ArrowRight />
               </Link>
             </Button>

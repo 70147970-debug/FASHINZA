@@ -26,7 +26,7 @@ export default function ForBrandsPage() {
           </Link>
         </Button>
         <Button asChild variant="outline" size="lg">
-          <Link to="/how-it-works">How it works</Link>
+          <Link to="/user-guide">User guide</Link>
         </Button>
       </PageHero>
 
@@ -85,7 +85,7 @@ export default function ForBrandsPage() {
               className="mb-0 lg:mb-0"
             >
               <Button asChild variant="link">
-                <Link to="/how-it-works#step-2">
+                <Link to="/user-guide#step-2">
                   How factory sourcing works <ArrowRight />
                 </Link>
               </Button>

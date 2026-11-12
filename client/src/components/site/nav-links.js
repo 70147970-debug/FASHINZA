@@ -1,6 +1,6 @@
 /** Main public navigation (desktop header and the "Explore" group of the phone menu). */
 export const PUBLIC_NAV = [
-  { href: "/how-it-works", label: "How It Works" },
+  { href: "/user-guide", label: "User Guide" },
   { href: "/for-brands", label: "For Brands" },
   { href: "/for-manufacturers", label: "For Manufacturers" },
   { href: "/sustainability", label: "Sustainability" },

@@ -5,7 +5,7 @@
  */
 export const PAGE_PATHS = [
   "/",
-  "/about", "/contact", "/faq", "/for-brands", "/for-manufacturers", "/how-it-works", "/privacy", "/sustainability", "/terms",
+  "/about", "/contact", "/faq", "/for-brands", "/for-manufacturers", "/how-it-works", "/privacy", "/sustainability", "/terms", "/user-guide",
   "/login", "/register", "/forgot-password", "/reset-password",
   "/onboarding", "/dashboard",
   "/projects", "/projects/new", "/projects/:id", "/projects/:id/edit",

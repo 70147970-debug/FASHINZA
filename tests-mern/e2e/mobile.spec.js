@@ -5,7 +5,7 @@ import { expectNoHorizontalOverflow, login } from "./helpers.js";
 
 /** Mobile layout checks (Pixel 7 profile, plus 320 px and 375 px widths). */
 
-const PUBLIC = ["/", "/how-it-works", "/for-brands", "/for-manufacturers", "/sustainability", "/about", "/faq", "/contact", "/login", "/register", "/privacy", "/terms"];
+const PUBLIC = ["/", "/user-guide", "/for-brands", "/for-manufacturers", "/sustainability", "/about", "/faq", "/contact", "/login", "/register", "/privacy", "/terms"];
 
 for (const width of [320, 375]) {
   test(`public pages fit a ${width}px screen`, async ({ page }) => {
@@ -28,8 +28,8 @@ test("the public menu opens as a drawer on phones", async ({ page }) => {
   await expect(menu.locator('a[href="/register?role=brand"]').first()).toBeVisible();
   await expect(menu.locator('a[href="/register?role=manufacturer"]').first()).toBeVisible();
   await expect(menu.getByRole("link", { name: "FAQ" })).toBeVisible();
-  await menu.getByRole("link", { name: "How It Works" }).click();
-  await expect(page).toHaveURL(/how-it-works/);
+  await menu.getByRole("link", { name: "User Guide" }).click();
+  await expect(page).toHaveURL(/\/user-guide$/);
 });
 
 test("the app shell uses a navigation drawer and pages fit the screen", async ({ page }) => {

@@ -1,0 +1,45 @@
+{
+  "duration": 161,
+  "chapters": [
+    {
+      "title": "Welcome",
+      "start": 0
+    },
+    {
+      "title": "A brand signs up",
+      "start": 10
+    },
+    {
+      "title": "Brief the garment",
+      "start": 24
+    },
+    {
+      "title": "The factory sends a quotation",
+      "start": 57
+    },
+    {
+      "title": "The brand accepts a quotation",
+      "start": 76
+    },
+    {
+      "title": "Fabric sourcing and sampling",
+      "start": 87
+    },
+    {
+      "title": "The brand approves the sample",
+      "start": 99
+    },
+    {
+      "title": "Production and quality inspection",
+      "start": 108
+    },
+    {
+      "title": "Inspection approval and payment",
+      "start": 127
+    },
+    {
+      "title": "Shipping and delivery",
+      "start": 141
+    }
+  ]
+}

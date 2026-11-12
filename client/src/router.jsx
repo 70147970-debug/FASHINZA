@@ -16,7 +16,7 @@
  * gate's user to it, so page modules only load their data. One file per page: CLIENT-A and CLIENT-B never
  * need to edit this file to port a page.
  */
-import { createBrowserRouter, redirect } from "react-router";
+import { createBrowserRouter, Navigate, redirect, useLocation } from "react-router";
 import RootLayout from "@/layouts/RootLayout";
 import PublicLayout from "@/layouts/PublicLayout";
 import AuthLayout from "@/layouts/AuthLayout";
@@ -36,6 +36,12 @@ async function runGate(gate, request) {
   if (gate.kind === "user") return requireUser(request, gate.roles);
   if (gate.kind === "onboarded") return requireOnboardedUser(request, gate.roles);
   return (await fetchSession()).user;
+}
+
+/** /how-it-works → /user-guide, keeping the query and the #step-N anchor (loaders never see the hash). */
+function HowItWorksRedirect() {
+  const { search, hash } = useLocation();
+  return <Navigate to={{ pathname: "/user-guide", search, hash }} replace />;
 }
 
 /**
@@ -90,10 +96,12 @@ export const routes = [
           page("faq", () => import("@/pages/public/FaqPage"), PUBLIC),
           page("for-brands", () => import("@/pages/public/ForBrandsPage"), PUBLIC),
           page("for-manufacturers", () => import("@/pages/public/ForManufacturersPage"), PUBLIC),
-          page("how-it-works", () => import("@/pages/public/HowItWorksPage"), PUBLIC),
+          // "How It Works" became the User Guide; old links (including #step-N anchors) still arrive there.
+          { path: "how-it-works", Component: HowItWorksRedirect },
           page("privacy", () => import("@/pages/public/PrivacyPage"), PUBLIC),
           page("sustainability", () => import("@/pages/public/SustainabilityPage"), PUBLIC),
           page("terms", () => import("@/pages/public/TermsPage"), PUBLIC),
+          page("user-guide", () => import("@/pages/public/UserGuidePage"), PUBLIC),
         ],
       },
       {

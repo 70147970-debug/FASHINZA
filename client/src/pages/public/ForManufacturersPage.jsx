@@ -32,7 +32,7 @@ export default function ForManufacturersPage() {
           </Link>
         </Button>
         <Button asChild variant="outline" size="lg">
-          <Link to="/how-it-works">How it works</Link>
+          <Link to="/user-guide">User guide</Link>
         </Button>
       </PageHero>
 

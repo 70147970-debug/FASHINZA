@@ -250,7 +250,7 @@ export function MockFrame({ label, caption, children, className }) {
 /**
  * The manufacturing journey, in nine steps. Steps 1–3 (sourcing) happen on the project page; steps 4–9 run on
  * the order page as eight production milestones (fabric sourcing, sampling, cutting, stitching, finishing,
- * quality check, shipping and delivery confirmation). How It Works numbers its detail sections by these steps.
+ * quality check, shipping and delivery confirmation). The User Guide numbers its detail sections by these steps.
  */
 export const JOURNEY = [
   { icon: ClipboardList, title: "Design brief", detail: "Garment, fabric, sizes, quantity and tech pack" },

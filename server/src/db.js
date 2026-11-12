@@ -12,6 +12,11 @@ mongoose.set("strictQuery", true);
 // Fail fast instead of queueing queries while MongoDB is unreachable: the API answers 503 straight away
 // (see isDatabaseUnavailable and the error middleware) rather than hanging for Mongoose's 10 s buffer timeout.
 mongoose.set("bufferCommands", false);
+// With buffering off, Mongoose's automatic createCollection/createIndexes would run as each model is
+// compiled (before connecting), fail, and cache that failure for every later Model.init(). Collections and
+// indexes are created explicitly by ensureCollections() once the connection is open instead.
+mongoose.set("autoCreate", false);
+mongoose.set("autoIndex", false);
 
 /** Connects the default Mongoose connection (idempotent). */
 export async function connectDb(uri = config.mongodbUri, options = {}) {
@@ -21,13 +26,16 @@ export async function connectDb(uri = config.mongodbUri, options = {}) {
 }
 
 /**
- * Creates every collection and its indexes (unique rules included) and waits until they exist. Mongoose
- * also starts this on connect; awaiting it matters before seeding a fresh database and because
- * transactions cannot rely on creating collections implicitly.
+ * Creates every collection and its indexes (unique rules included) and waits until they exist. Automatic
+ * creation is switched off above, so this must run after connecting: before seeding a fresh database, and
+ * before transactions write, since they cannot rely on creating collections implicitly.
  */
 export async function ensureCollections() {
   const { ALL_MODELS } = await import("./models/index.js");
-  for (const Model of ALL_MODELS) await Model.init();
+  for (const Model of ALL_MODELS) {
+    await Model.createCollection(); // an existing collection is not an error
+    await Model.createIndexes();
+  }
 }
 
 export async function disconnectDb() {

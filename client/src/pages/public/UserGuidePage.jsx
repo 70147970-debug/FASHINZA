@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Photo } from "@/components/ui/photo";
 import { PROJECT_STATUS } from "@fashinza/shared/labels.js";
 import { PageMeta } from "@/components/meta";
+import { VideoDemo } from "@/components/site/video-demo";
 
 const STATUSES = [
   ["DRAFT", "The brand is still writing the brief. Only the brand can see it."],
@@ -92,21 +93,28 @@ const stepWord = (steps) => (steps.includes("–") ? "Steps" : "Step");
 /** Anchors follow the journey numbers (#step-5 opens "Steps 5–7"), so other pages can link to a step. */
 const anchor = (steps) => `step-${steps.split("–")[0]}`;
 
-export default function HowItWorksPage() {
+export default function UserGuidePage() {
   return (
     <>
       <PageMeta
-        title="How It Works"
-        description="The Fashinza manufacturing journey: design brief, factory sourcing, quotations, sample development, cutting, stitching, finishing, quality inspection and delivery."
+        title="User Guide"
+        description="A video demo and step-by-step guide to the Fashinza manufacturing journey: design brief, factory sourcing, quotations, sample development, cutting, stitching, finishing, quality inspection and delivery."
       />
       <PageHero
-        eyebrow="How it works"
+        eyebrow="User guide"
         title="From first brief to delivered order"
         description="Every garment follows the same nine steps. Brands, manufacturers and Fashinza administrators work from one shared record, and every important change is kept in its history."
         aside={
           <nav aria-label="On this page" className="border-t border-line-strong lg:ml-auto lg:max-w-md">
             <p className="label-caps py-4 text-ink-muted">On this page</p>
             <ol className="border-t border-line">
+              <li className="border-b border-line">
+                <a href="#video" className="group flex min-h-12 items-center gap-4 py-2.5 text-ink transition-colors duration-150 hover:text-accent-strong">
+                  <span className="w-[4.5rem] shrink-0 text-[13px] font-medium text-ink-muted">Watch</span>
+                  <span className="flex-1 font-display text-[1.0625rem] font-medium tracking-[-0.01em]">Video demo</span>
+                  <ArrowRight className="size-4 shrink-0 text-ink-subtle transition-colors duration-150 group-hover:text-accent" aria-hidden />
+                </a>
+              </li>
               {DETAIL.map((d) => (
                 <li key={d.title} className="border-b border-line">
                   <a
@@ -141,6 +149,18 @@ export default function HowItWorksPage() {
           <Link to="/register?role=manufacturer">Join as a Manufacturer</Link>
         </Button>
       </PageHero>
+
+      {/* The whole process on screen first; the written guide below covers the same steps in detail. */}
+      <Section id="video" tone="surface" labelledBy="video-title">
+        <SectionHeading
+          id="video-title"
+          eyebrow="Video demo"
+          title="Watch the whole process"
+          description="A brand briefs a garment, a matched factory quotes, and the order runs through sampling, production, quality inspection, payment and delivery. Use the chapters to jump to any part."
+          split
+        />
+        <VideoDemo />
+      </Section>
 
       <Section labelledBy="flow-title">
         <SectionHeading
