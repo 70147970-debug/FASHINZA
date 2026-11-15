@@ -1,5 +1,5 @@
 /**
- * JSON API client for the Express server (docs/mern/api.md).
+ * JSON API client for the Express server (docs/api.md).
  *
  * - Every request is same-origin under /api (Vite proxies it in dev) and sends the session cookie.
  * - Errors follow the contract shape `{ error: { code, message, fieldErrors? } }` and are thrown as ApiError.

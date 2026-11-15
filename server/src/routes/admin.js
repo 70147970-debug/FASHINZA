@@ -1,5 +1,5 @@
 /**
- * Admin (mounted at /api/admin; every endpoint requireUser(["ADMIN"])) — owner: SERVER-B (docs/mern/api.md
+ * Admin (mounted at /api/admin; every endpoint requireUser(["ADMIN"])) — owner: SERVER-B (docs/api.md
  * §6.1). Ports the admin pages' data loading and the server actions in src/app/(app)/admin/actions.ts.
  */
 import { Router } from "express";

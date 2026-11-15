@@ -1,5 +1,5 @@
 /**
- * Schema building blocks shared by every model (docs/mern/api.md §4):
+ * Schema building blocks shared by every model (docs/api.md §4):
  * - `_id` ObjectId exposed as `id`, no version key, toJSON/toObject per §1.8;
  * - optional fields default to null, Prisma defaults reproduced;
  * - Decimal columns are Decimal128 normalised to the column's scale on write;

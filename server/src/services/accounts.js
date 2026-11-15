@@ -1,6 +1,6 @@
 /**
  * Accounts (port of src/server/services/accounts.ts): registration, sign-in, password reset and change.
- * Account suspension (setUserStatus) lives in services/admin.js (SERVER-B), per docs/mern/api.md §5.
+ * Account suspension (setUserStatus) lives in services/admin.js (SERVER-B), per docs/api.md §5.
  *
  * MERN additions: new brands start PENDING approval (services/brand-approval.js), and a forgotten password is
  * reset with a 6-digit code sent by email (createPasswordResetCode → verifyPasswordResetCode → resetPassword)

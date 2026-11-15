@@ -6,7 +6,7 @@ import { Select, Textarea } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 /*
- * Admin forms. Each posts to its endpoint in docs/mern/api.md §11, §12 and §15 (the server actions of
+ * Admin forms. Each posts to its endpoint in docs/api.md §11, §12 and §15 (the server actions of
  * src/app/(app)/admin/actions.ts); ids are in the URL path, the hidden inputs are kept as today.
  */
 

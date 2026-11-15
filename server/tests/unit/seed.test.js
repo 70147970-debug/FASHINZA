@@ -1,7 +1,7 @@
 /**
  * The seed script's demo data, checked without a database: the generated placeholder files pass the real
  * upload checks (type, size, content sniffing) and the demo organisations and quotations pass the same
- * validation the forms use. Running the seed itself needs MongoDB (npm run mern:seed).
+ * validation the forms use. Running the seed itself needs MongoDB (npm run seed).
  */
 import { describe, expect, it } from "vitest";
 import { brandProfileSchema, manufacturerProfileSchema } from "@fashinza/shared/validation/profile.js";
@@ -87,7 +87,7 @@ describe("seed demo organisations", () => {
 /**
  * The demo factories run through the real rules-v1 engine (as verified, active factories with their demo
  * certificates and no committed orders). The briefs are the seed's demo projects and the e2e workflow's brief, so
- * a change to the factory list that changes these numbers also needs tests-mern/e2e/workflow.spec.js updated.
+ * a change to the factory list that changes these numbers also needs tests/e2e/workflow.spec.js updated.
  */
 describe("seed demo factories in matching", () => {
   const now = new Date("2026-01-01T00:00:00Z");

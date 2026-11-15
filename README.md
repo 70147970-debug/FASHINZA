@@ -1,151 +1,300 @@
-# Fashinza — B2B Apparel Manufacturing Platform
+# Fashinza
 
-Fashinza connects fashion brands with verified clothing manufacturers. Brands brief production projects and
-upload tech packs; a rule-based engine matches verified factories; factories send itemised quotations; the
-accepted quotation becomes an order that is tracked through eight gated production stages, sampling, AQL quality
-control, milestone payments (sandbox) and delivery. Administrators verify factories, monitor orders and resolve
-disputes, with every sensitive action recorded in an audit log.
+Fashinza is a B2B apparel-manufacturing platform: fashion brands brief a garment, verified factories that fit it
+quote, and both sides follow samples, production, inspection, payment and delivery in one shared record.
 
-Final Year Project · Department of Software Engineering · The University of Lahore.
+It runs on the **MERN stack**: MongoDB + Express (`server/`) + React (`client/`) + Node.js, with domain code shared by
+both in `shared/`. The app was ported from an earlier Next.js 16 + Prisma/PostgreSQL version, which remains in the
+git history (up to commit `768c21b`).
 
-## What is implemented
+- `docs/api.md` is the API contract: endpoints, request and response shapes, error messages, collections and indexes.
+- This file covers setup, commands, architecture and known limitations.
 
-| Area | Status |
-| --- | --- |
-| Public website (home, how it works, brands, manufacturers, sustainability, about, FAQ, contact, privacy, terms) | Complete |
-| Registration, login, logout, password change, password reset | Complete (reset link is written to the server log in development — no email service) |
-| Role-based access (brand / manufacturer / admin) enforced on the server, tenant isolation | Complete, covered by integration tests |
-| Organisation profiles, factory documents, manual verification | Complete |
-| Project wizard with drafts, validation, private versioned tech-pack uploads with progress | Complete |
-| Deterministic factory matching (`rules-v1`) with mandatory filters, weighted scores and explanations | Complete |
-| Quotations: cost breakdown, server-side totals, revisions with history, expiry, accept/reject | Complete |
-| Orders: 8 milestones, evidence-gated transitions, planned/actual dates, delay detection, messages | Complete |
-| Sampling rounds with approve / reject / revise | Complete |
-| QC with ISO 2859-1 AQL plans (level II), automatic pass/fail, rework and rollback to stitching | Complete |
-| Milestone payments (30/40/30 default, editable), signed idempotent webhooks, refunds | **Sandbox provider only** — no real money |
-| Persistent in-app notifications with unread count | Complete (email not configured) |
-| Admin: overview, verification queue, users, orders, QC issues, disputes, payment events, audit log, enquiries | Complete |
-| Real-time updates | Order pages refresh by polling every 30 s (no socket server) |
+> **Status:** runs against MongoDB 9.0.4 (single-node replica set `rs0`) on the development machine. The unit,
+> integration and end-to-end suites pass; see [Verification status](#7-verification-status). It has not been
+> deployed anywhere.
 
-**Planned extensions (not in this build):** AI demand forecasting and size-split advice, message translation and
-voice notes, demand aggregation across brands, IoT tracking, delay prediction, a real payment provider, email
-delivery, S3 storage. The matching engine is a pure function (`src/lib/matching.ts`) so a separate (e.g. Python)
-service can replace it without changing the rest of the app.
+---
 
-## Tech stack
+## 1. Requirements
 
-- Next.js 16 (App Router, server actions, Turbopack) + React 19 + TypeScript, Tailwind CSS v4, Radix primitives, Lucide icons
-- PostgreSQL + Prisma 7 (`@prisma/adapter-pg`), Zod (shared browser/server validation), decimal.js for money
-- Cookie sessions (opaque token, SHA-256 hashed in the database), scrypt password hashing
-- Vitest (unit + integration against PostgreSQL), Playwright (end-to-end, desktop + mobile)
+- Node.js 22 or newer, npm 10.
+- MongoDB running as a **replica set** (a single-node set named `rs0` is enough). The server uses multi-document
+  transactions (accepting a quotation, stage changes, QC rework, webhook processing, …), and MongoDB only allows
+  those on a replica set. Any MongoDB version with transaction support should work; 9.0.4 is the one tested.
 
-## Prerequisites
+### Setting up a single-node replica set
 
-- Node.js 20.19+ (22 recommended) and PostgreSQL 14+
-
-## Setup
+With a local `mongod` (version, package source and service manager are your choice):
 
 ```bash
-npm install                      # also runs prisma generate
-cp .env.example .env             # fill in DATABASE_URL, APP_URL, PAYMENT_SANDBOX_SECRET, ADMIN_*
-npm run db:deploy                # apply all migrations
-npm run db:seed                  # create the admin (and demo organisations when SEED_DEMO=1)
-npm run dev                      # http://localhost:3000
+mongod --replSet rs0 --bind_ip 127.0.0.1 --port 27017 --dbpath /path/to/data
+# once, in another terminal:
+mongosh --eval 'rs.initiate({ _id: "rs0", members: [{ _id: 0, host: "127.0.0.1:27017" }] })'
 ```
 
-Sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env`. With `SEED_DEMO=1` the seed also creates three demo
-brands (`demo-brand@fashinza.test`, `demo-brand-womenswear@…`, `demo-brand-activewear@…`) and four verified demo
-factories (`demo-factory-knits@…`, `-denim@…`, `-wovens@…`, `-activewear@…`), all using `SEED_DEMO_PASSWORD`.
-It then builds five demo projects (a draft, quoting projects, an order in production and a delivered order) by
-calling the real services, with test payments through the sandbox provider. Every demo organisation is labelled
-“(Demo)” and every demo file is a placeholder that says so; no reviews or real businesses are invented.
+Then `mongodb://127.0.0.1:27017/fashinza?replicaSet=rs0` (the default `MONGODB_URI`) works. A hosted MongoDB that is
+already a replica set works too; put its connection string in `MONGODB_URI`.
 
-## Environment variables
+On Ubuntu with a 6.19+/7.x kernel, MongoDB 8.0 before 8.0.37 refuses to start (it misreads the kernel version);
+9.0.4 starts normally.
 
-| Variable | Required | Purpose |
-| --- | --- | --- |
-| `DATABASE_URL` | Yes | PostgreSQL connection string |
-| `APP_URL` | Yes | Public base URL (reset links, sandbox webhook delivery) |
-| `PAYMENT_PROVIDER` | Yes | `sandbox` (the only implemented provider) |
-| `PAYMENT_SANDBOX_SECRET` | Yes | ≥32-char HMAC secret for webhook signatures |
-| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | For seeding | First administrator account (password ≥12 chars) |
-| `SEED_DEMO`, `SEED_DEMO_PASSWORD` | No | Create labelled demo organisations |
-| `UPLOAD_DIR` | No | Private file storage directory (default `./uploads`) |
-| `NEXT_PUBLIC_CONTACT_EMAIL` | No | Email shown on the contact page |
-| `TEST_DATABASE_URL`, `E2E_DATABASE_URL` | For tests | Disposable databases (names must contain `test` / `e2e`) |
+## 2. Install
 
-## Commands
+From the repository root (npm workspaces: `shared`, `server`, `client`):
+
+```bash
+npm install
+```
+
+Copy `.env.example` to `.env` and fill in the values (section 3), start MongoDB, then `npm run seed` and `npm run dev`.
+
+## 3. Configuration (environment variables)
+
+The server reads, in this order (later wins, real environment variables win over both files):
+
+1. the **root `.env`** (template: `.env.example`);
+2. **`server/.env`**, optional overrides, e.g. the email settings (template: `server/.env.example`; git-ignored).
+
+| Variable | Used for | Default |
+|---|---|---|
+| `MONGODB_URI` | application database | `mongodb://127.0.0.1:27017/fashinza?replicaSet=rs0` |
+| `PORT` | API (and, in production, the whole app) | `4000` |
+| `SERVER_URL` | the server's own base URL; the sandbox payment provider posts its signed webhooks here | `http://localhost:<PORT>` |
+| `APP_URL` | base of links in emails (brand approval) | `http://localhost:5173` for email links |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` | outgoing email server (`server/src/lib/mail.js`) | `smtp.gmail.com`, `465`, `true` |
+| `SMTP_USER`, `SMTP_PASS` | SMTP account; for Gmail the address and an **app password** (steps in `server/.env.example`). Unset: nothing is sent, each email (with reset codes) is written to the server console | unset |
+| `MAIL_FROM` | sender shown to recipients | `Fashinza <SMTP_USER>` |
+| `MAIL_OUTBOX_DIR` | also write every email there as JSON (the e2e suite reads reset codes from it) | unset |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` (≥ 12 chars), `ADMIN_NAME` | administrator created or updated by the seed | required by the seed |
+| `SEED_DEMO=1`, `SEED_DEMO_PASSWORD` | demo organisations, projects and orders in the seed | off |
+| `PAYMENT_PROVIDER` | only `sandbox` is implemented, as today | `sandbox` |
+| `PAYMENT_SANDBOX_SECRET` (≥ 32 chars) | HMAC key of the sandbox webhooks | required for payments |
+| `UPLOAD_DIR` | private uploads; must be outside `public/` and `client/` (the server refuses to start otherwise) | `./uploads` (repo root) |
+| `NEXT_PUBLIC_CONTACT_EMAIL` | contact address shown on the site (inlined into the client at build time, as Next did) | `contact@fashinza.example` |
+| `RATE_LIMIT_SCALE` | multiplies every rate limit (tests) | `1` |
+| `LINK_CHECK` | `on`: profile websites and social links are opened live when saved or checked (5 s, SSRF-guarded, see api.md "Social links"); `off`: no network access, links are stored as "Not checked" | `on` (`off` when unset under test runners; the integration and e2e environments set `off`) |
+| `NODE_ENV=production` | `Secure` session cookie | development |
+| `TEST_MONGODB_URI` | integration tests; the database name must contain `test` and differ from `MONGODB_URI` | `mongodb://127.0.0.1:27017/fashinza_test?replicaSet=rs0` |
+| `VITE_API_TARGET` | where the Vite dev server proxies `/api` | `http://localhost:4000` |
+
+A `.env` carried over from the Next.js version has `APP_URL` pointing at port 3000 and a `DATABASE_URL` the server
+ignores. Set `APP_URL` to the client's address (in `.env` or `server/.env`):
+
+```bash
+# server/.env (example; values are yours)
+APP_URL=http://localhost:5173        # so links in emails open the MERN client (dev)
+MONGODB_URI=mongodb://127.0.0.1:27017/fashinza?replicaSet=rs0
+```
+
+`server/.env.example` lists the email and link-check settings with comments; copy it to `server/.env` (git-ignored) and fill in
+what you need.
+
+### Sending email through Gmail (app password)
+
+Fashinza emails three kinds of message: the 6-digit password-reset code, "New brand awaiting approval" to every
+administrator, and the approval or rejection decision to the brand. Until SMTP is configured nothing is sent; each
+message (with any code) is printed in the server console after `[mail] SMTP not configured — not sent`.
+
+1. In the Google account that will send the mail, turn on **2-Step Verification** (Google Account → Security).
+   Google only offers app passwords when it is on.
+2. Open **App passwords** (Google Account → Security → 2-Step Verification → App passwords, or
+   https://myaccount.google.com/apppasswords), create one named e.g. "Fashinza" and copy the 16-character password
+   Google shows once.
+3. In `server/.env`:
+   ```bash
+   SMTP_USER=your-address@gmail.com
+   SMTP_PASS=abcdabcdabcdabcd      # the app password (spaces optional), never the normal account password
+   # optional: MAIL_FROM="Fashinza <your-address@gmail.com>"   (Gmail sends as SMTP_USER anyway)
+   ```
+   `SMTP_HOST` (`smtp.gmail.com`), `SMTP_PORT` (`465`) and `SMTP_SECURE` (`true`) already default to Gmail.
+4. Restart the server (`npm run dev`, or the API process). A failed delivery is logged as
+   `[mail] sending "<subject>" to <address> failed: …` and never breaks the request.
+
+Gmail limits how much one account may send per day; use any transactional SMTP provider for real traffic (set
+`SMTP_HOST`, `SMTP_PORT`, and `SMTP_SECURE=false` for port 587). Set `APP_URL` to the address of the web app so the
+links in approval emails open it.
+
+## 4. Commands (repository root)
 
 | Command | What it does |
-| --- | --- |
-| `npm run dev` | Development server |
-| `npm run build` / `npm start` | Production build / start |
-| `npm run lint`, `npm run typecheck` | ESLint, TypeScript |
-| `npm test` | Unit tests (matching, AQL tables, quotation maths, workflow rules, validation) |
-| `npm run test:integration` | Services against a real PostgreSQL test database (auth, permissions, tenant isolation, matching, quotations, orders, milestones, sampling, QC/rework, payment webhooks, disputes, notifications) |
-| `npm run test:e2e` | Playwright journeys for brand, manufacturer and admin plus mobile layout checks. Run `npm run build` first. **Empties and re-seeds the `E2E_DATABASE_URL` database.** |
-| `npm run db:deploy` / `npm run db:seed` | Apply migrations / seed |
+|---|---|
+| `npm run dev` | API on :4000 (`node --watch`) and Vite on :5173 side by side; Vite proxies `/api` to the API. Open http://localhost:5173. Ctrl+C stops both. |
+| `npm run build` | builds the client into `client/dist` |
+| `npm run start` | `NODE_ENV=production node server/src/index.js`: one process on :4000 serving the API, `client/dist` (with SPA fallback) and the photos in `public/`. Run `build` first. The script uses POSIX shell syntax for `NODE_ENV`. |
+| `npm run seed` | administrator from `ADMIN_EMAIL`/`ADMIN_PASSWORD`; with `SEED_DEMO=1` the demo workspace (needs MongoDB) |
+| `npm run test` | shared tests and server unit tests (no database needed) |
+| `npm run test:integration` | server integration tests against `TEST_MONGODB_URI` (needs MongoDB; refuses any database whose name lacks `test`) |
+| `npm run test:e2e` | Playwright end-to-end suite in `tests/e2e` (config `playwright.config.js`). Drops and re-seeds the MongoDB database `fashinza_e2e` (override with `E2E_MONGODB_URI`; refuses any name without `e2e`), then starts the production server (`node server/src/index.js`) on :4100 with sandbox payments, `RATE_LIMIT_SCALE=50`, `LINK_CHECK=off`, no SMTP (emails go to `/tmp/fashinza-mern-e2e-mail` as JSON, `MAIL_OUTBOX_DIR`) and uploads in `/tmp/fashinza-mern-e2e-uploads`. Builds nothing: run `build` first. Needs MongoDB. |
+| `npm run record-guide` | re-records the User Guide video (`public/videos/user-guide-demo.*`: video, poster, captions, chapter list) from the real app: drops and re-seeds `fashinza_e2e`, runs the production server on :4400 and walks through sign-up, brand approval, the brief, quoting, sampling, production, inspection, payment and delivery. Run `build` first. Do not run it at the same time as `test:e2e` (same database). |
 
-The integration and e2e suites truncate their databases and refuse to run unless the database name contains
-`test` / `e2e`. Never point them at real data.
+`npm run lint` lints the Node code (root `eslint.config.js`) and the client (`client/eslint.config.js`).
+`npm run test:all` runs the unit, integration, build and end-to-end steps in order.
 
-## Architecture
+## 5. Architecture
 
 ```
-src/app/(public)/      Public website            src/server/services/  Business rules (one file per domain)
-src/app/(auth)/        Login, register, reset    src/server/access.ts  Tenant scoping filters
-src/app/(app)/         Authenticated workspace   src/server/auth/      Sessions, password hashing
-src/app/api/           Files, uploads, webhooks, health
-src/lib/               Pure logic: matching, aql, workflow, quotation-math, validation schemas
-prisma/                Schema, migrations, seed  tests/{unit,integration,e2e}
+shared/   @fashinza/shared   plain JS ported from src/lib: zod validation, matching rules, AQL, workflow,
+                             quotation maths, labels, constants, formatting, FAQ, image metadata, enums;
+                             MERN-only: named colours for the brief's colour picker (colors.js) and 20 more
+                             garment categories with display groups (enums.js, constants.js)
+server/   @fashinza/server   Node 22 + Express 5 + Mongoose 8
+  src/index.js               entry: listens at once, connects to MongoDB in the background and keeps retrying
+  src/app.js                 app factory (used by supertest): security headers → /api/webhooks (raw body)
+                             → Origin check + body parsing → 16 routers → /api 404 → static files + SPA fallback
+  src/config.js, db.js       env loading; connection, transactions (withTransaction), error classifiers
+  src/models/                33 collections mapped from prisma/schema.prisma (unique indexes kept)
+  src/auth/                  scrypt hashes (original parameters), opaque session tokens (SHA-256 stored)
+  src/middleware/            requireUser / requireOnboardedUser, Origin check, body parsing, errors
+  src/services/              ports of src/server/services/* and the server actions
+  src/routes/                one router per area (see docs/api.md §6)
+  src/payments/provider.js   sandbox payment provider (signed webhooks; no money moves)
+  src/lib/                   form parsing, storage (uploads), access scoping, serialisation, rate limits, …
+  scripts/seed.js            port of prisma/seed.ts
+  scripts/dev.js        runs API + client for `npm run dev`
+  tests/unit, tests/integration
+client/   @fashinza/client   React 19 + Vite + React Router 7 (data mode) + Tailwind CSS v4
+  src/router.jsx             every URL of the Next app; gates and role redirects run before page loaders
+  src/layouts/               root, public, auth and app-shell layouts (the Next route groups)
+  src/pages/                 one module per page: default component + optional loader(...)
+  src/components/            ports of src/components (same markup and classes)
+  src/lib/api.js, session.js API calls, form submission, sign-in gates
+  src/styles/globals.css     the original stylesheet (all tokens, light and dark themes) plus the MERN-only
+                             "liquid glass" utilities, tilt, skeleton and motion styles (see below)
 ```
 
-Pages and server actions call `requireUser(roles)`; services then re-check ownership with the scoping helpers,
-so hiding a button is never the only protection. Multi-step changes (accepting a quotation, completing a stage,
-QC rework, webhook processing) run in database transactions; quotation acceptance locks the project row and
-`Order.projectId` is unique, so duplicate orders are impossible.
+### Visual design: liquid glass and 3D (MERN only)
 
-Each brand or factory account is one organisation (its profile holds the organisation details). Multi-user
-organisations are a possible extension.
+The MERN client keeps the original palette, fonts, copy and markup, and adds a "liquid glass" layer on top:
 
-## Security notes
+- **Glass utilities** (`globals.css`, section LIQUID GLASS): `glass` (marketing cards over the soft taupe /
+  forest-green glows of `bg-liquid` / `bg-liquid-surface`), `glass-strong` (dialogs, drawers, dropdown menus,
+  toasts, the back-to-top button), `glass-bar` (the public header once the page scrolls, the app's top bar),
+  `glass-subtle` (the app sidebar) and `glass-ink` (chips and outline buttons on photographs, always over a scrim).
+  Each is a translucent fill mixed from the theme's surface tokens, `backdrop-filter` blur + saturation, a 1px inner
+  highlight, a soft sheen and a layered shadow. Without `backdrop-filter`, or with
+  `prefers-reduced-transparency: reduce`, every glass surface becomes solid. Text keeps AA contrast on them in
+  both themes (worst case for `glass-strong` / `glass-bar`: a black or white pixel behind the blur).
+- **Hero silk** (`components/site/liquid-hero.jsx` + `liquid-silk.js`): a small raw-WebGL shader (no library, its
+  own ~3 kB gzipped chunk) of two satin scarves in the brand colours under the hero's scrim. It is fetched only
+  after the page's `load` event when the browser is idle, never under `prefers-reduced-motion`, Save-Data or below
+  768px, renders at most devicePixelRatio 1.5, pauses off-screen and in hidden tabs, steps down or stops on slow
+  devices, and leaves the photograph in place when WebGL is unavailable. The h1, buttons and photo never wait for it.
+- **Tilt** (`components/site/tilt.jsx`): photo cards lean towards a mouse with a glass sheen; nothing happens on
+  touch screens or under reduced motion. The homepage's production section is a layered 3D preview (order card in
+  front of the photograph).
+- **Ease of use:** a navigation progress bar, smooth scrolling for in-page anchors only, a back-to-top button on long
+  public pages, a boot splash in `index.html` while the first page loads, shimmer skeletons and calmer empty states.
 
-- Passwords: scrypt (N=2^17). Sessions: random 256-bit token in an http-only, SameSite=Lax cookie; only its hash is stored.
-- Rate limits on login, registration, password reset, contact form and uploads (in-memory; use Redis for multiple instances).
-- Uploads: type and size checked, file signature sniffed, random keys, stored outside `public/`, served only through
-  `/api/files/…` after an access check, with `nosniff` and a sandboxing CSP.
-- Payment state changes only through webhooks with a verified HMAC signature and timestamp; each event id is
-  processed once; amounts are cross-checked.
-- Admin actions (verification, suspensions, refunds, disputes, enquiries) are written to an append-only audit log.
+Screenshots of the redesign (1440px light and dark, 390px, and open menus, drawers and dialogs) were captured
+locally into `docs/mern/screenshots/redesign/`; they are not committed (about 70 MB).
 
-## Deployment
+Request flow in development: browser → Vite :5173 → `/api/*` proxied to Express :4000 (Host header kept, so the
+Origin check matches). In production Express serves everything on one port.
 
-A `Dockerfile` (Next.js standalone output) and `docker-compose.yml` (PostgreSQL + app + migrate job) are included.
-They have **not been tested** in this environment because Docker was not available.
+### Behaviour when MongoDB is unreachable
 
-```bash
-docker compose build
-docker compose run --rm migrate          # apply migrations
-docker compose up -d app
-```
+- The server still starts, serves the client app, its assets and the public photos, and keeps retrying the
+  connection (backing off to 30 s), logging each failure.
+- `GET /api/health` answers `503 {"status":"error","database":"unreachable"}`, exactly like the Next app's health
+  route.
+- API calls that need the database answer at once with `503 {"error":{"code":"DATABASE_UNAVAILABLE","message":…}}`,
+  using the same messages the Next app showed for an unexpected failure. Mongoose command buffering is switched off
+  so requests never hang. Checks that need no database (sign-in gate without a cookie, validation, rate limits,
+  Origin) still answer as usual.
+- In the browser, public pages render as signed out; app pages show the existing error card.
 
-Any Node host also works: `npm ci && npm run build && npm run db:deploy && npm start`. Keep `UPLOAD_DIR` on a
-persistent volume. `GET /api/health` reports database connectivity for load balancers.
+## 6. History: what maps to the earlier Next.js app
 
-## Backup and restore
+| Next.js app | MERN app |
+|---|---|
+| `prisma/schema.prisma`, PostgreSQL | `server/src/models/*.js`, MongoDB (one collection per Prisma model, same names) |
+| Prisma `$transaction`, `SELECT … FOR UPDATE`, unique constraints | `withTransaction(session => …)` on a replica set, conditional updates, unique indexes (e.g. one order per project, each webhook event once) |
+| `Decimal` columns | `Decimal128` at the column's scale, sent as strings (`"1234.50"`); `decimal.js` for maths |
+| `src/lib/*.ts` | `shared/src/*.js` (same exports, types removed) |
+| `src/server/services/*.ts` | `server/src/services/*.js` |
+| server actions (`src/app/**/actions.ts`) | `POST`/`PUT`/`DELETE /api/...` endpoints; responses carry `message`/`redirectTo` so the client shows the same toast and navigates the same way |
+| route handlers (`/api/files/[...key]`, `/api/projects/[id]/attachments`, `/api/webhooks/payments/[provider]`, `/api/health`) | the same paths in Express |
+| `/notifications/[id]` route handler (marks read, redirects) | client route whose loader calls `POST /api/notifications/:id/open` and redirects |
+| server components loading data | page `loader`s calling `GET /api/...` |
+| `requireUser` / `requireOnboardedUser` redirects, `src/proxy.ts` | client gates in `src/lib/session.js` (`/login?next=…`, `/dashboard?denied=1`, `/onboarding`) **and** the same checks on every API endpoint (401/403) |
+| `notFound()`, `not-found.tsx`, `error.tsx`, `loading.tsx` | 404 responses → the same not-found cards; route error boundaries; the same loading skeleton |
+| `export const metadata` | `<PageMeta>` (React 19 `<title>`/`<meta>`), same `Title | Fashinza` template and defaults |
+| `next/link`, `next/image` | React Router `Link`; `Photo` renders a plain `<img>` with the same props and frame |
+| `revalidatePath` after an action | the client reloads the page data and the session after a successful mutation |
+| `LiveRefresh` on the order page | re-fetch every 30 s while the tab is visible |
+| session cookie `fz_session`, scrypt hashes | unchanged: existing password hashes verify, cookie flags are the same |
+| `prisma/seed.ts` | `server/scripts/seed.js` (same accounts, demo data, idempotency rules; through the real services). MERN-only: ten more verified demo factories (fourteen in all, in ten sourcing countries, covering every garment category) |
+| `tests/unit`, `tests/integration`, `tests/e2e` (TypeScript) | `shared/tests` (unit), `server/tests/{unit,integration}` and `tests/e2e` (JavaScript, same case names) |
+| `UPLOAD_DIR`, file keys | unchanged; the MERN server can read files uploaded by the Next app, but only once their records exist in MongoDB |
 
-```bash
-pg_dump --format=custom --file=fashinza-$(date +%F).dump "$DATABASE_URL"         # database
-tar czf uploads-$(date +%F).tgz -C "$UPLOAD_DIR" .                                  # private files
-pg_restore --clean --if-exists --dbname="$DATABASE_URL" fashinza-YYYY-MM-DD.dump    # restore database
-tar xzf uploads-YYYY-MM-DD.tgz -C "$UPLOAD_DIR"                                     # restore files
-```
+## 7. Verification status
 
-Back up the database and the upload directory together; file records in the database point to keys in that directory.
+Last full run: 15 November 2026, MongoDB 9.0.4 (replica set `rs0`), Node 22, after the brand-approval, password
+policy, emailed reset code, social links, garment catalogue and liquid-glass changes. All passing:
 
-## Known limitations
+| Command | Result |
+|---|---|
+| `npm run test` | shared 75 tests (5 files); server unit 214 tests (17 files) |
+| `npm run test:integration` (database `fashinza_test`) | 116 tests (8 files): foundation, auth/access, projects/quotations, production/payments over services and over HTTP, brand approval, password reset codes, profile links |
+| `npm run build`, `npm run lint` | clean |
+| `npm run test:e2e` (database `fashinza_e2e`, server on :4100) | 35 tests (desktop + mobile), green twice in a row |
+| `npm run seed` with `SEED_DEMO=1` on the dev database | adds the ten newer demo factories and leaves existing records alone |
+| `npm run record-guide` | re-recorded the User Guide video with the brand-approval chapter and the colour picker |
 
-- Email delivery is not configured; notifications are in-app only.
-- Payments use a sandbox provider; Fashinza is not an escrow service.
-- Rate limiting is per process (in memory).
-- Prisma's driver adapter logs a `pg` deprecation warning for nested reads inside transactions; it is upstream and harmless.
+Also checked by hand on a production build: every new or changed page (registration with the password checklist,
+the three forgot-password steps, the pending-brand notice, the wizard's grouped categories and colour picker, the
+brand profile with social links, the admin overview, brand approvals list and review, all projects) at 1440px in
+both themes and at 390px, with no sideways scrolling at 320–390px.
+
+Earlier checks that still stand:
+
+- Visual parity, signed out: the Next production build and the MERN production server were captured at 1440px light,
+  1440px dark and 390px for the ten public pages, login, register, forgot-password and the not-found page, and were
+  pixel-identical outside the photographs. Those captures (local, not committed) predate the liquid-glass
+  redesign (section 5) and the MERN-only features; the redesign's are described in section 5.
+- Server behaviour with MongoDB unreachable (section 5) and `npm run dev` (both servers, proxy, Ctrl+C).
+
+Not verified:
+
+- Real email delivery: no SMTP account is configured on the development machine, so messages were only written to
+  the console and to `MAIL_OUTBOX_DIR`. Sending through Gmail needs the steps in section 3.
+- Live link checks against the real social sites in the test suites (they run with `LINK_CHECK=off`; the checker is
+  unit-tested with fake network answers).
+- Deployment to any hosted environment.
+
+## 8. Known limitations and differences
+
+- **No data migration.** Nothing copies existing PostgreSQL data into MongoDB. Ids change from UUIDs to ObjectIds,
+  so a migration would also have to map every reference. Password hashes and stored file keys are compatible.
+- **Sort ties:** where the original order was undefined (equal timestamps), MongoDB queries break ties by id.
+- **Images:** `Photo` serves the original files without Next's resizing, `srcset` or WebP conversion, so pages
+  download larger images than before. Layout and cropping are the same.
+- **New 503 code:** `DATABASE_UNAVAILABLE` did not exist in the Next app (it returned a generic 500 or error page);
+  user-facing text is unchanged.
+- **Passwords are reset with an emailed 6-digit code** (MERN addition) instead of a link; old `/reset-password` links
+  land on `/forgot-password` with an explanation. Without SMTP settings the email (and its code) is written to the
+  server console. New passwords must meet the password policy (12–16 characters, capital and small letter, number,
+  symbol, no spaces); existing passwords keep working for sign-in.
+- **Brand approval** (MERN addition): new brands wait for an administrator (`/admin/brands`) before they can create
+  projects; demo brands from the seed are approved. Brands that existed before this feature have no
+  `approvalStatus` and count as approved. Administrators can open every project (`/admin/projects`) and order
+  read-only.
+- **Social link checks are best effort** (MERN addition): Instagram, Facebook, TikTok and Pinterest show signed-out
+  visitors the same page whether or not a profile exists, and many sites block automatic requests, so those links
+  are stored as "Couldn't confirm" rather than "Link found". Only a missing host, a 404/410 or a platform's known
+  "page not found" redirect blocks saving. An administrator still opens the links when reviewing a brand.
+- **Garment categories and colours** (MERN addition): 20 categories beyond the Next app's 12, and named colours with
+  swatches in the brief. Colour values for fashion names are typical trade shades, not a standard; Pantone
+  references can still be typed as written.
+- **Webhook address:** sandbox webhooks go to `SERVER_URL`, not `APP_URL` as in the Next app, so the server can reach itself
+  even when `APP_URL` is the Vite dev server or a public address.
+- **Small rendering differences** found when comparing with the Next app: React Router adds `data-discover` to links;
+  the search form carries `method="get"`; generated ids differ; there is no Next dev badge; the page description
+  `<meta>` is set by JavaScript rather than present in the initial HTML.
+- **Not-found status:** unknown page URLs get the SPA with HTTP 404 (`server/src/lib/page-routes.js`, kept in step with
+  `client/src/router.jsx` by a unit test). Pages whose record does not exist (e.g. `/projects/<unknown id>`) still
+  answer 200 and render the not-found card on the client; Next answered those with 404.
+- **Sandbox only:** as in the Next app, only the sandbox payment provider is implemented; no money moves.
+- **Contract deviations** (documented in `docs/api.md`): a malformed file key returns 404 like the original,
+  not 400; the test reset empties collections instead of dropping them; webhook delivery uses `SERVER_URL`.

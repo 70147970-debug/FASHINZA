@@ -2,7 +2,7 @@
  * Server configuration.
  *
  * Environment files are read in this order:
- *   1. the ROOT .env (shared with the original Next.js app; read-only, never written),
+ *   1. the ROOT .env (see .env.example),
  *   2. server/.env (optional; overrides values from the root .env).
  * Variables already present in the real process environment always win over both files, so test runners
  * and process managers can set values explicitly. Secret values are never printed.
@@ -12,7 +12,7 @@
  * calls), TEST_MONGODB_URI (integration tests; name must contain "test"), SMTP_HOST / SMTP_PORT / SMTP_SECURE /
  * SMTP_USER / SMTP_PASS / MAIL_FROM (outgoing email, see lib/mail.js and server/.env.example), MAIL_OUTBOX_DIR
  * (also write every email there as JSON; tests), LINK_CHECK ("off" disables live checks of profile links).
- * Shared with the root app: APP_URL,
+ * Also: APP_URL,
  * UPLOAD_DIR (relative paths resolve against the repo root), PAYMENT_PROVIDER, PAYMENT_SANDBOX_SECRET,
  * ADMIN_EMAIL, ADMIN_PASSWORD, SEED_DEMO, SEED_DEMO_PASSWORD, NEXT_PUBLIC_CONTACT_EMAIL, RATE_LIMIT_SCALE.
  */
@@ -58,7 +58,7 @@ loadEnvFiles(process.env, [path.join(REPO_ROOT, ".env"), path.join(SERVER_ROOT, 
 
 const env = process.env;
 
-/** Relative paths are resolved against the repository root (where the original app ran from). */
+/** Relative paths are resolved against the repository root (where .env lives). */
 function resolveFromRoot(p) {
   return path.resolve(REPO_ROOT, p);
 }

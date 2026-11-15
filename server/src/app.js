@@ -1,5 +1,5 @@
 /**
- * Express application factory (exported for supertest). Mount order follows docs/mern/api.md §6.2:
+ * Express application factory (exported for supertest). Mount order follows docs/api.md §6.2:
  * webhooks (raw body) → health → domain routers → /api 404 → static files + SPA fallback → error handler.
  */
 import fs from "node:fs";

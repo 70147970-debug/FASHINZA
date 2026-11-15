@@ -1,5 +1,5 @@
 /**
- * Opportunities (mounted at /api/opportunities) — owner: SERVER-A (docs/mern/api.md §3.4–3.5, §6.1).
+ * Opportunities (mounted at /api/opportunities) — owner: SERVER-A (docs/api.md §3.4–3.5, §6.1).
  * Port of the /opportunities pages' data and saveQuotationAction in (app)/opportunities/actions.ts.
  *   GET  /                       onboarded MANUFACTURER
  *   GET  /:projectId             onboarded MANUFACTURER

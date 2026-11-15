@@ -1,5 +1,5 @@
 /**
- * Quotations (mounted at /api/quotations) — owner: SERVER-A (docs/mern/api.md §3.4, §6.1).
+ * Quotations (mounted at /api/quotations) — owner: SERVER-A (docs/api.md §3.4, §6.1).
  * Port of the quotation actions in (app)/projects/actions.ts and (app)/opportunities/actions.ts, and the
  * /quotations page data.
  *   GET  /                          onboarded MANUFACTURER

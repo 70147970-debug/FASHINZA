@@ -1,7 +1,7 @@
 /**
  * GET /api/health (mounted at /api/health) — liveness/readiness probe (port of src/app/api/health/route.ts):
  * reports whether the database answers. Never cached.
- * Implemented by the server foundation; owner per docs/mern/api.md §6.1: SERVER-B.
+ * Implemented by the server foundation; owner per docs/api.md §6.1: SERVER-B.
  */
 import { Router } from "express";
 import { pingDb } from "../db.js";

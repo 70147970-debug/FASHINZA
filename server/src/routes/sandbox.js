@@ -1,5 +1,5 @@
 /**
- * Sandbox checkout (mounted at /api/sandbox-checkout) — owner: SERVER-B (docs/mern/api.md §6.1). Ports the
+ * Sandbox checkout (mounted at /api/sandbox-checkout) — owner: SERVER-B (docs/api.md §6.1). Ports the
  * /sandbox-checkout/[ref] page data and simulateCheckoutAction.
  *
  * The simulation does not update the payment itself: it asks the sandbox provider to deliver a signed webhook

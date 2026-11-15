@@ -1,5 +1,5 @@
 /**
- * Workspace search (mounted at /api/search) — owner: SERVER-A (docs/mern/api.md §3.8, §6.1).
+ * Workspace search (mounted at /api/search) — owner: SERVER-A (docs/api.md §3.8, §6.1).
  * Port of the data loading in src/app/(app)/search/page.tsx.
  *   GET /?q=   onboarded (any role)
  */

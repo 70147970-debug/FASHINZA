@@ -13,7 +13,7 @@ import { STAGES } from "@fashinza/shared/workflow.js";
 import { formatMoney, isoDateInDays } from "@fashinza/shared/format.js";
 
 /*
- * Order forms. Each one posts to its endpoint in docs/mern/api.md §10–12 (the server actions of
+ * Order forms. Each one posts to its endpoint in docs/api.md §10–12 (the server actions of
  * src/app/(app)/orders/actions.ts); ids that travelled as hidden inputs are in the URL path now, the hidden
  * inputs are kept so the posted fields stay the same.
  */

@@ -1,5 +1,5 @@
 /**
- * Request body parsing for /api (docs/mern/api.md §1.2): JSON, urlencoded and multipart/form-data.
+ * Request body parsing for /api (docs/api.md §1.2): JSON, urlencoded and multipart/form-data.
  *
  * Multipart bodies are parsed once for every route (memory storage) so that plain FormData posts work on
  * every mutation. Upload problems (file over 10 MB, malformed body) do not fail the request here: they are

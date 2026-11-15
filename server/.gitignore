@@ -1,3 +1,3 @@
 node_modules
-# local overrides of the root .env (see docs/mern/README.md)
+# local overrides of the root .env (see README.md)
 .env

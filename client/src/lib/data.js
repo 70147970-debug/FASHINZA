@@ -2,7 +2,7 @@
  * Page-data helpers for the ports of the Next.js server components (CLIENT-B pages).
  *
  * The server components received Prisma objects: dates were `Date` instances and decimals were `Decimal`
- * objects. The JSON API sends ISO strings for both (docs/mern/api.md §1.8). `loadData` revives the date
+ * objects. The JSON API sends ISO strings for both (docs/api.md §1.8). `loadData` revives the date
  * strings into `Date` objects so the ported markup can compare and format them exactly as before; decimals
  * stay strings (`formatMoney` and `Number()` accept them) and `decimalText` reproduces `Decimal#toString()`.
  */

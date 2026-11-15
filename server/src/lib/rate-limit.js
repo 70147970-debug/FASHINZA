@@ -1,5 +1,5 @@
 /**
- * Rate limits (docs/mern/api.md §1.7) on top of the in-memory fixed window from @fashinza/shared.
+ * Rate limits (docs/api.md §1.7) on top of the in-memory fixed window from @fashinza/shared.
  * RATE_LIMIT_SCALE is read by the shared module when it loads, so config (which loads the .env files) is
  * imported first.
  */

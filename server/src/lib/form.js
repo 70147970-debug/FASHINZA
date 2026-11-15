@@ -1,5 +1,5 @@
 /**
- * Form handling (port of formObject / parseForm / files from src/server/action.ts). See docs/mern/api.md §1.2.
+ * Form handling (port of formObject / parseForm / files from src/server/action.ts). See docs/api.md §1.2.
  */
 import { zodFieldErrors } from "@fashinza/shared/form-state.js";
 import { multipartBody } from "../middleware/body.js";

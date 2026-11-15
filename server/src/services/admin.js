@@ -1,7 +1,7 @@
 /**
  * Administration (port of src/server/services/admin.ts, plus the admin decisions that lived in
  * src/server/services/profiles.ts — reviewDocument, decideVerification, revokeVerification — and
- * src/server/services/accounts.ts — setUserStatus; docs/mern/api.md §5 places them here).
+ * src/server/services/accounts.ts — setUserStatus; docs/api.md §5 places them here).
  */
 import { ProjectStatus, VerificationStatus } from "@fashinza/shared/enums.js";
 import { withTransaction } from "../db.js";

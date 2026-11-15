@@ -1,6 +1,6 @@
 /**
  * Profiles, factory documents, verification requests (mounted at /api/profile) — owner: SERVER-A
- * (docs/mern/api.md §3.2, §6.1). Port of src/app/(app)/profile-actions.ts and the profile/factory/onboarding page data.
+ * (docs/api.md §3.2, §6.1). Port of src/app/(app)/profile-actions.ts and the profile/factory/onboarding page data.
  *   GET    /brand                                user BRAND
  *   PUT    /brand                                user BRAND
  *   GET    /factory                              user MANUFACTURER

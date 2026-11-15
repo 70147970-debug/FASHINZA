@@ -4,7 +4,7 @@ import { cn } from "@fashinza/shared/utils.js";
 
 /**
  * The User Guide's screen recording: a walkthrough of the real app on demo data, recorded by
- * `npm run mern:record-guide` (tests-mern/demo/record-user-guide.js). The recorder writes the video, its poster,
+ * `npm run record-guide` (tests/demo/record-user-guide.js). The recorder writes the video, its poster,
  * a WebVTT caption track and the chapter list beside the video into public/videos/; the chapter list is loaded
  * at runtime so a new recording needs no code change. Without the chapter file the video still plays.
  */

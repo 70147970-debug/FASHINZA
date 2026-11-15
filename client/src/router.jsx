@@ -12,7 +12,7 @@
  *
  * Page modules (src/pages/**) are loaded lazily. Each one `export default`s its component and may export
  * `loader({ request, params, user })`, `action`, `shouldRevalidate` and `handle`. The router runs the path's
- * gate (docs/mern/api.md §2) and the role redirects listed there *before* the page loader, and passes the
+ * gate (docs/api.md §2) and the role redirects listed there *before* the page loader, and passes the
  * gate's user to it, so page modules only load their data. One file per page: CLIENT-A and CLIENT-B never
  * need to edit this file to port a page.
  */

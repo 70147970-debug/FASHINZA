@@ -4,7 +4,7 @@
  * reported as a generic failure that reveals no internals.
  */
 
-/** HTTP status per error code (docs/mern/api.md §1.4). */
+/** HTTP status per error code (docs/api.md §1.4). */
 export const STATUS = Object.freeze({
   INVALID: 400,
   UNAUTHENTICATED: 401,

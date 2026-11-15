@@ -1,5 +1,5 @@
 /**
- * Notifications (mounted at /api/notifications) — owner: SERVER-B (docs/mern/api.md §6.1). Ports the
+ * Notifications (mounted at /api/notifications) — owner: SERVER-B (docs/api.md §6.1). Ports the
  * /notifications page (list + inline markAllRead action) and src/app/(app)/notifications/[id]/route.ts.
  */
 import { Router } from "express";

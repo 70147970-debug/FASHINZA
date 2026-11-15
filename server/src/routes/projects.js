@@ -1,5 +1,5 @@
 /**
- * Projects (mounted at /api/projects) — owner: SERVER-A (docs/mern/api.md §3.3, §6.1).
+ * Projects (mounted at /api/projects) — owner: SERVER-A (docs/api.md §3.3, §6.1).
  * Port of src/app/(app)/projects/actions.ts, api/projects/[id]/attachments/route.ts and the project pages' data.
  *   GET    /                               onboarded BRAND, ADMIN
  *   GET    /:id                            onboarded BRAND   (edit page: project + submit checklist)

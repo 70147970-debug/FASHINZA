@@ -1,6 +1,6 @@
 /**
  * Helpers for rebuilding Prisma `include` / `select` trees from separate MongoDB collections
- * (docs/mern/api.md §1.8: relations keep exactly the nesting and key names of the original queries).
+ * (docs/api.md §1.8: relations keep exactly the nesting and key names of the original queries).
  *
  * Every helper takes an optional transaction `session`. Results are lean documents; serialise them with
  * `serialize(Model, doc)` from ./serialize.js once the relations are attached.

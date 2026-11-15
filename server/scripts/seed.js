@@ -1,5 +1,5 @@
 /**
- * Seed script (port of prisma/seed.ts). Run with `npm run mern:seed` from the repository root (or
+ * Seed script (port of prisma/seed.ts). Run with `npm run seed` from the repository root (or
  * `npm run seed` in server/). Reads the root .env, then server/.env (see src/config.js).
  *
  * Always: creates or updates the administrator account from ADMIN_EMAIL / ADMIN_PASSWORD.

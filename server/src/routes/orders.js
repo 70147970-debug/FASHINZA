@@ -1,6 +1,6 @@
 /**
  * Orders, milestones, samples, QC, shipment, messages, payment schedule (mounted at /api/orders) — owner:
- * SERVER-B (docs/mern/api.md §6.1). Ports of the server actions in src/app/(app)/orders/actions.ts and the
+ * SERVER-B (docs/api.md §6.1). Ports of the server actions in src/app/(app)/orders/actions.ts and the
  * data loading of the /orders and /orders/[id] pages. Checks run in the same order as the original actions:
  * sign-in/role → form validation → service rules.
  */
@@ -151,7 +151,7 @@ router.put("/:id/payment-schedule", requireOnboardedUser(["BRAND"]), async (req,
   const form = readForm(req);
   let items = [];
   if (Array.isArray(form.items)) {
-    // JSON bodies may send the array itself (docs/mern/api.md §3.10).
+    // JSON bodies may send the array itself (docs/api.md §3.10).
     items = form.items;
   } else {
     const raw = scheduleInput.safeParse({ items: form.items });

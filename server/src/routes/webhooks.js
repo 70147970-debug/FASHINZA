@@ -1,6 +1,6 @@
 /**
  * Payment webhooks (mounted at /api/webhooks with express.raw for every content type, limit 64kb, before the
- * JSON parsers; req.body is a Buffer; no Origin check) — owner: SERVER-B (docs/mern/api.md §6.1).
+ * JSON parsers; req.body is a Buffer; no Origin check) — owner: SERVER-B (docs/api.md §6.1).
  * Port of src/app/api/webhooks/payments/[provider]/route.ts: the raw body is verified against the provider
  * signature before anything is parsed or stored. Duplicates are acknowledged with 200 so the provider stops
  * retrying. Bodies over 64 KiB are refused by express.raw (413 "Payload too large.").

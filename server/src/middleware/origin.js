@@ -1,5 +1,5 @@
 /**
- * Cross-site protection (docs/mern/api.md §1.6). Next.js server actions rejected cross-site posts; this
+ * Cross-site protection (docs/api.md §1.6). Next.js server actions rejected cross-site posts; this
  * reproduces it for every state-changing /api request except the payment webhook.
  * A missing Origin header is allowed (as in Next.js).
  */

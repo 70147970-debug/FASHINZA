@@ -1,5 +1,5 @@
 /**
- * Contact enquiries (mounted at /api/contact) — owner: SERVER-A (docs/mern/api.md §3.7, §6.1).
+ * Contact enquiries (mounted at /api/contact) — owner: SERVER-A (docs/api.md §3.7, §6.1).
  * Port of src/app/(public)/contact/actions.ts.
  *   POST /   public
  */

@@ -1,5 +1,5 @@
 /**
- * Serialisation rules (docs/mern/api.md §1.8):
+ * Serialisation rules (docs/api.md §1.8):
  * - every document has `id` (hex string) and no `_id` / `__v`; references are hex strings;
  * - Decimal128 fields are strings with the column's scale ("1234.50"), or null;
  * - dates stay Date objects (JSON.stringify turns them into ISO strings);

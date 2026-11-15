@@ -3,7 +3,7 @@
  *
  * Every Prisma `$transaction` is a MongoDB transaction (withTransaction) and every query inside it passes the
  * session. Conditional `updateMany` guards are conditional `updateOne` calls whose modifiedCount is checked.
- * Services return plain serialised objects (docs/mern/api.md §1.8), except createOrderFromQuotation which
+ * Services return plain serialised objects (docs/api.md §1.8), except createOrderFromQuotation which
  * returns the hydrated order document.
  */
 import { randomBytes } from "node:crypto";

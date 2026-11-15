@@ -1,5 +1,5 @@
 /**
- * Private file download (mounted at /api/files) — owner: SERVER-A (docs/mern/api.md §3.6, §6.1).
+ * Private file download (mounted at /api/files) — owner: SERVER-A (docs/api.md §3.6, §6.1).
  * Port of src/app/api/files/[...key]/route.ts: every request re-checks that the signed-in user may see the owning
  * record. Unknown and forbidden keys give the same 404 so other organisations' files are not revealed.
  *   GET /*key   user   (?download → attachment disposition)

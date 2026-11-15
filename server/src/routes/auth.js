@@ -1,5 +1,5 @@
 /**
- * Auth & account (mounted at /api/auth) — owner: SERVER-A (docs/mern/api.md §3.1, §6.1).
+ * Auth & account (mounted at /api/auth) — owner: SERVER-A (docs/api.md §3.1, §6.1).
  * Port of src/app/(auth)/actions.ts, changePasswordAction in (app)/profile-actions.ts and the app layout's user data.
  *   GET  /me                 public
  *   POST /register           public

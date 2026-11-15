@@ -1,5 +1,5 @@
 /**
- * Error responses (docs/mern/api.md §1.4): `{ error: { code, message, fieldErrors? } }`.
+ * Error responses (docs/api.md §1.4): `{ error: { code, message, fieldErrors? } }`.
  */
 import mongoose from "mongoose";
 import { isDatabaseUnavailable } from "../db.js";

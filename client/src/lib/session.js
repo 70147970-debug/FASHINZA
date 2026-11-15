@@ -2,7 +2,7 @@
  * The signed-in user (GET /api/auth/me) and the page gates that replace `requireUser` /
  * `requireOnboardedUser` from src/server/auth/session.ts and the optimistic redirect in src/proxy.ts.
  *
- * Route loaders call the gates *before* loading page data (docs/mern/api.md §2); the server checks the
+ * Route loaders call the gates *before* loading page data (docs/api.md §2); the server checks the
  * same rules again on every endpoint. All loaders of one navigation share a single /api/auth/me request.
  *
  *   export async function loader({ request }) {

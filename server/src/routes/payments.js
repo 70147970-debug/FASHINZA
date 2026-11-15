@@ -1,5 +1,5 @@
 /**
- * Payments (mounted at /api/payments) — owner: SERVER-B (docs/mern/api.md §6.1). Ports the /payments page data
+ * Payments (mounted at /api/payments) — owner: SERVER-B (docs/api.md §6.1). Ports the /payments page data
  * and startPaymentAction (src/app/(app)/orders/actions.ts).
  */
 import { Router } from "express";

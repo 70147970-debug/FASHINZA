@@ -1,5 +1,5 @@
 /**
- * Disputes (mounted at /api/disputes) — owner: SERVER-B (docs/mern/api.md §6.1). Ports raiseDisputeAction
+ * Disputes (mounted at /api/disputes) — owner: SERVER-B (docs/api.md §6.1). Ports raiseDisputeAction
  * (src/app/(app)/orders/actions.ts) and the /disputes, /disputes/[id] and /admin/disputes page data.
  * The admin update endpoint lives in routes/admin.js (POST /api/admin/disputes/:id).
  */

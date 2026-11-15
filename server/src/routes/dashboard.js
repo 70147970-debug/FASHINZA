@@ -1,5 +1,5 @@
 /**
- * Dashboard (mounted at /api/dashboard) — owner: SERVER-B (docs/mern/api.md §6.1). Port of the /dashboard page
+ * Dashboard (mounted at /api/dashboard) — owner: SERVER-B (docs/api.md §6.1). Port of the /dashboard page
  * data (src/app/(app)/dashboard/page.tsx). Admins get ROLE_DENIED; the client sends them to /admin first.
  */
 import { Router } from "express";
