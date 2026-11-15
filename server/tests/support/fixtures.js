@@ -19,7 +19,8 @@ const services = {
 };
 
 let seq = 0;
-export const PASSWORD = "Password123";
+/** Meets the password policy (12–16 characters, capital, small letter, number, symbol). */
+export const PASSWORD = "Brand#Pass2026";
 
 /** @typedef {{ id: string, role: "BRAND" | "MANUFACTURER" | "ADMIN", name: string, email: string, profileCompleted: boolean }} Actor */
 
@@ -38,11 +39,17 @@ export async function makeAdmin() {
   return { id: user._id.toHexString(), role: "ADMIN", name: "Admin", email, profileCompleted: true };
 }
 
-/** @returns {Promise<Actor>} */
-export async function makeBrand() {
+/**
+ * An onboarded brand. New brands start PENDING approval; pass `{ approved: false }` to keep it that way,
+ * otherwise it is approved (as an administrator would) so it can create projects.
+ * @param {{ approved?: boolean }} [o]
+ * @returns {Promise<Actor>}
+ */
+export async function makeBrand(o = {}) {
   const { saveBrandProfile } = await services.profiles();
   const brand = await makeUser("BRAND");
   await saveBrandProfile(brand, { companyName: `Brand ${seq}`, country: "United Kingdom" });
+  if (o.approved !== false) await User.updateOne({ _id: brand.id }, { $set: { approvalStatus: "APPROVED", approvalReviewedAt: new Date() } });
   return { ...brand, profileCompleted: true };
 }
 

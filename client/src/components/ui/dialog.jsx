@@ -9,15 +9,16 @@ export const DialogClose = DialogPrimitive.Close;
 
 /**
  * Accessible modal: focus is trapped, Escape closes it, and it scrolls within the viewport on small screens.
- * `size`: sm 400px, md 512px (default), lg 640px. 8px radius, raised surface, the one place with a soft shadow. Put the action row last in children; ActionDialog does this.
+ * `size`: sm 400px, md 512px (default), lg 640px. 14px radius, a strong liquid-glass panel (≥88% raised surface over
+ * a softly blurred overlay, so text keeps AA contrast) that rises in. Put the action row last in children; ActionDialog does this.
  */
 export function DialogContent({ title, description, className, size = "md", children, ...props }) {
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-overlay" />
+      <DialogPrimitive.Overlay className="fz-overlay fixed inset-0 z-50 bg-overlay backdrop-blur-[3px]" />
       <DialogPrimitive.Content
         className={cn(
-          "fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-line bg-surface-raised text-ink shadow-pop focus:outline-none",
+          "fz-dialog glass-strong fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-line text-ink focus:outline-none",
           { sm: "max-w-sm", md: "max-w-lg", lg: "max-w-2xl" }[size],
           className,
         )}

@@ -8,7 +8,8 @@
  *         every file is a generated placeholder named "demo-…". Records are created through the real
  *         services (projects, matching, quotations, orders, sampling, QC, sandbox payments), so they pass
  *         the same validation and permission checks as real data:
- *           - four verified demo factories with capabilities and machinery;
+ *           - fourteen verified demo factories with capabilities, machinery and demo certificates, in Pakistan,
+ *             Bangladesh, India, Sri Lanka, Vietnam, China, Turkey, Portugal, Morocco and Indonesia;
  *           - three demo brands with projects in different states: a draft, a brief waiting for quotes,
  *             a brief with two quotations (with sample proposals), an order mid-production (fabric
  *             sourced, sample approved, cutting in progress) and a delivered order with a QC report.
@@ -169,7 +170,11 @@ function demoPng(fileName, hex, width = 320, height = 240) {
 
 const NOT_REAL = "This is a demo profile for exploring Fashinza. It is not a real business.";
 
-/** Certifications are limited to the demo documents these factories have always had; the new factory has none. */
+/**
+ * Demo factories, all verified by the seed. `certs` become demo certificate documents (placeholder PDFs) that the
+ * seed marks verified, so matching treats them like reviewed certificates; the sportswear factory has none. The
+ * first four have always been seeded; the other ten add more sourcing countries and the newer categories.
+ */
 const FACTORIES = [
   {
     key: "knits", email: "demo-factory-knits@fashinza.test", name: "Demo Knitwear Mills (Demo)", city: "Lahore", country: "Pakistan",
@@ -217,6 +222,155 @@ const FACTORIES = [
       { type: "Heat transfer press", quantity: 6 }, { type: "Cutting table / straight knife", quantity: 3 }, { type: "Thread trimming machine", quantity: 2 },
     ],
   },
+  // Ten more factories in other sourcing countries, covering the newer categories. MOQs, lead times and
+  // certificates differ on purpose, so matching both invites and excludes them for different reasons.
+  {
+    key: "uniforms", email: "demo-factory-uniforms@fashinza.test", name: "Demo Uniform & Teamwear Co. (Demo)", city: "Faisalabad", country: "Pakistan",
+    description: `Corporate uniforms, workwear and teamwear: work shirts, polo shirts, cargo trousers, hi-vis garments and sublimated team jerseys, with embroidery and reflective tape application in-house. ${NOT_REAL}`,
+    categories: ["UNIFORMS_WORKWEAR", "SPORTS_JERSEYS", "POLO_SHIRTS", "SHIRTS", "TROUSERS"],
+    production: ["Cut and sew", "Woven garments", "Pattern making", "Embroidery", "Screen printing", "Sublimation", "Sampling", "Reflective tape application"],
+    fabrics: ["Cotton", "Polyester", "Recycled polyester", "Jersey knit", "Poly-cotton twill", "Canvas"], finishing: ["Labelling", "Pressing and folding", "Custom packaging"],
+    moq: 500, capacity: 30000, lead: 50, certs: ["WRAP", "ISO 9001"],
+    machinery: [
+      { type: "Single-needle lockstitch", quantity: 140 }, { type: "Double-needle lockstitch", quantity: 30 }, { type: "Overlock 4-thread", quantity: 36 },
+      { type: "Feed-off-the-arm", quantity: 12 }, { type: "Bartack", quantity: 10 }, { type: "Buttonhole", quantity: 8 }, { type: "Button attach", quantity: 8 },
+      { type: "Embroidery machine", quantity: 6 }, { type: "Sublimation printer and calender", quantity: 3 }, { type: "Heat transfer press", quantity: 8 },
+      { type: "Reflective tape sealing press", quantity: 4 }, { type: "Cutting table / straight knife", quantity: 6 }, { type: "Needle detector", quantity: 2 },
+    ],
+  },
+  {
+    key: "composite", email: "demo-factory-composite@fashinza.test", name: "Demo Knit Composite (Demo)", city: "Gazipur", country: "Bangladesh",
+    description: `Vertical knit composite with knitting, dyeing, printing and sewing under one roof, for basics, polo shirts, kidswear, babywear, loungewear and sleepwear in large runs. ${NOT_REAL}`,
+    categories: ["T_SHIRTS", "POLO_SHIRTS", "HOODIES_SWEATSHIRTS", "KIDSWEAR", "BABYWEAR", "LOUNGEWEAR", "SLEEPWEAR"],
+    production: ["Knitting", "Cut and sew", "Screen printing", "Embroidery", "Sampling"],
+    fabrics: ["Cotton", "Organic cotton", "Jersey knit", "Fleece", "Recycled polyester", "Rib knit", "Interlock"],
+    finishing: ["Garment dyeing", "Labelling", "Pressing and folding", "Custom packaging"],
+    moq: 2000, capacity: 180000, lead: 60, certs: ["GOTS", "OEKO-TEX Standard 100", "BCI", "WRAP"],
+    machinery: [
+      { type: "Circular knitting machine", quantity: 48 }, { type: "Single-needle lockstitch", quantity: 260 }, { type: "Overlock 4-thread", quantity: 210 },
+      { type: "Flatlock / coverstitch", quantity: 140 }, { type: "Fabric spreading machine", quantity: 6 }, { type: "Cutting table / straight knife", quantity: 12 },
+      { type: "Screen printing carousel", quantity: 10 }, { type: "Embroidery machine", quantity: 8 }, { type: "Snap / rivet press", quantity: 10 },
+      { type: "Steam press", quantity: 36 }, { type: "Needle detector", quantity: 4 },
+    ],
+  },
+  {
+    key: "ethnic", email: "demo-factory-ethnic@fashinza.test", name: "Demo Jaipur Craft Studio (Demo)", city: "Jaipur", country: "India",
+    description: `Hand block printing and hand embroidery studio for ethnic wear (kurtas, shalwar kameez, kaftans), bridal and eveningwear, dresses, tops and printed scarves, in small batches. ${NOT_REAL}`,
+    categories: ["ETHNIC_WEAR", "BRIDAL_EVENINGWEAR", "DRESSES", "BLOUSES_TOPS", "SCARVES_SHAWLS"],
+    production: ["Cut and sew", "Woven garments", "Pattern making", "Embroidery", "Digital printing", "Sampling", "Hand block printing", "Hand embroidery (zardozi, aari)"],
+    fabrics: ["Cotton", "Organic cotton", "Silk", "Linen", "Viscose", "Georgette and chiffon"],
+    finishing: ["Labelling", "Pressing and folding", "Custom packaging", "Hand finishing"],
+    moq: 100, capacity: 5000, lead: 50, certs: ["GOTS", "Fairtrade"],
+    machinery: [
+      { type: "Single-needle lockstitch", quantity: 40 }, { type: "Overlock 3-thread", quantity: 10 }, { type: "Embroidery machine", quantity: 4 },
+      { type: "Hand embroidery frame (adda)", quantity: 30 }, { type: "Block printing table", quantity: 12 }, { type: "Digital textile printer", quantity: 1 },
+      { type: "Cutting table / straight knife", quantity: 2 }, { type: "Steam press", quantity: 4 },
+    ],
+  },
+  {
+    key: "intimates", email: "demo-factory-intimates@fashinza.test", name: "Demo Lanka Intimates & Swim (Demo)", city: "Katunayake", country: "Sri Lanka",
+    description: `Lingerie, swimwear and performance activewear with moulded cups, bonded seams and laser-cut edges, plus loungewear and sleepwear, for brands that need technical construction. ${NOT_REAL}`,
+    categories: ["LINGERIE", "SWIMWEAR", "ACTIVEWEAR", "LOUNGEWEAR", "SLEEPWEAR"],
+    production: ["Cut and sew", "Pattern making", "Sublimation", "Sampling", "Bonding and laser cutting", "Cup moulding"],
+    fabrics: ["Recycled polyester", "Polyester", "Jersey knit", "Nylon-elastane", "Lace", "Microfibre"],
+    finishing: ["Labelling", "Custom packaging"],
+    moq: 500, capacity: 40000, lead: 55, certs: ["OEKO-TEX Standard 100", "WRAP", "ISO 9001"],
+    machinery: [
+      { type: "Overlock 4-thread", quantity: 60 }, { type: "Flatlock / coverstitch", quantity: 50 }, { type: "Zigzag lockstitch", quantity: 70 },
+      { type: "Single-needle lockstitch", quantity: 40 }, { type: "Bartack", quantity: 12 }, { type: "Bonding machine", quantity: 10 },
+      { type: "Laser cutting machine", quantity: 4 }, { type: "Cup moulding machine", quantity: 6 }, { type: "Heat transfer press", quantity: 8 },
+      { type: "Cutting table / straight knife", quantity: 6 }, { type: "Needle detector", quantity: 2 },
+    ],
+  },
+  {
+    key: "shirts", email: "demo-factory-shirts@fashinza.test", name: "Demo Saigon Wovens (Demo)", city: "Ho Chi Minh City", country: "Vietnam",
+    description: `Woven womenswear and menswear: shirts, blouses, dresses, skirts, jumpsuits, trousers and shorts in cotton, linen, silk and lyocell, with a fit and pattern room. ${NOT_REAL}`,
+    categories: ["SHIRTS", "BLOUSES_TOPS", "DRESSES", "SKIRTS", "JUMPSUITS", "TROUSERS", "SHORTS"],
+    production: ["Cut and sew", "Woven garments", "Pattern making", "Digital printing", "Sampling"],
+    fabrics: ["Cotton", "Linen", "Silk", "Viscose", "Tencel lyocell", "Recycled polyester"],
+    finishing: ["Enzyme washing", "Labelling", "Pressing and folding", "Custom packaging"],
+    moq: 200, capacity: 25000, lead: 45, certs: ["OEKO-TEX Standard 100", "WRAP"],
+    machinery: [
+      { type: "Single-needle lockstitch", quantity: 120 }, { type: "Overlock 3-thread", quantity: 20 }, { type: "Overlock 5-thread", quantity: 14 },
+      { type: "Buttonhole", quantity: 6 }, { type: "Button attach", quantity: 6 }, { type: "Blind hem machine", quantity: 6 }, { type: "Fusing press", quantity: 4 },
+      { type: "Fabric spreading machine", quantity: 2 }, { type: "Cutting table / straight knife", quantity: 5 }, { type: "Steam press", quantity: 14 },
+      { type: "Needle detector", quantity: 2 },
+    ],
+  },
+  {
+    key: "coats", email: "demo-factory-coats@fashinza.test", name: "Demo Ningbo Coats & Tailoring (Demo)", city: "Ningbo", country: "China",
+    description: `Tailored coats, suits and blazers and padded outerwear, with fusing, canvassing and seam-sealing lines for wool coats and technical jackets. ${NOT_REAL}`,
+    categories: ["COATS", "OUTERWEAR", "SUITS_BLAZERS"],
+    production: ["Cut and sew", "Woven garments", "Pattern making", "Sampling", "Down and wadding filling", "Seam sealing"],
+    fabrics: ["Wool blends", "Polyester", "Recycled polyester", "Nylon", "Cashmere blends", "Cotton"],
+    finishing: ["Pressing and folding", "Labelling", "Custom packaging"],
+    moq: 500, capacity: 20000, lead: 60, certs: ["OEKO-TEX Standard 100", "ISO 9001"],
+    machinery: [
+      { type: "Single-needle lockstitch", quantity: 160 }, { type: "Double-needle lockstitch", quantity: 20 }, { type: "Overlock 4-thread", quantity: 24 },
+      { type: "Buttonhole", quantity: 8 }, { type: "Keyhole buttonhole", quantity: 4 }, { type: "Button attach", quantity: 8 }, { type: "Fusing press", quantity: 6 },
+      { type: "Pick-stitch machine", quantity: 6 }, { type: "Down filling machine", quantity: 4 }, { type: "Seam sealing machine", quantity: 8 },
+      { type: "Automatic cutter (CAD/CAM)", quantity: 2 }, { type: "Steam press", quantity: 24 }, { type: "Needle detector", quantity: 2 },
+    ],
+  },
+  {
+    key: "jersey", email: "demo-factory-jersey@fashinza.test", name: "Demo Aegean Organic Jersey (Demo)", city: "Izmir", country: "Turkey",
+    description: `Organic cotton jersey garments: T-shirts, sweatshirts, jersey dresses, loungewear, maternity, kidswear and babywear, with in-house knitting, garment dyeing and printing. ${NOT_REAL}`,
+    categories: ["T_SHIRTS", "HOODIES_SWEATSHIRTS", "DRESSES", "LOUNGEWEAR", "MATERNITY", "KIDSWEAR", "BABYWEAR"],
+    production: ["Knitting", "Cut and sew", "Pattern making", "Screen printing", "Digital printing", "Embroidery", "Sampling"],
+    fabrics: ["Organic cotton", "Cotton", "Jersey knit", "Fleece", "Modal", "Tencel lyocell"],
+    finishing: ["Garment dyeing", "Enzyme washing", "Labelling", "Custom packaging"],
+    moq: 300, capacity: 18000, lead: 40, certs: ["GOTS", "OEKO-TEX Standard 100"],
+    machinery: [
+      { type: "Circular knitting machine", quantity: 10 }, { type: "Single-needle lockstitch", quantity: 50 }, { type: "Overlock 4-thread", quantity: 40 },
+      { type: "Flatlock / coverstitch", quantity: 26 }, { type: "Cutting table / straight knife", quantity: 4 }, { type: "Screen printing carousel", quantity: 4 },
+      { type: "Digital textile printer", quantity: 2 }, { type: "Embroidery machine", quantity: 3 }, { type: "Garment dyeing machine", quantity: 4 },
+      { type: "Steam press", quantity: 8 }, { type: "Needle detector", quantity: 1 },
+    ],
+  },
+  {
+    key: "sweaters", email: "demo-factory-sweaters@fashinza.test", name: "Demo Minho Knitwear (Demo)", city: "Barcelos", country: "Portugal",
+    description: `Premium knitwear and jersey in small runs: fully fashioned sweaters and cardigans, T-shirts, polo shirts, sweatshirts and socks, close to European markets. ${NOT_REAL}`,
+    categories: ["KNITWEAR", "T_SHIRTS", "POLO_SHIRTS", "HOODIES_SWEATSHIRTS", "SOCKS_HOSIERY"],
+    production: ["Knitting", "Cut and sew", "Pattern making", "Embroidery", "Screen printing", "Sampling", "Fully fashioned knitting", "Linking"],
+    fabrics: ["Organic cotton", "Cotton", "Jersey knit", "Fleece", "Wool blends", "Merino wool"],
+    finishing: ["Garment dyeing", "Labelling", "Pressing and folding", "Custom packaging"],
+    moq: 150, capacity: 10000, lead: 30, certs: ["GOTS", "OEKO-TEX Standard 100"],
+    machinery: [
+      { type: "Flat knitting machine", quantity: 16 }, { type: "Circular knitting machine", quantity: 6 }, { type: "Sock knitting machine", quantity: 24 },
+      { type: "Linking machine", quantity: 10 }, { type: "Single-needle lockstitch", quantity: 30 }, { type: "Overlock 4-thread", quantity: 18 },
+      { type: "Flatlock / coverstitch", quantity: 12 }, { type: "Embroidery machine", quantity: 2 }, { type: "Screen printing carousel", quantity: 1 },
+      { type: "Steam press", quantity: 6 }, { type: "Needle detector", quantity: 1 },
+    ],
+  },
+  {
+    key: "bottoms", email: "demo-factory-bottoms@fashinza.test", name: "Demo Tangier Denim & Wovens (Demo)", city: "Tangier", country: "Morocco",
+    description: `Denim and woven garments for European brands: jeans, trousers, shorts, skirts, jumpsuits and jackets, with laser and ozone finishing in the laundry. ${NOT_REAL}`,
+    categories: ["DENIM", "TROUSERS", "SHORTS", "SKIRTS", "JUMPSUITS", "OUTERWEAR"],
+    production: ["Cut and sew", "Woven garments", "Pattern making", "Sampling"],
+    fabrics: ["Denim", "Cotton", "Tencel lyocell", "Linen"],
+    finishing: ["Enzyme washing", "Stone washing", "Pressing and folding", "Laser finishing", "Ozone washing"],
+    moq: 200, capacity: 15000, lead: 30, certs: ["OEKO-TEX Standard 100", "ISO 9001"],
+    machinery: [
+      { type: "Single-needle lockstitch", quantity: 70 }, { type: "Double-needle lockstitch", quantity: 20 }, { type: "Feed-off-the-arm", quantity: 8 },
+      { type: "Overlock 5-thread", quantity: 14 }, { type: "Bartack", quantity: 8 }, { type: "Buttonhole", quantity: 4 }, { type: "Snap / rivet press", quantity: 6 },
+      { type: "Belt loop machine", quantity: 4 }, { type: "Laser finishing machine", quantity: 2 }, { type: "Ozone washing machine", quantity: 1 },
+      { type: "Industrial washing machine", quantity: 6 }, { type: "Cutting table / straight knife", quantity: 4 }, { type: "Needle detector", quantity: 1 },
+    ],
+  },
+  {
+    key: "bags", email: "demo-factory-bags@fashinza.test", name: "Demo Bandung Bags & Accessories (Demo)", city: "Bandung", country: "Indonesia",
+    description: `Cut-and-sew accessories: totes and backpacks, caps and bucket hats, printed scarves and small accessories in canvas, nylon and recycled polyester. ${NOT_REAL}`,
+    categories: ["BAGS", "HEADWEAR", "SCARVES_SHAWLS", "ACCESSORIES"],
+    production: ["Cut and sew", "Pattern making", "Embroidery", "Screen printing", "Digital printing", "Sampling"],
+    fabrics: ["Cotton", "Canvas", "Recycled polyester", "Polyester", "Nylon", "Vegan leather (PU)"],
+    finishing: ["Labelling", "Custom packaging"],
+    moq: 300, capacity: 20000, lead: 40, certs: ["SA8000"],
+    machinery: [
+      { type: "Single-needle lockstitch", quantity: 50 }, { type: "Post-bed machine", quantity: 12 }, { type: "Double-needle lockstitch", quantity: 10 },
+      { type: "Binding machine", quantity: 8 }, { type: "Bartack", quantity: 6 }, { type: "Cap sewing machine", quantity: 4 }, { type: "Embroidery machine", quantity: 4 },
+      { type: "Hydraulic clicker press", quantity: 3 }, { type: "Heat transfer press", quantity: 3 }, { type: "Needle detector", quantity: 1 },
+    ],
+  },
 ];
 
 const BRANDS = {
@@ -245,7 +399,8 @@ async function demoUser(email, role, name, org, password) {
     if (existing.role !== role) throw new Error(`${email} exists with role ${existing.role}; expected ${role}.`);
     return { actor: { id: existing._id.toHexString(), role, name: existing.name, email, profileCompleted: true }, created: false };
   }
-  const id = await registerAccount({ role, name, organization: org, email, password, confirmPassword: password });
+  // Demo brands are created approved, so administrators are not asked to review them (see seedBrand).
+  const id = await registerAccount({ role, name, organization: org, email, password, confirmPassword: password }, { approved: true });
   return { actor: { id, role, name, email, profileCompleted: true }, created: true };
 }
 
@@ -274,6 +429,12 @@ async function seedFactory(admin, f, password) {
 async function seedBrand(b, password) {
   const { actor, created } = await demoUser(b.email, "BRAND", b.person, b.org, password);
   await saveBrandProfile(actor, { companyName: b.org, country: b.country, city: b.city, description: b.description });
+  // New brands start PENDING approval (services/brand-approval.js); demo brands are created approved (demoUser)
+  // so their demo projects can be created. Demo brands left pending by an older seed are approved here.
+  await User.updateOne(
+    { _id: toObjectId(actor.id), approvalStatus: { $ne: "APPROVED" } },
+    { $set: { approvalStatus: "APPROVED", approvalNote: "Demo brand approved by the seed script.", approvalReviewedAt: new Date() } },
+  );
   if (created) console.log(`Created demo brand ${b.email}`);
   return actor;
 }

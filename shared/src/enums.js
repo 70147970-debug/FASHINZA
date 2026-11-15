@@ -10,11 +10,26 @@ export const Role = Object.freeze(["BRAND", "MANUFACTURER", "ADMIN"]);
 /** @type {readonly ["ACTIVE", "SUSPENDED"]} */
 export const UserStatus = Object.freeze(["ACTIVE", "SUSPENDED"]);
 
+/**
+ * Brand approval (MERN addition, not in the Prisma schema): new brand accounts start PENDING until an administrator
+ * approves or rejects them. Users without the field (older records, manufacturers, admins) count as APPROVED.
+ * @type {readonly ["PENDING", "APPROVED", "REJECTED"]}
+ */
+export const ApprovalStatus = Object.freeze(["PENDING", "APPROVED", "REJECTED"]);
+
 /** @type {readonly ["UNSUBMITTED", "PENDING", "VERIFIED", "REJECTED"]} */
 export const VerificationStatus = Object.freeze(["UNSUBMITTED", "PENDING", "VERIFIED", "REJECTED"]);
 
-/** @type {readonly ["T_SHIRTS", "SHIRTS", "DRESSES", "DENIM", "TROUSERS", "ACTIVEWEAR", "OUTERWEAR", "KNITWEAR", "HOODIES_SWEATSHIRTS", "KIDSWEAR", "SLEEPWEAR", "ACCESSORIES"]} */
-export const GarmentCategory = Object.freeze(["T_SHIRTS", "SHIRTS", "DRESSES", "DENIM", "TROUSERS", "ACTIVEWEAR", "OUTERWEAR", "KNITWEAR", "HOODIES_SWEATSHIRTS", "KIDSWEAR", "SLEEPWEAR", "ACCESSORIES"]);
+/**
+ * The first twelve values are the Prisma schema's; the rest were added in the MERN app only (appended, so
+ * existing values keep their sort rank).
+ * @type {readonly ["T_SHIRTS", "SHIRTS", "DRESSES", "DENIM", "TROUSERS", "ACTIVEWEAR", "OUTERWEAR", "KNITWEAR", "HOODIES_SWEATSHIRTS", "KIDSWEAR", "SLEEPWEAR", "ACCESSORIES", "POLO_SHIRTS", "BLOUSES_TOPS", "SKIRTS", "SHORTS", "JUMPSUITS", "SUITS_BLAZERS", "COATS", "SWIMWEAR", "LINGERIE", "LOUNGEWEAR", "UNIFORMS_WORKWEAR", "ETHNIC_WEAR", "BRIDAL_EVENINGWEAR", "MATERNITY", "BABYWEAR", "SPORTS_JERSEYS", "SOCKS_HOSIERY", "SCARVES_SHAWLS", "HEADWEAR", "BAGS"]}
+ */
+export const GarmentCategory = Object.freeze([
+  "T_SHIRTS", "SHIRTS", "DRESSES", "DENIM", "TROUSERS", "ACTIVEWEAR", "OUTERWEAR", "KNITWEAR", "HOODIES_SWEATSHIRTS", "KIDSWEAR", "SLEEPWEAR", "ACCESSORIES",
+  "POLO_SHIRTS", "BLOUSES_TOPS", "SKIRTS", "SHORTS", "JUMPSUITS", "SUITS_BLAZERS", "COATS", "SWIMWEAR", "LINGERIE", "LOUNGEWEAR", "UNIFORMS_WORKWEAR",
+  "ETHNIC_WEAR", "BRIDAL_EVENINGWEAR", "MATERNITY", "BABYWEAR", "SPORTS_JERSEYS", "SOCKS_HOSIERY", "SCARVES_SHAWLS", "HEADWEAR", "BAGS",
+]);
 
 /** @type {readonly ["PRODUCTION", "FABRIC", "FINISHING"]} */
 export const CapabilityKind = Object.freeze(["PRODUCTION", "FABRIC", "FINISHING"]);

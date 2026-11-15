@@ -46,8 +46,8 @@ function NavLinks({ role, unread, onNavigate }) {
                   className={cn(
                     "group relative flex h-9 items-center gap-3 rounded-md px-3 text-sm transition-colors duration-150 max-lg:h-10",
                     active
-                      ? "bg-surface font-medium text-ink shadow-[inset_0_0_0_1px_var(--color-line)] before:absolute before:inset-y-2 before:-left-3 before:w-[3px] before:rounded-r-xs before:bg-accent"
-                      : "text-ink-muted hover:bg-surface-hover hover:text-ink",
+                      ? "bg-surface font-medium text-ink shadow-[inset_0_0_0_1px_var(--color-line),inset_0_1px_0_var(--glass-rim),0_1px_2px_var(--color-shadow-soft)] before:absolute before:inset-y-2 before:-left-3 before:w-[3px] before:rounded-r-xs before:bg-accent"
+                      : "text-ink-muted hover:bg-surface-hover/80 hover:text-ink",
                   )}
                 >
                   <item.icon
@@ -133,6 +133,12 @@ const THEME_ICONS = { light: Sun, dark: Moon, system: Monitor };
 const menuItem =
   "flex w-full cursor-default items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-sm text-ink outline-none transition-colors data-[highlighted]:bg-surface-hover data-[highlighted]:text-ink max-sm:min-h-10 [&_svg]:size-4 [&_svg]:text-ink-muted";
 
+/*
+ * Liquid shell: the page sits on canvas with faint fixed taupe / forest-green glows (bg-liquid on a fixed
+ * layer, behind everything); the sidebar is subtle glass over them and the top bar is glass-bar, so content
+ * scrolling underneath blurs through. Cards and tables stay solid surfaces, so data keeps full contrast.
+ */
+
 export function AppShell({ user, unread, signOut, children }) {
   const signOutForm = useRef(null);
   const searchInput = useRef(null);
@@ -162,7 +168,8 @@ export function AppShell({ user, unread, signOut, children }) {
   }, []);
 
   return (
-    <div className="min-h-dvh lg:pl-sidebar">
+    <div className="relative isolate min-h-dvh lg:pl-sidebar">
+      <div aria-hidden className="bg-liquid pointer-events-none fixed inset-0 -z-10" />
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-[60] focus:rounded-md focus:bg-surface-raised focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-ink focus:shadow-pop"
@@ -171,12 +178,12 @@ export function AppShell({ user, unread, signOut, children }) {
       </a>
 
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-sidebar border-r border-line bg-canvas lg:block">
+      <aside className="glass-subtle fixed inset-y-0 left-0 z-30 hidden w-sidebar border-r border-line lg:block">
         <SidebarBody user={user} unread={unread} onSignOut={requestSignOut} />
       </aside>
 
       {/* Top bar */}
-      <header className="sticky top-0 z-20 border-b border-line bg-canvas/90 backdrop-blur supports-[backdrop-filter]:bg-canvas/80">
+      <header className="glass-bar sticky top-0 z-20">
         <div className="flex h-16 items-center gap-2 px-3 sm:gap-3 sm:px-6 lg:px-8">
           <Sheet>
             <SheetTrigger asChild>
@@ -188,7 +195,7 @@ export function AppShell({ user, unread, signOut, children }) {
                 <Menu className="size-5" aria-hidden />
               </button>
             </SheetTrigger>
-            <SheetContent title="Navigation" side="left" hideTitle className="w-[17.5rem] max-w-[85vw] bg-canvas p-0">
+            <SheetContent title="Navigation" side="left" hideTitle className="w-[17.5rem] max-w-[85vw] p-0">
               <SidebarBody user={user} unread={unread} onSignOut={requestSignOut} mobile />
             </SheetContent>
           </Sheet>
@@ -256,7 +263,7 @@ export function AppShell({ user, unread, signOut, children }) {
                 <DropdownMenu.Content
                   align="end"
                   sideOffset={8}
-                  className="z-50 w-64 rounded-lg border border-line bg-surface-raised p-1.5 text-ink shadow-pop"
+                  className="fz-menu glass-strong z-50 w-64 rounded-xl border border-line p-1.5 text-ink"
                 >
                   <div className="flex items-center gap-2.5 px-2.5 py-2">
                     <Avatar name={user.name} />

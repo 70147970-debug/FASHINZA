@@ -1,8 +1,9 @@
 import { Link, useLoaderData } from "react-router";
-import { ClipboardList, Plus } from "lucide-react";
+import { ClipboardList } from "lucide-react";
 import { loadJson } from "@/lib/api";
 import { DataTable, EmptyState, MobileCard, MobileCardList, PageHeader, Pagination, StatusBadge } from "@/components/app/primitives";
 import { FilterBar } from "@/components/app/filter-bar";
+import { BrandApprovalNotice, CreateProjectButton } from "@/components/app/brand-approval";
 import { StatusTabs } from "@/components/orders/order-parts";
 import { ProjectProgress } from "@/components/projects/project-progress";
 import { Button } from "@/components/ui/button";
@@ -40,7 +41,7 @@ export async function loader({ request, user }) {
   const sp = Object.fromEntries(new URL(request.url).searchParams);
   const status = sp.status && (sp.status === "ACTIVE" || sp.status in PROJECT_STATUS) ? sp.status : undefined;
   const data = await loadJson("/api/projects", { request, query: { q: sp.q, status, page: Number(sp.page) || 1 } });
-  return { actor: { role: user.role }, sp, status, data };
+  return { actor: { role: user.role, approvalStatus: user.approvalStatus, approvalNote: user.approvalNote, profileCompleted: user.profileCompleted }, sp, status, data };
 }
 
 export default function ProjectsPage() {
@@ -55,16 +56,9 @@ export default function ProjectsPage() {
       <PageHeader
         title="Projects"
         description="Every production brief, from draft to delivery."
-        actions={
-          actor.role === "BRAND" && (
-            <Button asChild variant="accent">
-              <Link to="/projects/new">
-                <Plus /> Create production project
-              </Link>
-            </Button>
-          )
-        }
+        actions={actor.role === "BRAND" && <CreateProjectButton user={actor} />}
       />
+      <BrandApprovalNotice user={actor} />
       {sp.deleted && (
         <Alert tone="success" className="mb-4">
           The draft was deleted.
@@ -88,13 +82,7 @@ export default function ProjectsPage() {
                 <Link to="/projects">Show all projects</Link>
               </Button>
             ) : (
-              actor.role === "BRAND" && (
-                <Button asChild variant="accent">
-                  <Link to="/projects/new">
-                    <Plus /> Create production project
-                  </Link>
-                </Button>
-              )
+              actor.role === "BRAND" && <CreateProjectButton user={actor} />
             )
           }
         />

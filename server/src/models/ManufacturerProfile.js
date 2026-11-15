@@ -1,5 +1,6 @@
 import { GarmentCategory, VerificationStatus } from "@fashinza/shared/enums.js";
 import { BOTH, enumOf, int, makeSchema, model, optDate, optStr, ref, str } from "./_schema.js";
+import { socialLinks } from "./_social-links.js";
 
 const schema = makeSchema(
   {
@@ -16,6 +17,7 @@ const schema = makeSchema(
     contactEmail: str(),
     contactPhone: optStr(),
     website: optStr(),
+    socialLinks: socialLinks(),
     verificationStatus: enumOf(VerificationStatus, "UNSUBMITTED"),
     verificationNote: optStr(),
     verificationRequestedAt: optDate(),

@@ -38,6 +38,13 @@ export const E2E_ENV = {
   ADMIN_PASSWORD: "E2eAdminPassword1",
   SEED_DEMO: "1",
   SEED_DEMO_PASSWORD: "E2eDemoPassword1",
+  // Profile links are not opened live in tests (no network access; saved links show "Not checked").
+  LINK_CHECK: "off",
+  // Emails are never sent (empty SMTP credentials win over any in .env); each one is written to this folder as
+  // JSON instead, where the forgot-password spec reads its code (see readMail in helpers.js).
+  SMTP_USER: "",
+  SMTP_PASS: "",
+  MAIL_OUTBOX_DIR: path.join(os.tmpdir(), "fashinza-mern-e2e-mail"),
 };
 
 export const ACCOUNTS = {

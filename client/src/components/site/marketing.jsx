@@ -3,13 +3,15 @@ import { ArrowRight, Check, ClipboardList, Factory, FileText, Info, Ruler, ScanS
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Photo, photoCredit } from "@/components/ui/photo";
+import { Tilt } from "./tilt";
 import { cn } from "@fashinza/shared/utils.js";
 
 /*
- * Public-website building blocks ("Atelier"). Server components.
+ * Public-website building blocks ("Atelier", liquid edition).
  * Charcoal on ivory, Playfair headlines, numbered section heads over thin rules, asymmetric 12-column grids and
- * real garment-industry photography. Sections sit on `canvas` (default) or `surface`; dark photographic bands
- * (hero, closing call to action) carry ivory text over a scrim.
+ * real garment-industry photography. Sections sit on `canvas` (default) or `surface` (white with soft taupe and
+ * forest-green ambient glows, where liquid-glass cards live); dark photographic bands (hero, closing call to
+ * action) carry ivory text over a scrim. Photo cards lean towards the pointer (<Tilt>).
  */
 
 /** Phones: let long call-to-action labels wrap instead of pushing the page sideways at 320px. */
@@ -33,9 +35,9 @@ export function PhotoCredit({ photo, decorative = false, className }) {
   );
 }
 
-/** Ivory outline button for dark photographic bands. */
+/** Frosted ivory-outline button for dark photographic bands (a charcoal glass fill keeps the label legible). */
 export const ON_PHOTO_OUTLINE =
-  "border border-ink-inverse/40 text-ink-inverse hover:bg-ink-inverse/10 hover:text-ink-inverse focus-visible:outline-ink-inverse";
+  "glass-ink border border-ink-inverse/40 text-ink-inverse hover:bg-ink-inverse/15 hover:text-ink-inverse focus-visible:outline-ink-inverse";
 
 export function Section({ className, tone = "default", children, id, labelledBy, containerClassName }) {
   return (
@@ -45,7 +47,7 @@ export function Section({ className, tone = "default", children, id, labelledBy,
       className={cn(
         "scroll-mt-20 py-16 lg:py-24",
         tone === "default" && "bg-canvas",
-        tone === "surface" && "border-y border-line bg-surface",
+        tone === "surface" && "border-y border-line bg-liquid-surface",
         tone === "inverse" && "bg-inverse text-ink-inverse",
         className,
       )}
@@ -99,7 +101,7 @@ export function SectionHeading({ id, index, eyebrow, title, description, split =
 export function PageHero({ eyebrow, title, description, children, aside, photo }) {
   const media = !aside && photo;
   return (
-    <section className="border-b border-line bg-canvas">
+    <section className="border-b border-line bg-liquid">
       <div
         className={cn(
           "container-page grid gap-10 pb-14 pt-12 sm:gap-12 sm:pb-16 sm:pt-16 lg:pb-20 lg:pt-20",
@@ -124,7 +126,7 @@ export function PageHero({ eyebrow, title, description, children, aside, photo }
         </div>
         {aside && <div className="min-w-0 lg:col-span-6">{aside}</div>}
         {media && (
-          <div className="relative aspect-[4/3] min-w-0 lg:col-span-5 lg:col-start-8 lg:aspect-[4/5]">
+          <Tilt max={4} className="aspect-[4/3] min-w-0 rounded-xl shadow-float lg:col-span-5 lg:col-start-8 lg:aspect-[4/5]">
             <Photo
               photo={media.name}
               alt={media.alt}
@@ -135,21 +137,21 @@ export function PageHero({ eyebrow, title, description, children, aside, photo }
               rounded="xl"
               credit
             />
-          </div>
+          </Tilt>
         )}
       </div>
     </section>
   );
 }
 
-/** Editorial feature grid: no boxes, each entry hangs from a rule and is numbered automatically. */
+/** Feature grid of liquid-glass cards, numbered automatically. */
 export function FeatureGrid({ children, columns = 3, className }) {
   return (
     <div
       className={cn(
-        "grid gap-x-10 gap-y-12 [counter-reset:feature] sm:grid-cols-2",
-        columns === 3 && "lg:grid-cols-3",
-        columns === 4 && "lg:grid-cols-4 lg:gap-x-8",
+        "grid gap-4 [counter-reset:feature] sm:grid-cols-2 sm:gap-5",
+        columns === 3 && "lg:grid-cols-3 lg:gap-6",
+        columns === 4 && "lg:grid-cols-4 lg:gap-5",
         className,
       )}
     >
@@ -158,15 +160,17 @@ export function FeatureGrid({ children, columns = 3, className }) {
   );
 }
 
-/** An entry of FeatureGrid: rule, icon and running number, Playfair title, body. */
+/** An entry of FeatureGrid: a glass card with an icon tile and running number, Playfair title, body. */
 export function FeatureCard({ icon: Icon, title, children }) {
   return (
-    <div className="border-t border-line-strong pt-5 [counter-increment:feature]">
+    <div className="glass group/feature rounded-xl border border-line p-5 transition-transform duration-300 [counter-increment:feature] motion-safe:hover:-translate-y-0.5 sm:p-6">
       <div className="flex items-center justify-between gap-3">
-        <Icon className="size-5 text-ink" strokeWidth={1.5} aria-hidden />
+        <span className="grid size-10 place-items-center rounded-lg border border-accent-line bg-accent-soft text-accent-strong">
+          <Icon className="size-5" strokeWidth={1.5} aria-hidden />
+        </span>
         <span aria-hidden className="font-display text-[0.9375rem] italic text-ink-muted tabular before:content-[counter(feature,decimal-leading-zero)]" />
       </div>
-      <h3 className="mt-6 font-display text-[1.3125rem] font-medium leading-7 tracking-[-0.015em] text-ink">{title}</h3>
+      <h3 className="mt-5 font-display text-[1.3125rem] font-medium leading-7 tracking-[-0.015em] text-ink">{title}</h3>
       <div className="mt-2.5 text-[0.9375rem] leading-7 text-ink-muted">{children}</div>
     </div>
   );
@@ -359,7 +363,7 @@ export function CtaBand({
           <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <Button asChild variant="accent" size="lg" className={WRAP_ON_PHONE}>
               <Link to={main.href}>
-                {main.label} <ArrowRight />
+                {main.label} <ArrowRight className="transition-transform duration-200 group-hover/button:translate-x-0.5" />
               </Link>
             </Button>
             {focused ? (

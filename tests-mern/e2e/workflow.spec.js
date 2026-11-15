@@ -1,7 +1,7 @@
 // Port of tests/e2e/workflow.spec.ts for the MERN app (same steps, same selectors).
 import { expect, test } from "@playwright/test";
 import { ACCOUNTS } from "./env.js";
-import { chip, confirmDialog, expectPagesFitPhone, inDays, login, logout, pdf, png } from "./helpers.js";
+import { chip, confirmDialog, expectPagesFitPhone, inDays, login, logout, pdf, pickColour, png } from "./helpers.js";
 
 /**
  * The main business journey across all three roles, in order. Each step depends on the
@@ -9,7 +9,8 @@ import { chip, confirmDialog, expectPagesFitPhone, inDays, login, logout, pdf, p
  */
 test.describe.configure({ mode: "serial" });
 
-const brand = { name: "Ayesha Khan", org: "E2E Threads Ltd", email: `brand-${Date.now()}@e2e.test`, password: "BrandPassword1" };
+// New passwords follow the policy: 12–16 characters with a capital, a small letter, a number and a symbol.
+const brand = { name: "Ayesha Khan", org: "E2E Threads Ltd", email: `brand-${Date.now()}@e2e.test`, password: "Brand#Pass2026" };
 let projectUrl = "";
 let orderUrl = "";
 
@@ -53,16 +54,60 @@ test("a new brand registers and completes onboarding", async ({ page }) => {
   await page.getByLabel("Confirm password").fill(brand.password);
   await page.getByRole("button", { name: "Create account" }).click();
   await expect(page).toHaveURL(/\/onboarding/);
+  // Every new brand is checked by Fashinza before it can create projects; the brand is told so straight away.
+  const review = page.getByRole("region", { name: "Your brand is under review" });
+  await expect(review).toBeVisible();
+  await expect(review.getByText(/Fashinza checks every new brand within 24–48 hours/)).toBeVisible();
   await expect(page.getByLabel("Company name")).toHaveValue(brand.org);
   await page.getByLabel("Country").fill("United Kingdom");
   await page.getByRole("button", { name: "Save and continue" }).click();
   await expect(page).toHaveURL(/\/dashboard\?welcome=1/);
   await expect(page.getByText("Start your first production run")).toBeVisible();
+  // Until an administrator approves the brand, project creation is disabled and the notice says why.
+  await expect(page.getByRole("region", { name: "Your brand is under review" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Create production project", exact: true }).first()).toBeDisabled();
+  // Exact name: the welcome notification ("…you can create production projects once…") is a link too.
+  await expect(page.getByRole("link", { name: "Create production project", exact: true })).toHaveCount(0);
+});
+
+test("an administrator approves the new brand", async ({ page }) => {
+  await logout(page);
+  await login(page, ACCOUNTS.admin.email, ACCOUNTS.admin.password);
+  // The overview lists the brand approval queue; the queue opens on pending brands, newest first.
+  await expect(page.getByRole("link", { name: /Brands awaiting approval/ }).first()).toBeVisible();
+  await page.goto("/admin/brands");
+  await expect(page.getByRole("heading", { name: "Brand approvals", level: 1 })).toBeVisible();
+  await page.getByRole("link", { name: brand.org }).click();
+  await expect(page.getByRole("heading", { name: brand.org, level: 1 })).toBeVisible();
+  await expect(page.getByText(brand.email).first()).toBeVisible();
+  await expect(page.getByText("Awaiting approval").first()).toBeVisible();
+
+  // Rejecting needs a reason.
+  await page.getByRole("button", { name: "Reject brand" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("button", { name: "Reject brand" }).click();
+  // The message is shown above the form and under the field; check the field's own error.
+  await expect(dialog.locator("#note-error")).toHaveText("Give a reason for rejecting the brand.");
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+
+  await page.getByRole("button", { name: "Approve brand" }).click();
+  await confirmDialog(page, "Approve brand", { "Note to the brand": "Company details checked." });
+  await expect(page.getByText("Verified brand").first()).toBeVisible();
+  await expect(page.getByText(/Brand approved/).first()).toBeVisible();
+
+  // The brand is told in the app, and can now create projects.
+  await asBrand(page);
+  await page.goto("/notifications");
+  // Case-sensitive, so the welcome notification ("…once your brand is approved.") does not match too.
+  await expect(page.getByText(/Your brand is approved/)).toBeVisible();
+  await page.goto("/dashboard");
+  await expect(page.getByRole("region", { name: "Your brand is under review" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Create production project", exact: true }).first()).toBeVisible();
 });
 
 test("the brand briefs a project through the wizard and submits it for matching", async ({ page }) => {
   await asBrand(page);
-  await page.getByRole("link", { name: "Create production project" }).first().click();
+  await page.getByRole("link", { name: "Create production project", exact: true }).first().click();
 
   // Step 1 — validation then save.
   await page.getByRole("button", { name: "Save and continue" }).click();
@@ -77,7 +122,9 @@ test("the brand briefs a project through the wizard and submits it for matching"
   // Step 2
   await page.getByLabel("Fabric type and composition").fill("100% organic cotton jersey, 220 gsm");
   await chip(page, "Fabrics the factory must handle", "Organic cotton");
-  await page.getByLabel("Colours").fill("Black, Off-white");
+  // Colours come from the colour picker: search, then choose the listed colour (each has a swatch).
+  await pickColour(page, "Black");
+  await pickColour(page, "Off-white");
   await chip(page, "Sizes", "S");
   await chip(page, "Sizes", "M");
   await chip(page, "Sizes", "L");
@@ -124,8 +171,12 @@ test("the brand briefs a project through the wizard and submits it for matching"
   await expect(page.getByText("Everything factories need is in place.")).toBeVisible();
   await page.getByRole("button", { name: "Submit project for matching" }).click();
   await expect(page).toHaveURL(/submitted=1/);
-  await expect(page.getByText(/1 verified factory was invited to quote/)).toBeVisible();
+  // Three seeded factories make T-shirts with a verified GOTS certificate, an MOQ of at most 500 and a lead time
+  // that fits (server/tests/unit/seed.test.js checks the same brief against the seed's factory list).
+  await expect(page.getByText(/3 verified factories were invited to quote/)).toBeVisible();
   await expect(page.getByRole("heading", { name: /Demo Knitwear Mills/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Demo Aegean Organic Jersey/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Demo Minho Knitwear/ })).toBeVisible();
   // Factories without verified GOTS (and any created by other specs) are listed as excluded.
   await expect(page.getByText(/Missing a required certification: \d+/)).toBeVisible();
 });

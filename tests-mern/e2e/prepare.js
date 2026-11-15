@@ -16,6 +16,7 @@ async function prepare() {
   const name = databaseName(E2E_MONGODB_URI);
   if (!/e2e/i.test(name)) throw new Error("Set E2E_MONGODB_URI to a disposable MongoDB database whose name contains 'e2e'.");
   rmSync(E2E_ENV.UPLOAD_DIR, { recursive: true, force: true });
+  rmSync(E2E_ENV.MAIL_OUTBOX_DIR, { recursive: true, force: true });
 
   const conn = await mongoose.createConnection(E2E_MONGODB_URI, { serverSelectionTimeoutMS: 10_000 }).asPromise();
   try {

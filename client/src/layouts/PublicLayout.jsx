@@ -1,6 +1,7 @@
 import { Outlet } from "react-router";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
+import { BackToTop } from "@/components/site/back-to-top";
 import { homeFor } from "@/components/app/nav";
 import { useSessionUser } from "@/lib/session";
 
@@ -21,6 +22,7 @@ export default function PublicLayout() {
         <Outlet />
       </main>
       <SiteFooter />
+      <BackToTop />
     </div>
   );
 }

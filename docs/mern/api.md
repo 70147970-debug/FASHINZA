@@ -84,6 +84,7 @@ error keys and messages are identical to today.
 | `UNAUTHENTICATED` | 401 | no/expired/suspended session. Message `"Sign in to continue."`. Page loads → client navigates to `/login?next=<encodeURIComponent(pathname+search)>`; mutations → same navigation |
 | `ROLE_DENIED` | 403 | signed in but the role is not allowed (today: `redirect("/dashboard?denied=1")`). Message `"That page is not available for your account type."`. Client navigates to `/dashboard?denied=1` |
 | `PROFILE_INCOMPLETE` | 403 | non-admin whose profile is not completed hit a `requireOnboardedUser` endpoint (today: `redirect("/onboarding")`). Message `"Complete your profile to continue."` (never shown). Client navigates to `/onboarding` |
+| `BRAND_NOT_APPROVED` | 403 | a brand that is not approved yet (`PENDING`) or was rejected tried to create, edit or submit a project (or add files / re-run matching). PENDING: `"Your brand is waiting for approval (usually 24–48 hours). You can create projects once it's approved."`; REJECTED: `"Your brand was not approved. Contact us if you think this is a mistake."` — show message (MERN addition, see "Brand approval") |
 | `FORBIDDEN` | 403 | domain refusal (`forbidden()` / suspended account at login / cross-site request) — show message |
 | `NOT_FOUND` | 404 | `"<What> was not found or you do not have access to it."` (`notFound()`); page loads render the not-found card |
 | `CONFLICT` | 409 | domain conflict (`conflict()`), show message |
@@ -136,7 +137,8 @@ In-memory fixed window from `@fashinza/shared/rate-limit.js` (`rateLimit(key, li
 |---|---|---|---|---|
 | register | `register:<ip>` | 10 / 1 h | before validation | `Too many attempts from your connection. Please wait a few minutes and try again.` |
 | login | `login:<ip>` then `login:<email>` (short-circuit: the email bucket is only touched when the ip bucket allowed) | 20 / 15 min, 10 / 15 min | after validation | same as register |
-| forgot password | `forgot:<ip>` | 5 / 1 h | before validation | same as register |
+| forgot password (send code) | `forgot:<ip>`, then after validation `forgot-wait:<email>` and `forgot-email:<email>` (whether or not an account exists) | 10 / 1 h; 1 / 60 s; 5 / 1 h | ip before validation, email buckets after | ip: same as register; `Please wait a minute before requesting another code.`; `Too many codes were requested for this email. Please try again in an hour.` |
+| forgot password (verify code) | `reset-code:<ip>` | 30 / 15 min | before validation | same as register (each code also stops after 5 wrong guesses) |
 | reset password | `reset:<ip>` | 10 / 1 h | before validation | same as register |
 | contact | `contact:<ip>` | 5 / 10 min | before validation | `Too many messages from your connection. Please try again in a few minutes.` |
 | project upload | `upload:<userId>` | 60 / 10 min | after authentication | `Too many uploads. Please wait a few minutes.` |
@@ -176,6 +178,18 @@ In-memory fixed window from `@fashinza/shared/rate-limit.js` (`rateLimit(key, li
 
 ---
 
+### 1.10 Email (MERN addition)
+
+`server/src/lib/mail.js` exports `sendMail({ to, subject, text, html })` (never throws; resolves `{ sent }`) and
+`sendMailInBackground(message)`. Transport: nodemailer over SMTP — `SMTP_HOST` (default `smtp.gmail.com`),
+`SMTP_PORT` (465), `SMTP_SECURE` (true), `SMTP_USER`, `SMTP_PASS` (for Gmail an app password), `MAIL_FROM` (default
+`Fashinza <SMTP_USER>`); see `server/.env.example`. Without `SMTP_USER`/`SMTP_PASS` nothing is sent: the server
+console gets `[mail] SMTP not configured — not sent` with the recipient, subject and text (so reset codes can be read
+in development). With `MAIL_OUTBOX_DIR` set, every message is also written there as `<time>-<uuid>.json`
+`{ to, subject, text, html, sentAt }` (the e2e suite reads codes from it). Emails are sent after a transaction
+commits, never inside one. Sent today: password reset codes, "New brand awaiting approval" (to administrators) and
+the brand approval decision (to the brand).
+
 ## 2. Page gating (client)
 
 The client reads `GET /api/auth/me` and applies these gates in route loaders **before** loading page data (the
@@ -186,13 +200,14 @@ server enforces the same rules again). "onboarded" = `requireOnboardedUser`, "us
 | `/` and every `(public)` page | none | header shows a workspace link when signed in |
 | `/login` | none | signed in → `homeFor(role)` (`/admin` for ADMIN, else `/dashboard`) |
 | `/register` | none | signed in → `homeFor(role)`; `?role=manufacturer` (case-insensitive) preselects MANUFACTURER, else BRAND |
-| `/forgot-password`, `/reset-password?token=` | none | |
+| `/forgot-password` | none | `?link=old` shows "Reset links are no longer used" |
+| `/reset-password` | none | always → `/forgot-password?link=old` (old reset links; codes replaced them) |
 | `/onboarding` | user | ADMIN → `/admin`; `profileCompleted` → BRAND `/dashboard`, MANUFACTURER `/factory` |
 | `/dashboard` | onboarded | ADMIN → `/admin`; shows `?denied=1` alert and `?welcome=1` (brand) |
 | `/projects` | onboarded BRAND, ADMIN | |
-| `/projects/new` | onboarded BRAND | |
+| `/projects/new` | onboarded BRAND | brand not approved → approval notice instead of the wizard |
 | `/projects/:id/edit` | onboarded BRAND | not found → not-found card; status not DRAFT/SUBMITTED/QUOTING → `/projects/:id` |
-| `/projects/:id` | onboarded | MANUFACTURER → `/opportunities/:id` (before loading); DRAFT and BRAND → `/projects/:id/edit` |
+| `/projects/:id` | onboarded | MANUFACTURER → `/opportunities/:id` (before loading); DRAFT and BRAND → `/projects/:id/edit`; ADMIN sees every project (drafts too) read-only |
 | `/opportunities`, `/opportunities/:id`, `/quotations` | onboarded MANUFACTURER | |
 | `/orders` | onboarded | ADMIN → `/admin/orders` |
 | `/orders/:id` | onboarded | |
@@ -205,7 +220,7 @@ server enforces the same rules again). "onboarded" = `requireOnboardedUser`, "us
 | `/factory` | onboarded MANUFACTURER | |
 | `/settings` | user | |
 | `/search` | onboarded | empty `q` → empty state without calling the API |
-| `/admin`, `/admin/*` | user ADMIN | |
+| `/admin`, `/admin/*` | user ADMIN | includes `/admin/brands`, `/admin/brands/:id`, `/admin/projects` (MERN additions) |
 | `/sandbox-checkout/:ref` | user BRAND | |
 
 Signed-out visits to any gated page go to `/login?next=<path+search>` (today's `src/proxy.ts`). Role failures go
@@ -237,8 +252,12 @@ Response `200`:
 or
 ```json
 { "user": { "id": "…", "name": "Ayesha Khan", "email": "ayesha@example.com", "role": "BRAND", "profileCompleted": true,
-            "org": "North Thread", "unread": 3 } }
+            "org": "North Thread", "unread": 3, "approvalStatus": "PENDING", "approvalNote": null } }
 ```
+`approvalStatus` (`PENDING`|`APPROVED`|`REJECTED`; MERN addition) is the brand's approval, read from the database on
+every call (missing → `APPROVED`; manufacturers and administrators are always `APPROVED`); `approvalNote` is the
+administrator's note or rejection reason (or `null`). The client shows the approval notice and disables "Create
+production project" unless it is `APPROVED`.
 `org` = BRAND: `brandProfile.companyName ?? null`; MANUFACTURER: `manufacturerProfile.businessName ?? null`;
 ADMIN: `"Fashinza administration"` (today's `(app)/layout.tsx`). `unread` = count of the user's notifications with
 `readAt: null` (`unreadCount`). Never 401.
@@ -255,7 +274,19 @@ profile (BRAND: `brandProfile {companyName: organization, country: ""}`; MANUFAC
 {businessName: organization, description: "", country: "", city: "", minOrderQuantity: 0, maxMonthlyCapacity: 0,
 contactName: name, contactEmail: email}`), notification `SYSTEM` "Welcome to Fashinza" (text per role, link
 `/onboarding`) — see `registerAccount` in `src/server/services/accounts.ts`.
+MERN additions: password policy (below); a new BRAND is created with `approvalStatus: "PENDING"` (its welcome text
+explains the 24–48 hour review) and every ACTIVE administrator gets a `SYSTEM` notification "New brand awaiting
+approval" (link `/admin/brands/<userId>`) in the same transaction, then an email (after the commit, see "Email").
+`registerAccount(input, { approved: true })` (demo seed only) creates the brand APPROVED without notifying anyone.
 Page: `/register` (register-form).
+
+**Password policy** (MERN addition; `passwordSchema` / `PASSWORD_RULES` in `@fashinza/shared/validation/auth.js`)
+for every new password — register, reset, change password; signing in does not apply it, so older passwords keep
+working: 12–16 characters, at least one capital letter, one small letter, one number and one symbol (anything that
+is not a letter, number or space), no spaces. Messages in this order (the field shows the first unmet one):
+`"Use 12 to 16 characters."`, `"Include at least one capital letter."`, `"Include at least one small letter."`,
+`"Include at least one number."`, `"Include at least one symbol, such as ! @ # $ %."`, `"Don't use spaces."`. The
+client shows a live checklist under every new-password field (`client/src/components/forms/password-requirements.jsx`).
 
 ##### `POST /api/auth/login` — public
 Body: `email`, `password`, `next` (optional) (`loginSchema`).
@@ -271,26 +302,42 @@ Deletes the session and the cookie. Success: `{ ok: true, redirectTo: "/login?si
 shell's sign-out item.
 
 ##### `POST /api/auth/forgot-password` — public
-Body: `email` (`z.object({ email: z.string().trim().toLowerCase().email("Enter a valid email address.") })`).
-Order: rate limit → validate → `createPasswordReset(email)`. If a token was issued and `NODE_ENV !== "production"`,
-log `[password-reset] <email>: <APP_URL or http://localhost:3000>/reset-password?token=<token>` (never in
-production). The root `.env` `APP_URL` usually points at the Next app; set `APP_URL` in `server/.env` to the MERN
-client's URL (e.g. `http://localhost:5173` in dev) so the logged link opens the MERN app. Always the same response:
-`{ ok: true, message: "If an account exists for that email, a reset link has been issued. It expires in one hour." }`
-(shown as the inline success alert). Side effect: verification row `identifier = "password-reset:<userId>"`,
-`value = sha256(token)`, expires in 1 h; previous rows for the identifier deleted.
-Page: `/forgot-password`.
+Step 1 of the code flow (MERN: replaces the reset-link flow). Body: `email` (`forgotPasswordSchema`).
+Order: `forgot:<ip>` rate limit → validate → per-email rate limits (see 1.7) → `createPasswordResetCode(email)`.
+For an ACTIVE account: a random 6-digit code; earlier codes, reset tokens and old reset-link rows of the user are
+deleted (one active code per account); verification row `identifier = "password-reset-code:<userId>"`, `value` =
+salted scrypt hash of the code (never the code), `attempts: 0`, expires in 10 minutes; the code is emailed ("Your
+Fashinza password reset code", sent in the background so the answer does not wait for or reveal delivery). Unknown
+or suspended accounts: nothing is stored or sent, and the code is hashed anyway so timing matches.
+Always the same response: `{ ok: true, message: "If an account exists for that email, we've sent a 6-digit code. It
+expires in 10 minutes.", email: <normalised email>, resendAfter: 60 }`. The page offers "Resend code" (same request)
+after `resendAfter` seconds. Page: `/forgot-password`.
+
+##### `POST /api/auth/forgot-password/verify` — public
+Step 2. Body: `email`, `code` (`resetCodeSchema`; spaces are removed, so "123 456" works). Order: `reset-code:<ip>`
+rate limit → validate (empty → `"Enter the 6-digit code from the email."`; not six digits → `"You have entered the
+incorrect code."`) → `verifyPasswordResetCode`. Every code error is `INVALID` with the same text as `message` and
+`fieldErrors.code`:
+- wrong code, no code issued, or unknown/suspended account → `"You have entered the incorrect code."` (no account
+  enumeration);
+- older than 10 minutes → `"This code has expired. Request a new one."`;
+- the 5th wrong guess, and any guess after it (even the right code) → `"Too many incorrect attempts. Request a new
+  code."` (each guess is counted atomically before it is checked).
+Success: `{ ok: true, resetToken }`. The code is used up (single use) and replaced by verification row
+`identifier = "password-reset-token:<userId>"`, `value = sha256(resetToken)`, expires in 15 minutes.
 
 ##### `POST /api/auth/reset-password` — public
-Body: `token` (min 10), `password` (`passwordSchema`), `confirmPassword`; refine → `confirmPassword`:
-`"Passwords do not match."`. Order: rate limit → validate → `resetPassword`.
-Success: `{ ok: true, redirectTo: "/login?reset=1" }`.
-Errors: `INVALID` `"This reset link is invalid or has expired. Request a new one."`.
-Side effects (transaction): password updated, verification rows for the identifier deleted, **all sessions of the
-user deleted**. Page: `/reset-password?token=…`.
+Step 3. Body: `token` (the `resetToken`; min 10 characters), `password` (password policy), `confirmPassword`; refine
+→ `confirmPassword`: `"Passwords do not match."`. Order: rate limit → validate → `resetPassword`.
+Success: `{ ok: true, redirectTo: "/login?reset=1" }` (the login page says "Your password was changed. Sign in with
+your new password.").
+Errors: `INVALID` `"Your reset session has expired. Request a new code."` (unknown, used or expired token; old
+reset-link tokens are no longer accepted).
+Side effects (transaction): password updated, every reset row of the user deleted, **all sessions of the user
+deleted**. Page: `/forgot-password` (step 3). `/reset-password` only redirects to `/forgot-password?link=old`.
 
 ##### `POST /api/auth/change-password` — user
-Body: `currentPassword`, `newPassword`, `confirmPassword` (`changePasswordSchema`).
+Body: `currentPassword`, `newPassword` (password policy), `confirmPassword` (`changePasswordSchema`).
 Success: `{ ok: true, message: "Password changed." }`.
 Errors: `INVALID` `"Your current password is incorrect."` with `fieldErrors.currentPassword` (same text).
 Page: `/settings` (password-form, `resetOnSuccess`).
@@ -298,11 +345,13 @@ Page: `/settings` (password-form, `resetOnSuccess`).
 #### 2. Profiles, factory documents, verification requests
 
 ##### `GET /api/profile/brand` — user BRAND
-Response: `{ profile: BrandProfile* | null }`. Pages: `/profile` (BrandProfileForm values), `/onboarding` (brand).
+Response: `{ profile: BrandProfile* | null }` (`socialLinks` is always a list, `[]` for profiles saved before social
+links existed). Pages: `/profile` (BrandProfileForm values), `/onboarding` (brand).
 
 ##### `PUT /api/profile/brand` — user BRAND
-Body: `companyName`, `country`, `city`, `website`, `phone`, `description` (`brandProfileSchema`).
-Effect: upsert brand profile, set `user.profileCompleted = true` (transaction).
+Body: `companyName`, `country`, `city`, `website`, `phone`, `description` (`brandProfileSchema`), plus social links
+(see "Social links" below).
+Effect: live link checks (below), then upsert brand profile, set `user.profileCompleted = true` (transaction).
 Success: was not yet onboarded → `{ ok: true, redirectTo: "/dashboard?welcome=1" }`; otherwise
 `{ ok: true, message: "Company profile saved." }`. Pages: `/profile`, `/onboarding`.
 
@@ -312,7 +361,8 @@ Response:
 { profile: ManufacturerProfile* + {
     capabilities: [ManufacturerCapability*],
     documents: [ManufacturerDocument*] (order: createdAt desc),
-    machinery: [{type, quantity}] (order: sortOrder asc, type asc) } | null }
+    machinery: [{type, quantity}] (order: sortOrder asc, type asc),
+    socialLinks: [{platform, url, check: {status, checkedAt}}] (always a list) } | null }
 ```
 Pages: `/factory`, `/onboarding` (manufacturer: uses `businessName`, `contactName`, `contactEmail`).
 
@@ -322,11 +372,53 @@ Body: `businessName`, `description`, `country`, `city`, `categories[]`, `product
 `contactPhone`, `website`, and machinery as two parallel repeated keys `machineType` and `machineQuantity`
 (multipart) — the server builds `machinery = types.map((type, i) => ({ type, quantity: quantities[i] ?? "" }))`
 keeping empty rows so error keys (`machinery.<i>.type`, `machinery.<i>.quantity`) line up. JSON alternative: send
-`machinery: [{type, quantity}]` directly. Validation: `manufacturerProfileSchema`.
+`machinery: [{type, quantity}]` directly. Social links as below. Validation: `manufacturerProfileSchema`.
 Effect (transaction, `saveManufacturerProfile`): upsert profile, replace capabilities
 (PRODUCTION/FABRIC/FINISHING), replace machinery with `sortOrder = index`, set `profileCompleted = true`.
 Success: was not onboarded → `{ ok: true, redirectTo: "/factory?welcome=1" }`; else
 `{ ok: true, message: "Factory profile saved." }`. Pages: `/factory`, `/onboarding`.
+
+##### Social links (both profile PUTs) and link checks
+Rules and platforms: `@fashinza/shared/social.js` (`SOCIAL_PLATFORMS`, `validate(platform, url)`,
+`socialLinksSchema`); live checks: `server/src/lib/link-check.js`.
+
+- Body: two parallel repeated keys `socialPlatform` and `socialUrl` (multipart, one pair per row on screen; rows left
+  completely empty are ignored but keep their position, so error keys are `socialLinks.<row>.platform` /
+  `socialLinks.<row>.url`) or a JSON `socialLinks: [{platform, url}]`. A PUT always **replaces** the list (no rows =
+  no links), like machinery. Direct service callers that omit `socialLinks` (seed) keep the stored list.
+- Platforms (`platform` values): `INSTAGRAM` (instagram.com), `FACEBOOK` (facebook.com, fb.com), `LINKEDIN`
+  (linkedin.com), `TIKTOK` (tiktok.com), `X` (x.com, twitter.com), `PINTEREST` (pinterest.com, pin.it), `YOUTUBE`
+  (youtube.com, youtu.be), `BEHANCE` (behance.net), `ETSY` (etsy.com), `OTHER` (any public https site). Subdomains
+  (www., m., …) count as the platform.
+- Validation: at most 8 links (`"Add up to 8 social links."` on `socialLinks`), one per platform except Other; a
+  missing scheme is read as `https://`; `http://` is upgraded to `https://` for listed platforms and refused for
+  Other (`"Use a secure link that starts with https://."`); no spaces, credentials or port; ≤ 300 characters; the
+  host must belong to the platform (e.g. `"This isn't an Instagram link. Use a URL like
+  https://instagram.com/yourbrand."`) and the link must point to a page (not the home, sign-in or menu pages);
+  Other must be a public domain (no IP addresses, no local/test names) and not a listed platform (`"This is an
+  Instagram link. Choose Instagram as the platform."`). Stored `url` is normalised (scheme added, http upgraded).
+- Live check on save (before the transaction): the website when it changed, and every social link that is new or
+  changed (a stored check is reused while the link is unchanged, younger than 30 days and not SKIPPED with checks
+  on). `NOT_FOUND` → `INVALID` with `fieldErrors.website` / `fieldErrors["socialLinks.<row>.url"]` =
+  `"We couldn't find this page. Check the link and try again."` (a link resolving to a private network address gets
+  `"This link points to a private or local network address. Use a public web address."`). Other results are stored
+  per link as `check: { status: FOUND | UNCONFIRMED | SKIPPED, checkedAt }`.
+- Check rules: GET with a browser User-Agent, no cookies, 5 s for the whole check, ≤ 3 redirects followed by hand;
+  NOT_FOUND = DNS name does not exist, final 404/410, or a known "not found" redirect (e.g. LinkedIn
+  `/company/unavailable`); FOUND = 2xx (Instagram, Facebook, TikTok and Pinterest answer every address alike to
+  automatic visitors, so their 2xx counts as UNCONFIRMED); UNCONFIRMED = 400/401/403/429/999, sign-in walls, 5xx,
+  timeouts, network errors, redirects off the platform. SSRF: only http/https on ports 80/443, listed platforms only on
+  their own hosts, every host resolved first and refused when any address is private, loopback, link-local, CGNAT,
+  multicast or reserved; the connection repeats that test (no DNS rebinding).
+- `LINK_CHECK` env: `on` (default) / `off` (status `SKIPPED`, no network access). Unset under test runners
+  (`NODE_ENV=test` / `VITEST`) it is off; the integration and e2e environments set `LINK_CHECK=off`.
+
+##### `POST /api/profile/check-link` — user BRAND, MANUFACTURER
+Body: `platform`, `url` (`checkLinkSchema`: the validation above for one link). Rate limit: 30 per 10 minutes per
+account (`"Too many link checks. Please wait a few minutes and try again."`).
+Response: `{ status: "FOUND" | "NOT_FOUND" | "UNCONFIRMED" | "SKIPPED", message, url (normalised), checkedAt }`;
+nothing is stored. Errors: `INVALID` with `fieldErrors.url` / `fieldErrors.platform`. Page: the Social media editor on
+`/profile`, `/factory` and `/onboarding`.
 
 ##### `POST /api/profile/factory/documents` — user MANUFACTURER — **multipart**
 Fields: `type` (`CERTIFICATION`|`BUSINESS_REGISTRATION`|`OTHER`), `certificationName`, file field `file` (one file).
@@ -399,8 +491,8 @@ Body: `step` (1–7), `projectId` (empty for a new project), `intent` (`next`|`s
 `fabrics`, `sizes`, `requiredCapabilities`, `requiredCertifications`, `sampleSizes` — repeated keys; scalars read as
 `String(value ?? "")`). Only that step's fields are read; nothing else is overwritten (`saveProjectStepAction` +
 `saveProject`).
-Errors: unknown step → `INVALID` `"Unknown step."`; `INVALID` `"Please correct the highlighted fields."` + field
-errors; `NOT_FOUND` Project; `CONFLICT` `"This project can no longer be edited because production has started."`.
+Errors: unknown step → `INVALID` `"Unknown step."`; `BRAND_NOT_APPROVED` (brand not approved; checked before
+validation); `INVALID` `"Please correct the highlighted fields."` + field errors; `NOT_FOUND` Project; `CONFLICT` `"This project can no longer be edited because production has started."`.
 Success (first matching rule wins):
 1. `submitted === "1"` → `{ ok: true, redirectTo: "/projects/<id>?updated=1" }`
 2. `intent === "next"` → `{ ok: true, redirectTo: "/projects/<id>/edit?step=<step+1>" }`
@@ -413,7 +505,7 @@ max(old, step+1)`; submitted project with changes → project revision `{field: 
 
 ##### `POST /api/projects/:id/submit` — onboarded BRAND
 Success: `{ ok: true, redirectTo: "/projects/<id>?submitted=1", summary: { reviewed, eligible, newlyInvited, exclusionReasons } }`.
-Errors: `CONFLICT` `"This project has already been submitted."`; `INVALID` `"Some required details are missing.
+Errors: `BRAND_NOT_APPROVED`; `CONFLICT` `"This project has already been submitted."`; `INVALID` `"Some required details are missing.
 Complete the highlighted steps before submitting."` + field errors; `INVALID` `"Upload a tech pack before
 submitting so factories can quote accurately."` + `fieldErrors.techPack = "Upload at least one tech pack."`.
 Side effects (transaction, conditional DRAFT→SUBMITTED update so a double submit cannot run matching twice):
@@ -424,7 +516,7 @@ Side effects (transaction, conditional DRAFT→SUBMITTED update so a double subm
 
 ##### `POST /api/projects/:id/rerun-matching` — onboarded BRAND
 Success: `{ ok: true, message: "Matching reviewed <reviewed> factories: <eligible> eligible, <newlyInvited> newly invited." }`.
-Errors: `CONFLICT` `"Matching can only be run before a quotation is accepted."`. Side effects: matching run; status
+Errors: `BRAND_NOT_APPROVED`; `CONFLICT` `"Matching can only be run before a quotation is accepted."`. Side effects: matching run; status
 SUBMITTED → QUOTING when ≥ 1 eligible. Page: `/projects/:id`.
 
 ##### `POST /api/projects/:id/cancel` — onboarded BRAND
@@ -446,7 +538,7 @@ none). Order: authenticate (401 `UNAUTHENTICATED` `"Sign in to continue."`) → 
 10 MB + 64 KiB` → `INVALID` `"Files must be 10 MB or smaller."` (multer limit must produce the same error) → no
 file → `INVALID` `"Choose a file to upload."` → unknown kind → `INVALID` `"Unknown file type."` → `addAttachment`.
 Success `201`: `{ id, kind, version, fileName }` (version = tech pack number or null).
-Errors: `CONFLICT` `"Files cannot be added to a closed project."`; upload validation (§3.1), with
+Errors: `BRAND_NOT_APPROVED`; `CONFLICT` `"Files cannot be added to a closed project."`; upload validation (§3.1), with
 `imagesOnly` for REFERENCE_IMAGE/SKETCH. Side effects: see `addAttachment` (tech pack version = max + 1, retry on
 duplicate key up to twice; activity `TECH_PACK_VERSION`/`FILE_ADDED`; `SYSTEM` "New tech pack version"
 notifications after submission). Page: wizard step 6 and `/projects/:id` files tab (file-uploader, XHR with
@@ -802,7 +894,7 @@ All `/api/admin/*` endpoints: `requireUser(["ADMIN"])`.
 
 ##### `GET /api/admin/overview`
 Response = `adminDashboard` (runs `refreshDelays()`):
-`{ usersByRole: [{role, _count}], suspended, pendingFactories, verifiedFactories, ordersByStatus: [{status, _count}],
+`{ usersByRole: [{role, _count}], suspended, pendingBrands (brands with approvalStatus PENDING), pendingFactories, verifiedFactories, ordersByStatus: [{status, _count}],
 delayedOrders, openDisputes, failedQc30, paidByCurrency: [{currency, _sum: {amount}}], webhookErrors,
 projectsByStatus: [{status, _count}], recentAudit: [AuditLog* + { actor: { name }, target: { name?, href? } | undefined }] (take 6) }`.
 Page: `/admin`.
@@ -839,6 +931,50 @@ why."`. Errors: `NOT_FOUND` Factory; `CONFLICT` `"Only factories awaiting review
 ##### `POST /api/admin/factories/:id/revoke`
 Body: `reason`. Success: `"Verification revoked."`. Errors: `CONFLICT` `"Only verified factories can have
 verification revoked."`. Side effects: see `revokeVerification`. Page: `/admin/factories/:id`.
+
+##### Brand approval (MERN addition, `server/src/services/brand-approval.js`)
+New brands are `PENDING` until an administrator approves them (usually within 24–48 hours). Until then — and after a
+rejection — the brand can sign in and edit its company profile but gets `BRAND_NOT_APPROVED` for creating, editing
+or submitting projects, adding project files and re-running matching (`assertBrandApproved`, read from the database
+on every request, so decisions apply to open sessions); reading, cancelling and deleting drafts stay possible.
+Approved brands are shown as "Verified brand". Stored on `user`: `approvalStatus`, `approvalNote`,
+`approvalReviewedAt`, `approvalReviewedById` (a missing status counts as `APPROVED`).
+
+##### `GET /api/admin/brands`
+Query: `status`, `q` (person, email or company name), `page`. Status rule as for factories: **absent** → `PENDING`;
+an ApprovalStatus → that; anything else (e.g. `ALL`) → every brand. Response (`listBrands`, 20 per page, newest
+registration first): `{ items: [{ id, name, email, status, profileCompleted, createdAt, approvalStatus,
+approvalNote, approvalReviewedAt, brandProfile: { companyName, country, city, website, socialLinks: <count> } |
+null, projectCount }], total, page, pages, counts: { PENDING, APPROVED, REJECTED } (same search), status: <effective
+status or null> }`. Page: `/admin/brands`.
+
+##### `GET /api/admin/brands/:id`
+Response (`getBrand`): `{ brand: { id, name, email, status, statusReason, profileCompleted, createdAt, lastLoginAt,
+approvalStatus, approvalNote, approvalReviewedAt, approvalReviewedBy: { name } | null }, profile: BrandProfile* |
+null (with socialLinks), projects: { total, byStatus: [{status, _count}], recent: [Project* (name, status, category,
+updatedAt)] (updatedAt desc, take 5), activeOrders }, history: [AuditLog* + { actor: { name }, target }] (entries
+whose targetId is the brand, newest first, take 50) }`. Errors: `NOT_FOUND` `"Brand was not found or you do not
+have access to it."` (also for non-brand users and malformed ids). Page: `/admin/brands/:id`.
+
+##### `POST /api/admin/brands/:id/approval`
+Body: `decision` (`APPROVED`|`REJECTED`; else `INVALID` `"Choose approve or reject."`), `note` (optional for
+APPROVED, **required** for REJECTED: `INVALID` with `fieldErrors.note = "Give a reason for rejecting the brand."`;
+≤ 1,000 characters). Decisions can be revisited (approve a rejected brand, withdraw an approval); repeating the
+current one → `CONFLICT` `"This brand is already approved."` / `"This brand has already been rejected."`.
+Success: APPROVED → `"Brand approved. The brand has been notified by email and in the app."`; REJECTED → `"Brand
+rejected. The brand has been told why."`. Side effects (transaction): the user's approval fields (note trimmed,
+`null` when empty), audit `BRAND_APPROVED|BRAND_REJECTED` (targetType `User`, reason = note, metadata `{from, to,
+companyName}`), notification `VERIFICATION_DECISION` to the brand ("Your brand is approved" → link `/projects/new`;
+"Brand not approved" with the reason → link `/dashboard`); after the commit an email to the brand. Page:
+`/admin/brands/:id`.
+
+##### `GET /api/admin/projects`
+Every brand's projects, for read-only links to `/projects/:id` (administrators can open every project page, drafts
+included, and every order page). Query: `status` (`ACTIVE` = not DRAFT/DELIVERED/CANCELLED, or a ProjectStatus),
+`q` (project name, or the brand's company name, person or email), `page`. Response (`listAllProjects`, 20 per page,
+updatedAt desc): `{ items: [Project* + { brand: { id, name, email, companyName, approvalStatus } | null, order: { id,
+reference, status } | null, _count: { quotations (SUBMITTED + REVISION_REQUESTED), matchResults } }], total, page,
+pages, counts: { <ProjectStatus>: n } (same search, all statuses) }`. Page: `/admin/projects`.
 
 ##### `GET /api/admin/users`
 Query: `q`, `role` (Role), `status` (UserStatus), `page`. Response (`listUsers`, pageSize 20): `items: [{ id, name,
@@ -931,12 +1067,12 @@ transactions work). One Mongoose model per Prisma model, one collection each, **
 
 | Model (file `server/src/models/<Model>.js`) | collection | fields (type, default) | indexes |
 |---|---|---|---|
-| `User` | `user` | name String; email String (lowercase); emailVerified Boolean=false; image String?; role Role=BRAND; status UserStatus=ACTIVE; statusReason String?; profileCompleted Boolean=false; lastLoginAt Date?; timestamps | email unique; {role, status} |
+| `User` | `user` | name String; email String (lowercase); emailVerified Boolean=false; image String?; role Role=BRAND; status UserStatus=ACTIVE; statusReason String?; profileCompleted Boolean=false; lastLoginAt Date?; approvalStatus ApprovalStatus=APPROVED (new brands are created PENDING); approvalNote String?; approvalReviewedAt Date?; approvalReviewedById → User?; timestamps | email unique; {role, status}; {role, approvalStatus, createdAt desc} |
 | `Session` | `session` | expiresAt Date; token String (sha256 hex); ipAddress String?; userAgent String?; userId → User; timestamps | token unique; userId; TTL on expiresAt optional (`expireAfterSeconds: 0`) |
 | `Account` | `account` | accountId String; providerId String; userId → User; accessToken, refreshToken, idToken String?; accessTokenExpiresAt, refreshTokenExpiresAt Date?; scope String?; password String?; timestamps | userId; {userId, providerId} |
-| `Verification` | `verification` | identifier String; value String (sha256); expiresAt Date; timestamps | identifier; value |
-| `BrandProfile` | `brand_profile` | userId → User; companyName String; description String?; country String; city, website, phone String?; timestamps | userId unique |
-| `ManufacturerProfile` | `manufacturer_profile` | userId → User; businessName, description, country, city String; categories [GarmentCategory]; minOrderQuantity, maxMonthlyCapacity Number (int); typicalLeadTimeDays Number=45; contactName, contactEmail String; contactPhone, website String?; verificationStatus VerificationStatus=UNSUBMITTED; verificationNote String?; verificationRequestedAt, verifiedAt Date?; timestamps | userId unique; verificationStatus; country |
+| `Verification` | `verification` | identifier String (`password-reset-code:<userId>` → value = salted scrypt hash of the code; `password-reset-token:<userId>` → value = sha256 of the token); value String; expiresAt Date; attempts Number=0 (wrong code guesses); timestamps | identifier; value; TTL on expiresAt (`expireAfterSeconds: 86400`, so "expired" stays answerable for a day) |
+| `BrandProfile` | `brand_profile` | userId → User; companyName String; description String?; country String; city, website, phone String?; socialLinks [{ platform SocialPlatform, url String, check { status LinkCheckStatus=SKIPPED, checkedAt Date? } }] (no `_id`, default []); timestamps | userId unique |
+| `ManufacturerProfile` | `manufacturer_profile` | userId → User; businessName, description, country, city String; categories [GarmentCategory]; minOrderQuantity, maxMonthlyCapacity Number (int); typicalLeadTimeDays Number=45; contactName, contactEmail String; contactPhone, website String?; socialLinks (as BrandProfile); verificationStatus VerificationStatus=UNSUBMITTED; verificationNote String?; verificationRequestedAt, verifiedAt Date?; timestamps | userId unique; verificationStatus; country |
 | `ManufacturerCapability` | `manufacturer_capability` | profileId → ManufacturerProfile; kind CapabilityKind; name String | {profileId, kind, name} unique; name |
 | `ManufacturerMachine` | `manufacturer_machine` | profileId; type String; quantity Number; sortOrder Number=0 | {profileId, type} unique |
 | `ManufacturerDocument` | `manufacturer_document` | profileId; type DocumentType; certificationName String?; fileKey, fileName, mimeType String; size Number; status DocumentStatus=PENDING; reviewNote String?; reviewedAt Date?; createdAt | fileKey unique; {profileId, status} |
@@ -971,6 +1107,17 @@ Enums (values and order) are exported from `@fashinza/shared/enums.js` (`Role`, 
 `SampleStatus`, `QCResult`, `DefectSeverity`, `QCDecision`, `ReworkStatus`, `PaymentMilestoneStatus`,
 `TransactionType`, `TransactionStatus`, `NotificationType`, `InquiryStatus`, `IssueStatus`, `IssueCategory`) and
 `enumRank(values, value)`.
+
+`GarmentCategory` (MERN-only addition): the first twelve values are the Prisma enum's, in order; twenty more are
+appended (`POLO_SHIRTS` … `BAGS`), so existing values keep their sort rank. Labels are in `GARMENT_CATEGORIES` and
+the display groups (the wizard's optgroups, the factory profile's chip groups) in `GARMENT_CATEGORY_GROUPS`
+(`@fashinza/shared/constants.js`; every value is in exactly one group).
+
+`Project.colors` stays one comma-separated string (≤ 1,000 characters, `"Keep the colour list under 1,000
+characters."`; submit still needs `"List at least one colour."`). The brief's colour picker writes three kinds of
+item: a listed colour name (`@fashinza/shared/colors.js`: the 148 CSS named colours plus fashion and textile names,
+each with a hex value and a family), a custom colour `"Name (#RRGGBB)"`, or free text as typed (for example a
+Pantone reference). Pages show a swatch for the first two and free text without one.
 
 Money: write Decimal128 from decimal.js strings (`Decimal128.fromString(new Decimal(x).toFixed(scale))`); read
 with `new Decimal(doc.amount.toString())`. Never `Number()` for arithmetic.
@@ -1133,6 +1280,11 @@ payments/provider.js:   getPaymentProvider, sandboxProvider, signPayload, buildS
 | 76 | GET /api/health | SERVER-B |
 
 Totals: SERVER-A 35, SERVER-B 41, 76 endpoints. Overdue detection (§3.17) is SERVER-B.
+
+Added after the port (accounts feature: brand approval, admin access, password reset codes; not counted above):
+`POST /api/auth/forgot-password/verify` (routes/auth.js), `GET /api/admin/brands`, `GET /api/admin/brands/:id`,
+`POST /api/admin/brands/:id/approval` (routes/admin.js → services/brand-approval.js), `GET /api/admin/projects`
+(routes/admin.js → services/admin.js `listAllProjects`).
 
 Origin of each endpoint (today's code): auth → `src/app/(auth)/actions.ts`, `(app)/layout.tsx`; profile →
 `src/app/(app)/profile-actions.ts`, `profile/`, `factory/`, `onboarding/` pages; projects →

@@ -4,8 +4,9 @@
  *
  * It drops and re-seeds the disposable e2e database (name must contain "e2e"), starts the production server on
  * port 4400 against it, and walks through the main journey in ONE browser page so the recording is continuous:
- * a brand signs up and briefs a garment, the matched demo factory quotes, the brand accepts, and the order runs
- * through sampling, production, inspection, a sandbox payment and delivery. The steps are the ones the e2e suite
+ * a brand signs up, an administrator approves the brand, the brand briefs a garment (colours from the colour
+ * picker), the matched demo factory quotes, the brand accepts, and the order runs through sampling, production,
+ * inspection, a sandbox payment and delivery. The steps are the ones the e2e suite
  * verifies (tests-mern/e2e/workflow.spec.js), slowed down and captioned for people.
  *
  * Writes to public/videos/:
@@ -21,7 +22,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium, expect } from "@playwright/test";
 import { ACCOUNTS, E2E_ENV } from "../e2e/env.js";
-import { chip, confirmDialog, inDays, login, logout, pdf, png } from "../e2e/helpers.js";
+import { chip, confirmDialog, inDays, login, logout, pdf, pickColour, png } from "../e2e/helpers.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const OUT_DIR = path.join(ROOT, "public", "videos");
@@ -31,7 +32,7 @@ const BASE = `http://localhost:${PORT}`;
 const SIZE = { width: 1280, height: 720 };
 
 // The e2e database is dropped and re-seeded before every recording, so a fixed address never collides.
-const brand = { name: "Maya Clarke", org: "Juniper Studio", email: "maya@juniper-studio.test", password: "DemoBrandPassword1" };
+const brand = { name: "Maya Clarke", org: "Juniper Studio", email: "maya@juniper-studio.test", password: "Demo#Brand2026" };
 
 /** The site's own photographs stand in for the factory's evidence and sample photos, so the uploads look real. */
 const photo = (file) => path.join(ROOT, "public", "images", file);
@@ -155,7 +156,8 @@ async function chapter(page, title) {
 /** Shows a caption, records it as a subtitle cue and holds it long enough to read. */
 async function say(page, text, holdMs = 2600) {
   const start = now();
-  if (cues.length) cues[cues.length - 1].end = start;
+  // A caption stays up until the next one, unless switchTo() cleared the screen in between.
+  if (cues.length && !cues[cues.length - 1].closed) cues[cues.length - 1].end = start;
   cues.push({ start, end: start + holdMs / 1000, text, label: chapterLabel });
   await page.evaluate(([label, t]) => window.__setCaption?.(label, t), [chapterLabel, text]);
   await sleep(holdMs);
@@ -193,6 +195,12 @@ async function completeStage(page, stage, narrate) {
 
 async function switchTo(page, who, account) {
   await page.evaluate(() => window.__setCaption?.("", ""));
+  // The on-screen caption is cleared while accounts switch; end the subtitle cue at the same moment.
+  const last = cues[cues.length - 1];
+  if (last) {
+    last.end = Math.max(last.start, now());
+    last.closed = true;
+  }
   await logout(page);
   await login(page, account.email, account.password);
   await sleep(600);
@@ -220,7 +228,10 @@ async function walkthrough(page) {
   await type(page.getByLabel("Full name"), brand.name);
   await type(page.getByLabel("Brand or company name"), brand.org);
   await type(page.getByLabel("Work email"), brand.email);
-  await page.getByRole("textbox", { name: "Password", exact: true }).fill(brand.password);
+  // Typed, so the password checklist ticks each rule on the recording.
+  await type(page.getByRole("textbox", { name: "Password", exact: true }), brand.password);
+  await expect(page.locator("#password-requirements li[data-met='false']")).toHaveCount(0);
+  await say(page, "The password needs 12 to 16 characters with a capital letter, a small letter, a number and a symbol.", 2800);
   await page.getByLabel("Confirm password").fill(brand.password);
   await sleep(500);
   await page.getByRole("button", { name: "Create account" }).click();
@@ -229,11 +240,34 @@ async function walkthrough(page) {
   await type(page.getByLabel("Country"), "United Kingdom");
   await page.getByRole("button", { name: "Save and continue" }).click();
   await expect(page).toHaveURL(/\/dashboard\?welcome=1/);
-  await say(page, "The dashboard shows what to do next: create a production project.", 2600);
+  const review = page.getByRole("region", { name: "Your brand is under review" });
+  await expect(review).toBeVisible();
+  await expect(page.getByRole("button", { name: "Create production project", exact: true }).first()).toBeDisabled();
+  await review.scrollIntoViewIfNeeded();
+  await say(page, "Fashinza checks every new brand within 24–48 hours. Until then, the brand can complete its profile but not create projects.", 3400);
 
-  // 3 — Brief
+  // 3 — The Fashinza team approves the brand (/admin/brands)
+  await chapter(page, "Fashinza approves the brand");
+  await switchTo(page, "admin", ACCOUNTS.admin);
+  await page.goto("/admin/brands");
+  await expect(page.getByRole("heading", { name: "Brand approvals", level: 1 })).toBeVisible();
+  await say(page, "An administrator sees every new brand waiting for approval.", 2200);
+  await page.getByRole("link", { name: brand.org }).click();
+  await expect(page.getByRole("heading", { name: brand.org, level: 1 })).toBeVisible();
+  await say(page, "They check the company, then approve it, or reject it with a reason the brand can read.", 2800);
+  await page.getByRole("button", { name: "Approve brand" }).click();
+  await sleep(600);
+  await confirmDialog(page, "Approve brand");
+  await expect(page.getByText("Verified brand").first()).toBeVisible();
+  await say(page, "The brand is now verified, and is told by email and in the app.", 2400);
+  await switchTo(page, "brand", brand);
+  await page.goto("/dashboard");
+  await expect(page.getByRole("link", { name: "Create production project", exact: true }).first()).toBeVisible();
+  await say(page, "Once approved, the dashboard shows what to do next: create a production project.", 2600);
+
+  // 4 — Brief
   await chapter(page, "Brief the garment");
-  await page.getByRole("link", { name: "Create production project" }).first().click();
+  await page.getByRole("link", { name: "Create production project", exact: true }).first().click();
   await say(page, "The project wizard collects everything a factory needs, one step at a time. Drafts are saved at every step.", 3000);
   await type(page.getByLabel("Project name"), "Organic cotton crew-neck tee");
   await page.getByLabel("Product category").selectOption("T_SHIRTS");
@@ -243,7 +277,9 @@ async function walkthrough(page) {
   await say(page, "Specifications: fabric, colours, sizes and the processes the garment needs.", 2200);
   await type(page.getByLabel("Fabric type and composition"), "100% organic cotton jersey, 220 gsm");
   await chip(page, "Fabrics the factory must handle", "Organic cotton");
-  await type(page.getByLabel("Colours"), "Black, Off-white");
+  await pickColour(page, "Black", { typeSlowly: true });
+  await pickColour(page, "Off-white", { typeSlowly: true });
+  await say(page, "Colours are picked from a list of named colours, each with a swatch. A Pantone reference can be added as written.", 3000);
   for (const s of ["S", "M", "L"]) await chip(page, "Sizes", s);
   await chip(page, "Manufacturing requirements", "Screen printing");
   await page.getByRole("button", { name: "Save and continue" }).click();
@@ -279,7 +315,7 @@ async function walkthrough(page) {
   await smoothScroll(page, 500);
   await sleep(1200);
 
-  // 4 — Factory quotes
+  // 5 — Factory quotes
   await chapter(page, "The factory sends a quotation");
   await switchTo(page, "factory", ACCOUNTS.knitFactory);
   await say(page, "Now we're the matched factory. The new project appears under Opportunities.", 2600);
@@ -305,7 +341,7 @@ async function walkthrough(page) {
   await expect(page.getByRole("heading", { name: /Waiting for the brand to decide/ })).toBeVisible();
   await say(page, "The quotation is sent. The brand is notified.", 2200);
 
-  // 5 — Brand accepts
+  // 6 — Brand accepts
   await chapter(page, "The brand accepts a quotation");
   await switchTo(page, "brand", brand);
   await page.goto("/projects");
@@ -321,7 +357,7 @@ async function walkthrough(page) {
   const orderUrl = page.url().split("?")[0];
   await say(page, "Accepting creates the order. Production follows eight milestones, from fabric sourcing to delivery.", 3400);
 
-  // 6 — Fabric and sampling
+  // 7 — Fabric and sampling
   await chapter(page, "Fabric sourcing and sampling");
   await switchTo(page, "factory", ACCOUNTS.knitFactory);
   await page.goto(orderUrl);
@@ -335,7 +371,7 @@ async function walkthrough(page) {
   await expect(page.getByText(/is with the brand for review/)).toBeVisible();
   await sleep(1000);
 
-  // 7 — Sample approval
+  // 8 — Sample approval
   await chapter(page, "The brand approves the sample");
   await switchTo(page, "brand", brand);
   await page.goto(orderUrl);
@@ -345,7 +381,7 @@ async function walkthrough(page) {
   await expect(page.locator('li[aria-current="step"]')).toContainText("Cutting");
   await say(page, "Approval starts bulk production, and the first milestone payment falls due.", 3000);
 
-  // 8 — Production and inspection
+  // 9 — Production and inspection
   await chapter(page, "Production and quality inspection");
   await switchTo(page, "factory", ACCOUNTS.knitFactory);
   await page.goto(orderUrl);
@@ -363,7 +399,7 @@ async function walkthrough(page) {
   await expect(page.getByText("The passed inspection is waiting for the brand's decision.")).toBeVisible();
   await say(page, "A passed inspection waits for the brand. A failed one would send the batch back for rework.", 3000);
 
-  // 9 — Acceptance and payment
+  // 10 — Acceptance and payment
   await chapter(page, "Inspection approval and payment");
   await switchTo(page, "brand", brand);
   await page.goto(orderUrl);
@@ -383,7 +419,7 @@ async function walkthrough(page) {
   await expect(page.locator("#payments li").filter({ hasText: "Sample approval" }).getByText("Paid", { exact: true })).toBeVisible();
   await say(page, "The payment provider confirms the charge, and the milestone is marked paid.", 2800);
 
-  // 10 — Shipping and delivery
+  // 11 — Shipping and delivery
   await chapter(page, "Shipping and delivery");
   await switchTo(page, "factory", ACCOUNTS.knitFactory);
   await page.goto(orderUrl);

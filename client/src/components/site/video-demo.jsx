@@ -61,7 +61,9 @@ export function VideoDemo() {
             aria-describedby="video-demo-note"
           >
             <source src={`${BASE}.webm`} type="video/webm" />
-            <track kind="captions" src={`${BASE}.vtt`} srcLang="en" label="English" default />
+            {/* The captions are also burned into the recording, so this track is off by default (on, the same
+                text would be drawn twice); viewers can still switch it on, and assistive tech can read it. */}
+            <track kind="captions" src={`${BASE}.vtt`} srcLang="en" label="English" />
             Your browser cannot play this video. The steps below describe the same process.
           </video>
         </div>

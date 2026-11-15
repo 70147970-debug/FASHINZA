@@ -1,6 +1,18 @@
-import { Fragment } from "react";
 import { Link, useLoaderData } from "react-router";
-import { AlertTriangle, ArrowRight, BadgeCheck, CheckCircle2, ChevronRight, CircleDollarSign, PackageSearch, ScanSearch, ShieldAlert, Users, Webhook } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  BadgeCheck,
+  CheckCircle2,
+  ChevronRight,
+  CircleDollarSign,
+  PackageSearch,
+  ScanSearch,
+  ShieldAlert,
+  UserCheck,
+  Users,
+  Webhook,
+} from "lucide-react";
 import { DescriptionList, Metric, MetricStrip, PageHeader, Panel, Timeline } from "@/components/app/primitives";
 import { auditTimelineItem } from "@/components/admin/audit-parts";
 import { Button } from "@/components/ui/button";
@@ -84,6 +96,16 @@ export default function AdminOverviewPage() {
 
   const queues = [
     {
+      key: "brands",
+      href: "/admin/brands?status=PENDING",
+      icon: UserCheck,
+      label: "Brands awaiting approval",
+      short: "Brand approvals",
+      description: "New brands cannot create projects yet. Check each company within 24–48 hours.",
+      count: d.pendingBrands ?? 0,
+      tone: "warning",
+    },
+    {
       key: "factories",
       href: "/admin/factories?status=PENDING",
       icon: BadgeCheck,
@@ -152,7 +174,13 @@ export default function AdminOverviewPage() {
           icon={BadgeCheck}
           hint={d.pendingFactories ? `${d.pendingFactories} awaiting review` : "None awaiting review"}
         />
-        <Metric label="Users" value={accounts} href="/admin/users" icon={Users} hint={`${users.BRAND ?? 0} brands · ${users.MANUFACTURER ?? 0} factories`} />
+        <Metric
+          label="Users"
+          value={accounts}
+          href="/admin/users"
+          icon={Users}
+          hint={`${users.BRAND ?? 0} brands · ${users.MANUFACTURER ?? 0} factories${d.pendingBrands ? ` · ${d.pendingBrands} awaiting approval` : ""}`}
+        />
         <Metric
           label="Payments received"
           value={firstPaid ? formatMoney(firstPaid._sum.amount ?? 0, firstPaid.currency) : 0}
@@ -182,12 +210,13 @@ export default function AdminOverviewPage() {
                 <CheckCircle2 className="size-3.5 shrink-0 text-success" aria-hidden />
                 <span className="font-medium text-ink">{open.length ? "Clear:" : "All clear:"}</span>
                 {clear.map((q, i) => (
-                  <Fragment key={q.key}>
+                  // The separator travels with its link, so a wrapped line never ends on a lone "·".
+                  <span key={q.key} className="inline-flex items-center gap-x-1.5">
                     {i > 0 && <span aria-hidden>·</span>}
                     <Link to={q.href} className="inline-flex min-h-8 items-center rounded-sm underline-offset-4 hover:text-ink hover:underline max-sm:min-h-10">
                       {q.short}
                     </Link>
-                  </Fragment>
+                  </span>
                 ))}
               </div>
             )}

@@ -5,7 +5,7 @@ import { expectNoHorizontalOverflow, login } from "./helpers.js";
 
 /** Mobile layout checks (Pixel 7 profile, plus 320 px and 375 px widths). */
 
-const PUBLIC = ["/", "/user-guide", "/for-brands", "/for-manufacturers", "/sustainability", "/about", "/faq", "/contact", "/login", "/register", "/privacy", "/terms"];
+const PUBLIC = ["/", "/user-guide", "/for-brands", "/for-manufacturers", "/sustainability", "/about", "/faq", "/contact", "/login", "/register", "/forgot-password", "/privacy", "/terms"];
 
 for (const width of [320, 375]) {
   test(`public pages fit a ${width}px screen`, async ({ page }) => {
@@ -45,7 +45,7 @@ test("the app shell uses a navigation drawer and pages fit the screen", async ({
 
 test("admin pages fit a phone screen", async ({ page }) => {
   await login(page, ACCOUNTS.admin.email, ACCOUNTS.admin.password);
-  for (const path of ["/admin", "/admin/factories?status=ALL", "/admin/users", "/admin/orders", "/admin/audit"]) {
+  for (const path of ["/admin", "/admin/brands?status=ALL", "/admin/factories?status=ALL", "/admin/projects", "/admin/users", "/admin/orders", "/admin/audit"]) {
     await page.goto(path);
     await expectNoHorizontalOverflow(page);
   }

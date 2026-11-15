@@ -66,6 +66,6 @@ export const FAQ = [
   {
     group: "Platform",
     q: "Do you send email notifications?",
-    a: "Not yet. All notifications appear in your in-app notification centre, with an unread count at the top of every page.",
+    a: "Only about your account: password reset codes and, for brands, the decision on your brand approval. Everything else appears in your in-app notification centre, with an unread count at the top of every page.",
   },
 ];

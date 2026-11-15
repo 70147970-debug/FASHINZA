@@ -13,6 +13,9 @@ export default defineConfig({
       UPLOAD_DIR: path.join(os.tmpdir(), "fashinza-server-unit-uploads"),
       PAYMENT_PROVIDER: "sandbox",
       PAYMENT_SANDBOX_SECRET: "unit-test-secret-unit-test-secret-unit-test",
+      // Emails are never sent from tests (empty values win over SMTP settings in .env).
+      SMTP_USER: "",
+      SMTP_PASS: "",
     },
   },
 });

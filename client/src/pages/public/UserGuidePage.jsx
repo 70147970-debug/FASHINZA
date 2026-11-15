@@ -27,6 +27,7 @@ const DETAIL = [
     steps: "1",
     title: "Design brief",
     points: [
+      "Fashinza checks every new brand account, usually within 24–48 hours. You can complete your company profile straight away and create projects once your brand is approved.",
       "Choose the garment category, describe the style, and set the quantity, target unit price and currency.",
       "Add the production deadline, fabrics, colours and sizes, the highest minimum order quantity (MOQ) you can accept, any processes you need (such as embroidery or screen printing), a preferred manufacturing country and required certifications.",
       "A tech pack (PDF or image, up to 10 MB) is required to submit. Add design sketches, reference images and documents such as measurement charts; a new tech pack becomes a new version and earlier versions are kept.",

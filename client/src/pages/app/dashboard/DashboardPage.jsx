@@ -10,12 +10,12 @@ import {
   FileSearch,
   FileText,
   PackageSearch,
-  Plus,
   ShieldCheck,
   Shirt,
   Timer,
 } from "lucide-react";
 import { EmptyState, Metric, MetricStrip, PageHeader, Panel, ProgressBar, StatusBadge } from "@/components/app/primitives";
+import { BrandApprovalNotice, CreateProjectButton, brandIsApproved } from "@/components/app/brand-approval";
 import { ProjectProgress } from "@/components/projects/project-progress";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
@@ -79,7 +79,7 @@ function SummaryStrip({ metrics, placement }) {
   const nonZero = metrics.filter((m) => m.value !== 0);
   if (nonZero.length === 0) return null;
   return (
-    <MetricStrip label="Summary" className="mb-0 sm:hidden">
+    <MetricStrip label="Summary" className="mb-6 sm:hidden">
       {nonZero.map(({ id, ...m }) => (
         <Metric key={id} {...m} />
       ))}
@@ -110,13 +110,9 @@ function viewAll(href, label) {
 
 function BrandHome({ actor, d, welcome }) {
   const recent = d.recent;
-  const create = (
-    <Button asChild variant="accent">
-      <Link to="/projects/new">
-        <Plus /> Create production project
-      </Link>
-    </Button>
-  );
+  // Brands awaiting approval (or rejected) see why the button is disabled in the notice below the header.
+  const approved = brandIsApproved(actor);
+  const create = <CreateProjectButton user={actor} />;
   const header = (
     <PageHeader
       eyebrow={today.format(new Date())}
@@ -125,10 +121,17 @@ function BrandHome({ actor, d, welcome }) {
       actions={create}
     />
   );
-  const welcomeAlert = welcome && (
-    <Alert tone="success" className="mb-6">
-      Your company profile is saved. Create your first production project to get matched with verified factories.
-    </Alert>
+  const welcomeAlert = (
+    <>
+      {welcome && (
+        <Alert tone="success" className="mb-6">
+          {approved
+            ? "Your company profile is saved. Create your first production project to get matched with verified factories."
+            : "Your company profile is saved. We'll let you know by email and in the app once your brand is approved."}
+        </Alert>
+      )}
+      <BrandApprovalNotice user={actor} />
+    </>
   );
 
   if (d.isNew) {

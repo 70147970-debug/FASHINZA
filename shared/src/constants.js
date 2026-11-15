@@ -32,7 +32,54 @@ export const GARMENT_CATEGORIES = [
   { value: "KIDSWEAR", label: "Kidswear" },
   { value: "SLEEPWEAR", label: "Sleepwear" },
   { value: "ACCESSORIES", label: "Accessories" },
+  { value: "POLO_SHIRTS", label: "Polo shirts" },
+  { value: "BLOUSES_TOPS", label: "Blouses & tops" },
+  { value: "SKIRTS", label: "Skirts" },
+  { value: "SHORTS", label: "Shorts" },
+  { value: "JUMPSUITS", label: "Jumpsuits & rompers" },
+  { value: "SUITS_BLAZERS", label: "Suits & blazers" },
+  { value: "COATS", label: "Coats" },
+  { value: "SWIMWEAR", label: "Swimwear" },
+  { value: "LINGERIE", label: "Lingerie & intimates" },
+  { value: "LOUNGEWEAR", label: "Loungewear" },
+  { value: "UNIFORMS_WORKWEAR", label: "Uniforms & workwear" },
+  { value: "ETHNIC_WEAR", label: "Ethnic wear (kurta, shalwar kameez)" },
+  { value: "BRIDAL_EVENINGWEAR", label: "Bridal & eveningwear" },
+  { value: "MATERNITY", label: "Maternity" },
+  { value: "BABYWEAR", label: "Babywear" },
+  { value: "SPORTS_JERSEYS", label: "Team & sports jerseys" },
+  { value: "SOCKS_HOSIERY", label: "Socks & hosiery" },
+  { value: "SCARVES_SHAWLS", label: "Scarves & shawls" },
+  { value: "HEADWEAR", label: "Caps & hats" },
+  { value: "BAGS", label: "Bags & totes" },
 ];
+
+/**
+ * Categories grouped for people choosing from all of them (the wizard's grouped select, the factory profile's
+ * chip groups). Every GarmentCategory value appears in exactly one group (checked by shared/tests).
+ * @type {readonly { label: string; values: readonly import("./enums.js").GarmentCategory[number][] }[]}
+ */
+export const GARMENT_CATEGORY_GROUPS = [
+  { label: "Tops", values: ["T_SHIRTS", "POLO_SHIRTS", "SHIRTS", "BLOUSES_TOPS"] },
+  { label: "Bottoms", values: ["DENIM", "TROUSERS", "SHORTS", "SKIRTS"] },
+  { label: "Dresses & one-pieces", values: ["DRESSES", "JUMPSUITS"] },
+  { label: "Outerwear & tailoring", values: ["OUTERWEAR", "COATS", "SUITS_BLAZERS", "UNIFORMS_WORKWEAR"] },
+  { label: "Knit & jersey", values: ["KNITWEAR", "HOODIES_SWEATSHIRTS"] },
+  { label: "Active & swim", values: ["ACTIVEWEAR", "SPORTS_JERSEYS", "SWIMWEAR"] },
+  { label: "Intimates & sleep", values: ["LINGERIE", "SLEEPWEAR", "LOUNGEWEAR"] },
+  { label: "Occasion & cultural", values: ["ETHNIC_WEAR", "BRIDAL_EVENINGWEAR"] },
+  { label: "Maternity, kids & baby", values: ["MATERNITY", "KIDSWEAR", "BABYWEAR"] },
+  { label: "Accessories", values: ["ACCESSORIES", "BAGS", "HEADWEAR", "SCARVES_SHAWLS", "SOCKS_HOSIERY"] },
+];
+
+/**
+ * The groups with their options ({ value, label }), in display order.
+ * @returns {{ label: string; options: { value: string; label: string }[] }[]}
+ */
+export function groupedGarmentCategories() {
+  const byValue = new Map(GARMENT_CATEGORIES.map((c) => [c.value, c]));
+  return GARMENT_CATEGORY_GROUPS.map((g) => ({ label: g.label, options: g.values.map((v) => byValue.get(v)).filter((c) => !!c) }));
+}
 
 export const CAPABILITIES = /** @type {const} */ ({
   PRODUCTION: ["Cut and sew", "Knitting", "Woven garments", "Pattern making", "Sampling", "Embroidery", "Screen printing", "Digital printing", "Sublimation"],

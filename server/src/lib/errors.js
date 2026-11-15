@@ -11,6 +11,8 @@ export const STATUS = Object.freeze({
   ROLE_DENIED: 403,
   PROFILE_INCOMPLETE: 403,
   FORBIDDEN: 403,
+  /** A brand that is not approved yet (or was rejected) tried to create, edit or submit a project. */
+  BRAND_NOT_APPROVED: 403,
   NOT_FOUND: 404,
   CONFLICT: 409,
   PAYLOAD_TOO_LARGE: 413,

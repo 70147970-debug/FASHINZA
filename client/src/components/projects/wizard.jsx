@@ -4,7 +4,8 @@ import { ActionForm, SubmitButton } from "@/components/forms/action-form";
 import { ChipSelect } from "@/components/forms/chip-select";
 import { Field } from "@/components/ui/field";
 import { Input, Select, Textarea } from "@/components/ui/input";
-import { CAPABILITIES, CERTIFICATIONS, CURRENCIES, GARMENT_CATEGORIES } from "@fashinza/shared/constants.js";
+import { ColourPicker } from "@/components/projects/colour-picker";
+import { CAPABILITIES, CERTIFICATIONS, CURRENCIES, groupedGarmentCategories } from "@fashinza/shared/constants.js";
 import { SIZE_OPTIONS, MIN_LEAD_DAYS, MAX_SAMPLE_PIECES, LAST_FIELD_STEP } from "@fashinza/shared/validation/project.js";
 import { isoDateInDays } from "@fashinza/shared/format.js";
 import { cn } from "@fashinza/shared/utils.js";
@@ -72,10 +73,14 @@ export function BasicsStep({ project }) {
             <option value="" disabled>
               Choose a category
             </option>
-            {GARMENT_CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
+            {groupedGarmentCategories().map((g) => (
+              <optgroup key={g.label} label={g.label}>
+                {g.options.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </Select>
         </Field>
@@ -109,11 +114,14 @@ export function SpecificationsStep({ project }) {
         />
       </Group>
       <Group title="Colourways and sizing">
-        <div className="grid gap-6 sm:grid-cols-2">
-          <Field id="colors" label="Colours" required hint="Comma-separated, with Pantone references if you have them.">
-            <Input name="colors" defaultValue={project.colors ?? ""} />
-          </Field>
-        </div>
+        <ColourPicker
+          id="colors"
+          name="colors"
+          label="Colours"
+          required
+          defaultValue={project.colors ?? ""}
+          hint="Choose every colourway. Type a Pantone reference and add it as written if you have one."
+        />
         <ChipSelect name="sizes" label="Sizes" required options={SIZE_OPTIONS} defaultValue={project.sizes} allowCustom />
       </Group>
       <Group title="Construction" description="Processes the factory must offer and anything else they should know.">

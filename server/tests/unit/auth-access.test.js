@@ -82,8 +82,22 @@ describe("registration", () => {
       name: "Enter your full name.",
       organization: "Enter your company or factory name.",
       email: "Enter a valid email address.",
-      password: "Use at least 8 characters.",
+      password: "Use 12 to 16 characters.",
     });
+  });
+
+  it.each([
+    ["too short", "Ab1!defgh", "Use 12 to 16 characters."],
+    ["too long", "Abcdefghij1!klmno", "Use 12 to 16 characters."],
+    ["no capital letter", "abcdefghij1!", "Include at least one capital letter."],
+    ["no small letter", "ABCDEFGHIJ1!", "Include at least one small letter."],
+    ["no number", "Abcdefghijk!", "Include at least one number."],
+    ["no symbol", "Abcdefghijk1", "Include at least one symbol, such as ! @ # $ %."],
+    ["a space", "Abcdef ghij1!", "Don't use spaces."],
+  ])("applies the password policy to new passwords (%s)", async (_label, password, message) => {
+    const res = await post("/api/auth/register").send({ role: "BRAND", name: "Ayesha Khan", organization: "North Thread", email: "a@example.test", password, confirmPassword: password });
+    expect(res.status).toBe(400);
+    expect(res.body.error.fieldErrors).toEqual({ password: message });
   });
 
   it("accepts multipart and urlencoded form bodies too", async () => {
@@ -119,20 +133,32 @@ describe("login", () => {
 });
 
 describe("password reset", () => {
-  it("validates the forgot-password email and limits it to 5 per hour", async () => {
+  it("validates the forgot-password email and limits it to 10 per hour per connection", async () => {
     const bad = await post("/api/auth/forgot-password", "10.8.8.8").send({ email: "x" });
     expect(bad.status).toBe(400);
     expect(bad.body.error.fieldErrors).toEqual({ email: "Enter a valid email address." });
-    for (let i = 0; i < 4; i++) await post("/api/auth/forgot-password", "10.8.8.8").send({});
+    for (let i = 0; i < 9; i++) await post("/api/auth/forgot-password", "10.8.8.8").send({});
     const limited = await post("/api/auth/forgot-password", "10.8.8.8").send({ email: "a@example.test" });
     expect(limited.status).toBe(429);
+    expect(limited.body.error.message).toBe("Too many attempts from your connection. Please wait a few minutes and try again.");
+  });
+
+  it("checks the code's format before anything else is looked up", async () => {
+    const missing = await post("/api/auth/forgot-password/verify").send({ email: "a@example.test", code: "" });
+    expect(missing.status).toBe(400);
+    expect(missing.body.error).toEqual({ code: "INVALID", message: "Enter the 6-digit code from the email.", fieldErrors: { code: "Enter the 6-digit code from the email." } });
+    const malformed = await post("/api/auth/forgot-password/verify").send({ email: "a@example.test", code: "12ab" });
+    expect(malformed.body.error).toEqual({ code: "INVALID", message: "You have entered the incorrect code.", fieldErrors: { code: "You have entered the incorrect code." } });
   });
 
   it("checks the new password and its confirmation", async () => {
-    const res = await post("/api/auth/reset-password").send({ token: "abcdefghijkl", password: "Password123", confirmPassword: "Password124" });
+    const res = await post("/api/auth/reset-password").send({ token: "abcdefghijkl", password: "Brand#Pass2026", confirmPassword: "Brand#Pass2027" });
     expect(res.status).toBe(400);
     expect(res.body.error.fieldErrors).toEqual({ confirmPassword: "Passwords do not match." });
+    const weak = await post("/api/auth/reset-password").send({ token: "abcdefghijkl", password: "Password1234", confirmPassword: "Password1234" });
+    expect(weak.body.error.fieldErrors).toEqual({ password: "Include at least one symbol, such as ! @ # $ %." });
   });
+
 });
 
 describe("contact form", () => {

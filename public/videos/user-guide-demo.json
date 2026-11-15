@@ -1,5 +1,5 @@
 {
-  "duration": 161,
+  "duration": 202,
   "chapters": [
     {
       "title": "Welcome",
@@ -7,39 +7,43 @@
     },
     {
       "title": "A brand signs up",
-      "start": 10
+      "start": 11
+    },
+    {
+      "title": "Fashinza approves the brand",
+      "start": 30
     },
     {
       "title": "Brief the garment",
-      "start": 24
+      "start": 48
     },
     {
       "title": "The factory sends a quotation",
-      "start": 57
+      "start": 86
     },
     {
       "title": "The brand accepts a quotation",
-      "start": 76
+      "start": 105
     },
     {
       "title": "Fabric sourcing and sampling",
-      "start": 87
+      "start": 117
     },
     {
       "title": "The brand approves the sample",
-      "start": 99
+      "start": 131
     },
     {
       "title": "Production and quality inspection",
-      "start": 108
+      "start": 140
     },
     {
       "title": "Inspection approval and payment",
-      "start": 127
+      "start": 165
     },
     {
       "title": "Shipping and delivery",
-      "start": 141
+      "start": 180
     }
   ]
 }

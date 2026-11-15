@@ -2,7 +2,7 @@ import * as React from "react";
 import { cn } from "@fashinza/shared/utils.js";
 
 /**
- * Card: surface, 1px hairline border, 6px radius, no shadow, 20px padding.
+ * Card: surface, 1px hairline border, 10px radius, a whisper of shadow (shadow-card), 20px padding.
  *
  *   <Card>
  *     <CardHeader>
@@ -15,7 +15,7 @@ import { cn } from "@fashinza/shared/utils.js";
  * For app pages prefer <Panel> from components/app/primitives, which wires the heading id for you.
  */
 export function Card({ className, ...props }) {
-  return <div className={cn("rounded-lg border border-line bg-surface", className)} {...props} />;
+  return <div className={cn("rounded-lg border border-line bg-surface shadow-card", className)} {...props} />;
 }
 
 /** Title row. Add `divided` for a bottom hairline (use when the body is a list or table). */

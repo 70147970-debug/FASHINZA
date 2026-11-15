@@ -6,14 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { cn } from "@fashinza/shared/utils.js";
+import { useScrolledPast } from "./use-scroll";
 
 /**
- * Public header: ivory bar over a hairline, Playfair wordmark, quiet nav whose active item is ink with a
- * forest-green rule on the header line. The sign-up action follows the audience of the page (manufacturer
- * pages invite factories, everything else invites brands). On phones Login stays visible next to the menu.
+ * Public header: ivory bar over a hairline that turns into liquid glass once the page scrolls, Playfair wordmark,
+ * quiet nav whose active item is ink with a forest-green rule on the header line (hovered items get a taupe one).
+ * The sign-up action follows the audience of the page (manufacturer pages invite factories, everything else
+ * invites brands). On phones Login stays visible next to the menu, which opens as a floating glass drawer.
  */
 export function SiteHeader({ home }) {
   const { pathname } = useLocation();
+  const scrolled = useScrolledPast(8);
   const factory = pathname.startsWith("/for-manufacturers");
   const cta = factory
     ? { href: "/register?role=manufacturer", label: "Join as a Manufacturer", short: "Join as a factory" }
@@ -23,7 +26,13 @@ export function SiteHeader({ home }) {
     : { href: "/register?role=manufacturer", label: "Run a garment factory? Join as a manufacturer" };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-line bg-canvas/90 backdrop-blur supports-[backdrop-filter]:bg-canvas/80">
+    <header
+      data-scrolled={scrolled || undefined}
+      className={cn(
+        "sticky top-0 z-40 border-b transition-[background-color,box-shadow,border-color] duration-300",
+        scrolled ? "glass-bar border-transparent" : "border-line bg-canvas",
+      )}
+    >
       <div className="container-page flex h-16 items-center justify-between gap-3 lg:gap-4">
         <Logo />
         <nav aria-label="Main" className="hidden h-full items-stretch gap-1 lg:flex">
@@ -35,14 +44,17 @@ export function SiteHeader({ home }) {
                 to={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative inline-flex shrink-0 items-center whitespace-nowrap px-2.5 text-sm transition-colors duration-150 xl:px-3",
+                  "group relative inline-flex shrink-0 items-center whitespace-nowrap px-2.5 text-sm transition-colors duration-150 xl:px-3",
                   active ? "font-medium text-ink" : "text-ink-muted hover:text-ink",
                 )}
               >
                 {item.label}
                 <span
                   aria-hidden
-                  className={cn("absolute inset-x-2.5 -bottom-px h-0.5 transition-colors duration-150 xl:inset-x-3", active ? "bg-accent" : "bg-transparent")}
+                  className={cn(
+                    "absolute inset-x-2.5 -bottom-px h-0.5 rounded-full transition-[background-color,transform] duration-200 xl:inset-x-3",
+                    active ? "bg-accent" : "scale-x-0 bg-taupe group-hover:scale-x-100",
+                  )}
                 />
               </Link>
             );
@@ -92,7 +104,7 @@ export function SiteHeader({ home }) {
                 <Menu className="size-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent title="Menu" className="bg-canvas">
+            <SheetContent title="Menu">
               <nav aria-label="Mobile" className="flex flex-col">
                 <p className="label-caps border-b border-line pb-2 text-ink-muted">Explore</p>
                 {PUBLIC_NAV.map((item) => (

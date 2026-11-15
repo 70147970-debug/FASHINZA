@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Photo } from "@/components/ui/photo";
 import { CtaBand, ON_PHOTO_OUTLINE, PhotoCredit, Section, SectionHeading, WRAP_ON_PHONE } from "@/components/site/marketing";
 import { FaqList } from "@/components/site/faq-list";
+import { LiquidHero } from "@/components/site/liquid-hero";
 import { ProductionSnapshotMock } from "@/components/site/product-mocks";
+import { Tilt } from "@/components/site/tilt";
 import { GARMENT_CATEGORIES } from "@fashinza/shared/constants.js";
 import { FAQ } from "@fashinza/shared/faq.js";
 import { cn } from "@fashinza/shared/utils.js";
@@ -101,6 +103,9 @@ export default function HomePage() {
           position="62% 55%"
           alt="A machinist guiding a pinstripe garment under the needle of an industrial sewing machine"
         />
+        {/* Liquid silk (WebGL, loaded after the page; off under reduced motion). It sits under the scrim, so the
+            copy's contrast never depends on it; without WebGL the photograph simply stays. */}
+        <LiquidHero />
         {/* Phones: ≥65% scrim everywhere. lg+: darkest on the left, where the copy sits (≥67% across the text column). */}
         <div
           aria-hidden
@@ -126,7 +131,7 @@ export default function HomePage() {
             <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Button asChild variant="accent" size="lg" className={WRAP_ON_PHONE}>
                 <Link to="/register?role=brand">
-                  Start Your Manufacturing Project <ArrowRight />
+                  Start Your Manufacturing Project <ArrowRight className="transition-transform duration-200 group-hover/button:translate-x-0.5" />
                 </Link>
               </Button>
               <Button asChild variant="ghost" size="lg" className={cn(ON_PHOTO_OUTLINE, WRAP_ON_PHONE)}>
@@ -135,10 +140,7 @@ export default function HomePage() {
             </div>
             <ul className="mt-8 flex flex-wrap gap-2">
               {HERO_FACTS.map((t) => (
-                <li
-                  key={t}
-                  className="flex items-center gap-1.5 rounded-full border border-ink-inverse/25 bg-scrim/40 px-3 py-1.5 text-[13px] leading-5 text-ink-inverse backdrop-blur-sm"
-                >
+                <li key={t} className="glass-ink flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] leading-5 text-ink-inverse">
                   <Check className="size-3.5 shrink-0 text-accent-inverse" strokeWidth={2.25} aria-hidden />
                   {t}
                 </li>
@@ -154,15 +156,30 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Garment categories: a quick "yes, they make my kind of clothing" for first-time visitors. */}
-      <div className="border-b border-line bg-surface">
-        <div className="container-page flex flex-col gap-3 py-5 sm:flex-row sm:items-center sm:gap-6">
-          <p className="eyebrow shrink-0 text-ink-muted">Garments you can brief</p>
-          <ul className="flex flex-wrap gap-x-5 gap-y-1.5 font-display text-base text-ink sm:text-[1.0625rem]">
-            {GARMENT_CATEGORIES.map((c) => (
-              <li key={c.value}>{c.label}</li>
-            ))}
-          </ul>
+      {/* Garment categories: a quick "yes, they make my kind of clothing" for first-time visitors. Phones get one
+          swipeable row (the list is long); wider screens wrap it. */}
+      <div className="border-b border-line bg-liquid-surface">
+        <div className="container-page flex flex-col gap-3 py-5 sm:flex-row sm:items-start sm:gap-6">
+          <p id="garments-title" className="eyebrow shrink-0 text-ink-muted sm:pt-1.5">
+            Garments you can brief
+          </p>
+          <div
+            role="region"
+            aria-labelledby="garments-title"
+            tabIndex={0}
+            className="-mx-4 min-w-0 overflow-x-auto overscroll-x-contain px-4 pb-1 focus-visible:outline-offset-[-2px] sm:mx-0 sm:overflow-visible sm:px-0 sm:pb-0"
+          >
+            <ul className="flex w-max gap-2 sm:w-auto sm:flex-wrap sm:gap-1.5">
+              {GARMENT_CATEGORIES.map((c) => (
+                <li
+                  key={c.value}
+                  className="inline-flex h-8 shrink-0 items-center whitespace-nowrap rounded-full border border-line bg-surface/75 px-3.5 font-display text-[0.9375rem] text-ink shadow-[inset_0_1px_0_var(--glass-rim)] sm:h-7 sm:px-3 sm:text-sm"
+                >
+                  {c.label}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
 
@@ -178,9 +195,11 @@ export default function HomePage() {
         />
         <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
           {PATHS.map((p) => (
-            <article
+            <Tilt
+              as="article"
               key={p.audience}
-              className="group flex min-w-0 flex-col overflow-hidden rounded-xl border border-line bg-surface shadow-sm transition-shadow duration-300 hover:shadow-md"
+              max={3}
+              className="group flex min-w-0 flex-col overflow-hidden rounded-xl border border-line bg-surface shadow-card hover:shadow-float"
             >
               <Photo
                 photo={p.photo}
@@ -216,7 +235,7 @@ export default function HomePage() {
                 <div className="mt-auto flex flex-col gap-3 pt-8 sm:flex-row sm:items-center sm:gap-6">
                   <Button asChild size="lg" className={cn("self-start", WRAP_ON_PHONE)}>
                     <Link to={p.href}>
-                      {p.cta} <ArrowRight />
+                      {p.cta} <ArrowRight className="transition-transform duration-200 group-hover/button:translate-x-0.5" />
                     </Link>
                   </Button>
                   <Button asChild variant="link">
@@ -224,7 +243,7 @@ export default function HomePage() {
                   </Button>
                 </div>
               </div>
-            </article>
+            </Tilt>
           ))}
         </div>
       </Section>
@@ -245,13 +264,14 @@ export default function HomePage() {
             </Link>
           </Button>
         </SectionHeading>
-        <ol className="relative grid gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+        {/* lg:mt-24 (it collapses with the heading's bottom margin) leaves room for the icons that rise above the cards. */}
+        <ol className="relative grid gap-5 sm:grid-cols-2 lg:mt-24 lg:grid-cols-4 lg:gap-6">
           {/* The thread joining the four phases (lg+). */}
           <span aria-hidden className="absolute left-[12.5%] right-[12.5%] top-10 hidden border-t border-dashed border-line-strong lg:block" />
           {PHASES.map((ph, i) => (
             // Phones: icon beside the text, so the four phases stay short. sm+: centred cards.
-            <li key={ph.title} className="relative flex gap-4 rounded-xl border border-line bg-canvas p-5 sm:block sm:p-6 sm:text-center">
-              <span className="relative grid size-12 shrink-0 place-items-center rounded-full border border-accent-line bg-surface text-accent-strong sm:mx-auto sm:size-16 lg:-mt-14 lg:mb-1">
+            <li key={ph.title} className="glass relative flex gap-4 rounded-xl border border-line p-5 sm:block sm:p-6 sm:text-center">
+              <span className="relative grid size-12 shrink-0 place-items-center rounded-full border border-accent-line bg-surface text-accent-strong shadow-card sm:mx-auto sm:size-16 lg:-mt-14 lg:mb-1">
                 <ph.icon className="size-5 sm:size-6" strokeWidth={1.5} aria-hidden />
               </span>
               <div className="min-w-0">
@@ -294,22 +314,24 @@ export default function HomePage() {
             <ul className="flex snap-x snap-mandatory gap-4 px-4 sm:px-6 lg:grid lg:grid-cols-5 lg:gap-5 lg:px-0">
               {CAPABILITIES.map((c, i) => (
                 <li key={c.title} className="group w-[72%] shrink-0 snap-start min-[480px]:w-[46%] sm:w-[38%] lg:w-auto">
-                  <Photo
-                    photo={c.photo}
-                    sizes="(min-width: 1024px) 20vw, (min-width: 640px) 38vw, 72vw"
-                    aspect="portrait"
-                    position={c.position}
-                    overlay="bottom"
-                    credit="top"
-                    decorative
-                    imageClassName="transition-transform duration-700 motion-safe:group-hover:scale-[1.04]"
-                    contentClassName="p-4 sm:p-5"
-                  >
-                    <span className="font-display text-sm italic text-ink-inverse tabular" aria-hidden>
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <h3 className="font-display text-[1.375rem] font-medium leading-7 tracking-[-0.01em] text-ink-inverse">{c.title}</h3>
-                  </Photo>
+                  <Tilt className="rounded-lg">
+                    <Photo
+                      photo={c.photo}
+                      sizes="(min-width: 1024px) 20vw, (min-width: 640px) 38vw, 72vw"
+                      aspect="portrait"
+                      position={c.position}
+                      overlay="bottom"
+                      credit="top"
+                      decorative
+                      imageClassName="transition-transform duration-700 motion-safe:group-hover:scale-[1.04]"
+                      contentClassName="p-4 sm:p-5"
+                    >
+                      <span className="font-display text-sm italic text-ink-inverse tabular" aria-hidden>
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <h3 className="font-display text-[1.375rem] font-medium leading-7 tracking-[-0.01em] text-ink-inverse">{c.title}</h3>
+                    </Photo>
+                  </Tilt>
                   <p className="mt-3 text-[13px] leading-5 text-ink-inverse-muted">{c.text}</p>
                 </li>
               ))}
@@ -348,7 +370,8 @@ export default function HomePage() {
               </Link>
             </Button>
           </div>
-          <div className="relative min-w-0 lg:col-span-7 lg:pb-72">
+          {/* A layered 3D preview: the order card floats in front of the photograph and the pair leans with the pointer. */}
+          <Tilt stack max={4} sheen={false} className="relative min-w-0 lg:col-span-7 lg:pb-72">
             <Photo
               photo="factoryFloor"
               sizes="(min-width: 1024px) 58vw, 100vw"
@@ -357,10 +380,10 @@ export default function HomePage() {
               credit="top"
               alt="Garment workers checking and stacking finished pieces along a production line"
             />
-            <div className="relative -mt-16 hidden px-6 sm:block md:mx-auto md:max-w-lg lg:absolute lg:bottom-0 lg:left-0 lg:mx-0 lg:mt-0 lg:w-[23rem] lg:max-w-none lg:-translate-x-6 lg:px-0 xl:w-[25rem]">
+            <div className="tilt-layer relative -mt-16 hidden px-6 [--tilt-depth:36px] sm:block md:mx-auto md:max-w-lg lg:absolute lg:bottom-0 lg:left-0 lg:mx-0 lg:mt-0 lg:w-[23rem] lg:max-w-none lg:-translate-x-6 lg:px-0 xl:w-[25rem]">
               <ProductionSnapshotMock />
             </div>
-          </div>
+          </Tilt>
         </div>
       </Section>
 
@@ -388,7 +411,7 @@ export default function HomePage() {
             />
             <ul className="grid gap-4">
               {RESPONSIBLE.map((r) => (
-                <li key={r.title} className="flex gap-4 rounded-xl border border-line bg-canvas p-5">
+                <li key={r.title} className="glass flex gap-4 rounded-xl border border-line p-5">
                   <span className="grid size-11 shrink-0 place-items-center rounded-full bg-accent-soft text-accent-strong">
                     <r.icon className="size-5" strokeWidth={1.5} aria-hidden />
                   </span>

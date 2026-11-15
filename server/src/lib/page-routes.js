@@ -14,6 +14,7 @@ export const PAGE_PATHS = [
   "/notifications", "/profile", "/factory", "/settings", "/search",
   "/admin", "/admin/factories", "/admin/factories/:id", "/admin/users", "/admin/orders", "/admin/qc", "/admin/disputes",
   "/admin/payments", "/admin/audit", "/admin/enquiries",
+  "/admin/brands", "/admin/brands/:id", "/admin/projects",
   "/sandbox-checkout/:ref", "/notifications/:id",
 ];
 

@@ -2,24 +2,30 @@ import { Eye, Lock, MapPin } from "lucide-react";
 import { useLoaderData } from "react-router";
 import { loadJson } from "@/lib/api";
 import { PageHeader, Panel } from "@/components/app/primitives";
+import { BrandApprovalBadge, BrandApprovalNotice } from "@/components/app/brand-approval";
 import { BrandProfileForm } from "@/components/profile/profile-forms";
 import { Avatar } from "@/components/ui/avatar";
 import { PageMeta } from "@/components/meta";
 
 /** GET /api/profile/brand. */
-export async function loader({ request }) {
+export async function loader({ request, user }) {
   const { profile } = await loadJson("/api/profile/brand", { request });
   // findUniqueOrThrow: an onboarded brand always has a profile.
   if (!profile) throw new Error("No BrandProfile found");
-  return { p: profile };
+  return { p: profile, actor: { role: user.role, approvalStatus: user.approvalStatus, approvalNote: user.approvalNote, profileCompleted: user.profileCompleted } };
 }
 
 export default function BrandProfilePage() {
-  const { p } = useLoaderData();
+  const { p, actor } = useLoaderData();
   return (
     <>
       <PageMeta title="Company profile" />
-      <PageHeader title="Company profile" description="Factories you are matched with see your company name, country and description." />
+      <PageHeader
+        title="Company profile"
+        meta={<BrandApprovalBadge status={actor.approvalStatus} />}
+        description="Factories you are matched with see your company name, country and description."
+      />
+      <BrandApprovalNotice user={actor} profileLink={false} />
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <Panel title="Company details" description="Saved changes apply to every project you send.">
           <BrandProfileForm values={p} />
@@ -51,7 +57,7 @@ export default function BrandProfilePage() {
               </li>
               <li className="flex gap-2.5">
                 <Lock className="mt-0.5 size-4 shrink-0 text-ink-subtle" aria-hidden />
-                Your website, city, phone number and draft projects are not shown to factories.
+                Your website, social media links, city, phone number and draft projects are not shown to factories.
               </li>
             </ul>
           </Panel>

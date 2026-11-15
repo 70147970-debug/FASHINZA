@@ -4,7 +4,7 @@
  */
 import { Router } from "express";
 import { z } from "zod";
-import { InquiryStatus, OrderStatus, Role, UserStatus, VerificationStatus } from "@fashinza/shared/enums.js";
+import { ApprovalStatus, InquiryStatus, OrderStatus, ProjectStatus, Role, UserStatus, VerificationStatus } from "@fashinza/shared/enums.js";
 import { disputeUpdateSchema, reasonSchema } from "@fashinza/shared/validation/operations.js";
 import { ok, parseForm, readForm } from "../lib/form.js";
 import { oneOf, pageParam, queryString } from "../lib/query.js";
@@ -16,6 +16,7 @@ import {
   getFactory,
   listAudit,
   listEnquiries,
+  listAllProjects,
   listFactories,
   listUsers,
   paymentOverview,
@@ -25,6 +26,7 @@ import {
   setEnquiryStatus,
   setUserStatus,
 } from "../services/admin.js";
+import { countBrandsByApproval, decideBrandApproval, getBrand, listBrands } from "../services/brand-approval.js";
 import { adminDashboard } from "../services/dashboard.js";
 import { updateDispute } from "../services/disputes.js";
 import { listOrders, refreshDelays } from "../services/orders.js";
@@ -85,6 +87,46 @@ router.post("/factories/:id/revoke", admin, async (req, res) => {
   const reason = reasonOf(req);
   await revokeVerification(req.actor, req.params.id, reason);
   ok(res, { message: "Verification revoked." });
+});
+
+// ───────────── brands (approval) ─────────────
+
+router.get("/brands", admin, async (req, res) => {
+  const raw = queryString(req, "status");
+  const q = queryString(req, "q") || undefined;
+  // Absent → the pending queue; an ApprovalStatus → that; anything else (e.g. ALL) → every brand.
+  const status = oneOf(ApprovalStatus, raw) ?? (raw === undefined ? "PENDING" : undefined);
+  const [data, counts] = await Promise.all([listBrands(req.actor, { status, q, page: pageParam(req) }), countBrandsByApproval(req.actor, { q })]);
+  res.json({ ...data, counts, status: status ?? null });
+});
+
+router.get("/brands/:id", admin, async (req, res) => {
+  res.json(await getBrand(req.actor, req.params.id));
+});
+
+const brandDecision = z.object({
+  decision: z.enum(["APPROVED", "REJECTED"], { errorMap: () => ({ message: "Choose approve or reject." }) }),
+  note: z.string().trim().max(1000, "Keep the note under 1,000 characters.").optional(),
+});
+
+router.post("/brands/:id/approval", admin, async (req, res) => {
+  const form = readForm(req);
+  const data = validated(brandDecision, { decision: form.decision, note: typeof form.note === "string" ? form.note : undefined });
+  await decideBrandApproval(req.actor, req.params.id, data.decision, data.note);
+  ok(res, { message: data.decision === "APPROVED" ? "Brand approved. The brand has been notified by email and in the app." : "Brand rejected. The brand has been told why." });
+});
+
+// ───────────── projects (read-only, every brand) ─────────────
+
+router.get("/projects", admin, async (req, res) => {
+  const status = queryString(req, "status");
+  res.json(
+    await listAllProjects(req.actor, {
+      q: queryString(req, "q") || undefined,
+      status: status === "ACTIVE" ? "ACTIVE" : oneOf(ProjectStatus, status),
+      page: pageParam(req),
+    }),
+  );
 });
 
 // ───────────── users ─────────────

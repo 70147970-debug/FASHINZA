@@ -144,7 +144,7 @@ export async function adminDashboard(actor) {
   assertRole(actor, "ADMIN");
   await refreshDelays();
   const since = new Date(Date.now() - 30 * 86400000);
-  const [usersByRole, suspended, pendingFactories, verifiedFactories, ordersByStatus, delayedOrders, openDisputes, failedQc30, paidByCurrency, webhookErrors, projectsByStatus, recentAudit] =
+  const [usersByRole, suspended, pendingFactories, verifiedFactories, ordersByStatus, delayedOrders, openDisputes, failedQc30, paidByCurrency, webhookErrors, projectsByStatus, recentAudit, pendingBrands] =
     await Promise.all([
       countBy(User, "role", Role),
       User.countDocuments({ status: "SUSPENDED" }),
@@ -158,11 +158,14 @@ export async function adminDashboard(actor) {
       WebhookEvent.countDocuments({ error: { $ne: null }, processedAt: null }),
       countBy(Project, "status", ProjectStatus),
       AuditLog.find().sort({ createdAt: -1, _id: -1 }).limit(6).lean(),
+      // Brand approval queue (services/brand-approval.js).
+      User.countDocuments({ role: "BRAND", approvalStatus: "PENDING" }),
     ]);
   const [actors, targets] = await Promise.all([mapById(User, recentAudit.map((a) => a.actorId), { name: 1 }), resolveAuditTargets(recentAudit)]);
   return {
     usersByRole,
     suspended,
+    pendingBrands,
     pendingFactories,
     verifiedFactories,
     ordersByStatus,

@@ -9,7 +9,10 @@
  *
  * Server-specific variables (all optional): PORT (4000), MONGODB_URI
  * (mongodb://127.0.0.1:27017/fashinza?replicaSet=rs0), SERVER_URL (http://localhost:<PORT>, for server-to-self
- * calls), TEST_MONGODB_URI (integration tests; name must contain "test"). Shared with the root app: APP_URL,
+ * calls), TEST_MONGODB_URI (integration tests; name must contain "test"), SMTP_HOST / SMTP_PORT / SMTP_SECURE /
+ * SMTP_USER / SMTP_PASS / MAIL_FROM (outgoing email, see lib/mail.js and server/.env.example), MAIL_OUTBOX_DIR
+ * (also write every email there as JSON; tests), LINK_CHECK ("off" disables live checks of profile links).
+ * Shared with the root app: APP_URL,
  * UPLOAD_DIR (relative paths resolve against the repo root), PAYMENT_PROVIDER, PAYMENT_SANDBOX_SECRET,
  * ADMIN_EMAIL, ADMIN_PASSWORD, SEED_DEMO, SEED_DEMO_PASSWORD, NEXT_PUBLIC_CONTACT_EMAIL, RATE_LIMIT_SCALE.
  */
@@ -78,7 +81,7 @@ export const config = Object.freeze({
   isTest: env.NODE_ENV === "test" || Boolean(env.VITEST),
   port,
   mongodbUri: env.MONGODB_URI || "mongodb://127.0.0.1:27017/fashinza?replicaSet=rs0",
-  /** Public base URL (password-reset links, sandbox webhook delivery). Undefined when not configured. */
+  /** Public base URL of the web app (links in emails, sandbox webhook delivery). Undefined when not configured. */
   appUrl: env.APP_URL || undefined,
   /** This API server's own base URL, for server-to-self calls. */
   serverUrl: env.SERVER_URL || `http://localhost:${port}`,
@@ -93,10 +96,26 @@ export const config = Object.freeze({
   seedDemoPassword: env.SEED_DEMO_PASSWORD || undefined,
   contactEmail: env.NEXT_PUBLIC_CONTACT_EMAIL || "contact@fashinza.example",
   rateLimitScale: Math.max(1, Number(env.RATE_LIMIT_SCALE ?? 1) || 1),
+  /**
+   * Outgoing email (lib/mail.js). Without SMTP_USER and SMTP_PASS nothing is sent: messages are written to the
+   * server console instead. Defaults suit Gmail with an app password (smtp.gmail.com:465, TLS).
+   */
+  mail: Object.freeze({
+    host: env.SMTP_HOST || "smtp.gmail.com",
+    port: Number(env.SMTP_PORT) || 465,
+    secure: env.SMTP_SECURE ? !/^(false|0|no|off)$/i.test(env.SMTP_SECURE) : true,
+    user: env.SMTP_USER || undefined,
+    pass: env.SMTP_PASS || undefined,
+    from: env.MAIL_FROM || `Fashinza <${env.SMTP_USER || "no-reply@fashinza.example"}>`,
+    /** When set, every message is also written there as a JSON file (the e2e suite reads codes from it). */
+    outboxDir: env.MAIL_OUTBOX_DIR ? resolveFromRoot(env.MAIL_OUTBOX_DIR) : undefined,
+  }),
+  // LINK_CHECK (live checks of profile links) is read by lib/link-check.js linkChecksEnabled(): "on" by default,
+  // "off" in the integration and e2e environments, and off when unset under test runners.
 });
 
 /** Keys whose values must never be logged. */
-export const SECRET_KEYS = ["PAYMENT_SANDBOX_SECRET", "ADMIN_PASSWORD", "SEED_DEMO_PASSWORD", "MONGODB_URI", "DATABASE_URL"];
+export const SECRET_KEYS = ["PAYMENT_SANDBOX_SECRET", "ADMIN_PASSWORD", "SEED_DEMO_PASSWORD", "MONGODB_URI", "DATABASE_URL", "SMTP_PASS"];
 
 /** MongoDB URI with credentials removed, safe for logs. */
 export function redactUri(uri) {

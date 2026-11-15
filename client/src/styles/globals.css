@@ -112,18 +112,22 @@
   --color-overlay: rgb(32 32 32 / 0.45);
   --color-shadow: rgb(40 34 26 / 0.1);
 
-  /* Radii: tailored. Controls 4px (rounded-md), cards 6px (rounded-lg), dialogs 8px (rounded-xl). */
+  /* Radii ("liquid" tailoring): controls 6px (rounded-md), cards 10px (rounded-lg), large cards and dialogs
+     14px (rounded-xl), floating panels 18px (rounded-2xl). Badges stay crisp (rounded-sm). */
   --radius-xs: 2px;
-  --radius-sm: 3px;
-  --radius-md: 4px;
-  --radius-lg: 6px;
-  --radius-xl: 8px;
-  --radius-2xl: 10px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-2xl: 18px;
 
-  /* Elevation: borders define structure. Only popovers, menus, dialogs and toasts float (shadow-pop). */
-  --shadow-card: 0 0 #0000;
+  /* Elevation: borders define structure; cards add a whisper of depth, popovers, menus, dialogs and toasts
+     float (shadow-pop), and glass surfaces carry their own layered shadow (see LIQUID GLASS below). */
+  --shadow-card: 0 1px 2px var(--color-shadow-soft), 0 4px 14px -8px var(--color-shadow-soft);
   --shadow-raised: 0 1px 2px var(--color-shadow);
   --shadow-pop: 0 1px 2px var(--color-shadow), 0 12px 32px -12px var(--color-shadow), 0 24px 48px -24px var(--color-shadow);
+  --shadow-float: 0 1px 2px var(--color-shadow-soft), 0 10px 30px -12px var(--color-shadow), 0 30px 60px -30px var(--color-shadow);
+  --color-shadow-soft: rgb(40 34 26 / 0.07);
 
   /* Type scale: only t-shirt names here (tailwind-merge treats other text-* names as colours).
      Display / title / heading sizes are the type-* utilities below. */
@@ -187,6 +191,7 @@
   --color-focus: #8fab91;
   --color-overlay: rgb(0 0 0 / 0.62);
   --color-shadow: rgb(0 0 0 / 0.5);
+  --color-shadow-soft: rgb(0 0 0 / 0.28);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
@@ -237,6 +242,91 @@
     --color-focus: #8fab91;
     --color-overlay: rgb(0 0 0 / 0.62);
     --color-shadow: rgb(0 0 0 / 0.5);
+    --color-shadow-soft: rgb(0 0 0 / 0.28);
+  }
+}
+
+/* ---------------------------------------------------------------------------------------------
+ * LIQUID GLASS
+ *
+ * Translucent surfaces that blur and saturate what lies behind them, with a 1px inner highlight (rim), a soft
+ * specular sheen and a layered shadow. Fills are mixed from the semantic surface tokens, so they follow the
+ * theme automatically; only the rim, sheen and shadow need dark values.
+ *
+ *   glass         64% surface: marketing cards and panels over the liquid ambient backgrounds
+ *   glass-strong  88% raised surface (92% in dark): dialogs, drawers, dropdown menus, toasts, floating buttons
+ *   glass-bar     86% canvas: the sticky public header (once scrolled) and the app shell's top bar
+ *   glass-subtle  72% canvas: the app shell's sidebar
+ *   glass-ink     45% charcoal: small chips and badges on photographs (ivory text; keep them on a scrim)
+ *
+ * Contrast (checked with a script, worst case = a pure black / white pixel behind the blur, sheen included):
+ * ink-muted and accent-strong text stay ≥4.5:1 on glass-strong and glass-bar in both themes (light 5.3 / 4.7,
+ * dark 4.6 / 5.6), also over the dark hero photograph. Plain
+ * `glass` is only used over the light ambient backgrounds below, never over photographs.
+ * Fallbacks: no backdrop-filter support, or prefers-reduced-transparency → solid surfaces.
+ * -------------------------------------------------------------------------------------------*/
+:root {
+  --glass-blur: 18px;
+  --glass-saturate: 1.6;
+  --glass-fill: color-mix(in srgb, var(--color-surface) 64%, transparent);
+  --glass-strong-mix: 88%;
+  --glass-fill-strong: color-mix(in srgb, var(--color-surface-raised) var(--glass-strong-mix), transparent);
+  --glass-fill-bar: color-mix(in srgb, var(--color-canvas) 86%, transparent);
+  --glass-fill-subtle: color-mix(in srgb, var(--color-canvas) 72%, transparent);
+  --glass-fill-ink: rgb(20 20 20 / 0.45);
+  --glass-rim: rgb(255 255 255 / 0.85);
+  --glass-rim-soft: rgb(255 255 255 / 0.4);
+  --glass-sheen: linear-gradient(165deg, rgb(255 255 255 / 0.55) 0%, rgb(255 255 255 / 0.14) 26%, rgb(255 255 255 / 0) 50%, rgb(255 255 255 / 0.1) 100%);
+  --glass-shadow: 0 1px 1px rgb(40 34 26 / 0.03), 0 8px 22px -10px rgb(40 34 26 / 0.14), 0 24px 48px -26px rgb(40 34 26 / 0.18);
+
+  /* Liquid ambient: soft taupe and forest-green glows behind glass. Peaks are capped (taupe 22%, forest 12%)
+     so ink-muted stays ≥4.5:1 and ink-subtle ≥3:1 at the brightest point. */
+  --liquid-taupe: color-mix(in srgb, var(--color-taupe) 22%, transparent);
+  --liquid-forest: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  --liquid-ambient:
+    radial-gradient(55% 60% at 6% 0%, var(--liquid-taupe), transparent 72%),
+    radial-gradient(45% 55% at 100% 30%, var(--liquid-forest), transparent 72%),
+    radial-gradient(50% 50% at 45% 105%, color-mix(in srgb, var(--color-taupe) 14%, transparent), transparent 70%);
+}
+:root[data-theme="dark"] {
+  --glass-rim: rgb(255 255 255 / 0.12);
+  --glass-rim-soft: rgb(255 255 255 / 0.05);
+  --glass-sheen: linear-gradient(165deg, rgb(255 255 255 / 0.06) 0%, rgb(255 255 255 / 0.02) 28%, rgb(255 255 255 / 0) 52%, rgb(255 255 255 / 0.03) 100%);
+  --glass-strong-mix: 92%;
+  --glass-shadow: 0 1px 1px rgb(0 0 0 / 0.25), 0 10px 26px -10px rgb(0 0 0 / 0.55), 0 26px 52px -26px rgb(0 0 0 / 0.6);
+  --liquid-taupe: color-mix(in srgb, var(--color-taupe) 13%, transparent);
+  --liquid-forest: color-mix(in srgb, var(--color-accent) 11%, transparent);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --glass-rim: rgb(255 255 255 / 0.12);
+    --glass-rim-soft: rgb(255 255 255 / 0.05);
+    --glass-sheen: linear-gradient(165deg, rgb(255 255 255 / 0.06) 0%, rgb(255 255 255 / 0.02) 28%, rgb(255 255 255 / 0) 52%, rgb(255 255 255 / 0.03) 100%);
+    --glass-strong-mix: 92%;
+    --glass-shadow: 0 1px 1px rgb(0 0 0 / 0.25), 0 10px 26px -10px rgb(0 0 0 / 0.55), 0 26px 52px -26px rgb(0 0 0 / 0.6);
+    --liquid-taupe: color-mix(in srgb, var(--color-taupe) 13%, transparent);
+    --liquid-forest: color-mix(in srgb, var(--color-accent) 11%, transparent);
+  }
+}
+/* Solid fallbacks: browsers without backdrop-filter, and visitors who ask for less transparency. */
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  :root {
+    --glass-fill: var(--color-surface);
+    --glass-fill-strong: var(--color-surface-raised);
+    --glass-fill-bar: var(--color-canvas);
+    --glass-fill-subtle: var(--color-canvas);
+    --glass-fill-ink: rgb(20 20 20 / 0.82);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-blur: 0px;
+    --glass-saturate: 1;
+    --glass-fill: var(--color-surface);
+    --glass-fill-strong: var(--color-surface-raised);
+    --glass-fill-bar: var(--color-canvas);
+    --glass-fill-subtle: var(--color-canvas);
+    --glass-fill-ink: rgb(20 20 20 / 0.82);
   }
 }
 
@@ -248,6 +338,13 @@
     -webkit-text-size-adjust: 100%;
     text-rendering: optimizeLegibility;
     scrollbar-color: var(--color-line-strong) transparent;
+  }
+  /* Smooth scrolling for in-page anchor links only: RootLayout adds this class for the duration of a hash-link
+     scroll (never for route changes, which must jump to the top instantly), and never under reduced motion. */
+  @media (prefers-reduced-motion: no-preference) {
+    html.fz-smooth-scroll {
+      scroll-behavior: smooth;
+    }
   }
   body {
     background: var(--color-canvas);
@@ -316,6 +413,7 @@
     ::before,
     ::after {
       animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
   }
@@ -426,6 +524,84 @@
   background-repeat: no-repeat;
 }
 
+/* Liquid glass surfaces (tokens and contrast rules: LIQUID GLASS above). They set fill, sheen, blur and a
+   box-shadow (rim + depth), so do not combine them with shadow-* utilities; borders stay up to the caller. */
+@utility glass {
+  background-color: var(--glass-fill);
+  background-image: var(--glass-sheen);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  box-shadow:
+    inset 0 1px 0 0 var(--glass-rim),
+    inset 0 0 0 1px var(--glass-rim-soft),
+    var(--glass-shadow);
+}
+@utility glass-strong {
+  background-color: var(--glass-fill-strong);
+  background-image: var(--glass-sheen);
+  -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 1.35)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(calc(var(--glass-blur) * 1.35)) saturate(var(--glass-saturate));
+  box-shadow:
+    inset 0 1px 0 0 var(--glass-rim),
+    inset 0 0 0 1px var(--glass-rim-soft),
+    var(--shadow-pop);
+}
+@utility glass-bar {
+  background-color: var(--glass-fill-bar);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  box-shadow:
+    inset 0 -1px 0 0 var(--glass-rim-soft),
+    0 1px 0 0 var(--color-line),
+    0 10px 30px -18px var(--color-shadow);
+}
+@utility glass-subtle {
+  background-color: var(--glass-fill-subtle);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  box-shadow: inset -1px 0 0 0 var(--glass-rim-soft);
+}
+@utility glass-ink {
+  background-color: var(--glass-fill-ink);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  backdrop-filter: blur(12px) saturate(1.4);
+  box-shadow:
+    inset 0 1px 0 0 rgb(255 255 255 / 0.2),
+    inset 0 0 0 1px rgb(255 255 255 / 0.12);
+}
+
+/* Ambient taupe / forest-green glows on canvas or white, for sections that hold glass cards. */
+@utility bg-liquid {
+  background-color: var(--color-canvas);
+  background-image: var(--liquid-ambient);
+}
+@utility bg-liquid-surface {
+  background-color: var(--color-surface);
+  background-image: var(--liquid-ambient);
+}
+
+/* Loading placeholder with a slow liquid shimmer (a static tint under reduced motion). */
+@utility skeleton {
+  background-color: var(--color-surface-muted);
+  background-image: linear-gradient(
+    100deg,
+    transparent 20%,
+    color-mix(in srgb, var(--color-surface) 70%, transparent) 50%,
+    transparent 80%
+  );
+  background-size: 220% 100%;
+  background-repeat: no-repeat;
+  animation: fz-shimmer 1.6s ease-in-out infinite;
+}
+@keyframes fz-shimmer {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+
 @layer components {
   /* Marketing container: ~1216px with 16/24/40px gutters. */
   .container-page {
@@ -513,5 +689,181 @@
   .data-table a.cell-primary:hover,
   .data-table .cell-primary a:hover {
     text-decoration-color: var(--color-accent);
+  }
+
+  /*
+   * 3D tilt with a glass sheen (components/site/tilt.jsx): photo cards lean towards the pointer and a soft
+   * highlight follows it. Only devices with a fine, hovering pointer and no reduced-motion preference tilt;
+   * on touch screens the cards stay flat. The sheen is masked away from the lower part of the card, where
+   * captions sit on their scrim, so it never lowers text contrast.
+   */
+  /* The tilt's transitions live here (not in utilities), so give tilting cards no transition-* utility of their
+     own: it would replace these and the card would snap back instead of easing flat. */
+  .tilt {
+    position: relative;
+    transition: box-shadow 300ms ease;
+  }
+  .tilt-sheen {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    pointer-events: none;
+    border-radius: inherit;
+    opacity: 0;
+    background: radial-gradient(circle at var(--tilt-x, 50%) var(--tilt-y, 0%), rgb(255 255 255 / 0.34), rgb(255 255 255 / 0) 45%);
+    mix-blend-mode: soft-light;
+    -webkit-mask-image: linear-gradient(to bottom, #000 25%, transparent 70%);
+    mask-image: linear-gradient(to bottom, #000 25%, transparent 70%);
+    transition: opacity 400ms ease;
+  }
+  /* At rest a card has no transform at all (no compositing layer per card); the 3D transform exists only while the
+     pointer is over it, and leaving eases it back to flat (`none` interpolates as the identity). */
+  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    .tilt {
+      transition:
+        transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        box-shadow 300ms ease;
+    }
+    .tilt[data-tilting] {
+      transform: perspective(var(--tilt-perspective, 1000px)) rotateX(var(--tilt-rx, 0deg)) rotateY(var(--tilt-ry, 0deg));
+      transition-duration: 180ms, 300ms;
+      will-change: transform;
+    }
+    .tilt[data-tilting] > .tilt-sheen {
+      opacity: 1;
+    }
+    /* A layered stack: children marked .tilt-layer float in front of the base at their own depth while it tilts. */
+    .tilt-stack {
+      transform-style: preserve-3d;
+    }
+    .tilt-stack .tilt-layer {
+      transition: transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .tilt-stack[data-tilting] .tilt-layer {
+      transform: translateZ(var(--tilt-depth, 48px));
+    }
+  }
+
+  /* "Your next step" cards (order, project and opportunity pages share the heading id): the same tone colours,
+     lifted with the glass rim, sheen and layered shadow so the one place to act stands out. */
+  main section[aria-labelledby="next-step-title"] {
+    background-image: var(--glass-sheen);
+    box-shadow:
+      inset 0 1px 0 0 var(--glass-rim),
+      var(--glass-shadow);
+  }
+
+  /* Enter / exit motion for dialogs, drawers and menus (Radix sets data-state; it waits for the exit animation
+     before unmounting). The global reduced-motion rule shortens all of them to an instant change. */
+  .fz-overlay[data-state="open"] {
+    animation: fz-fade-in 200ms ease-out;
+  }
+  .fz-overlay[data-state="closed"] {
+    animation: fz-fade-out 160ms ease-in forwards;
+  }
+  .fz-dialog[data-state="open"] {
+    animation: fz-pop-in 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .fz-dialog[data-state="closed"] {
+    animation: fz-pop-out 150ms ease-in forwards;
+  }
+  .fz-sheet-right[data-state="open"] {
+    animation: fz-slide-in-right 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .fz-sheet-right[data-state="closed"] {
+    animation: fz-slide-out-right 200ms ease-in forwards;
+  }
+  .fz-sheet-left[data-state="open"] {
+    animation: fz-slide-in-left 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .fz-sheet-left[data-state="closed"] {
+    animation: fz-slide-out-left 200ms ease-in forwards;
+  }
+  .fz-menu[data-state="open"] {
+    animation: fz-menu-in 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    transform-origin: var(--radix-dropdown-menu-content-transform-origin, top right);
+  }
+  .fz-menu[data-state="closed"] {
+    animation: fz-fade-out 120ms ease-in forwards;
+  }
+}
+
+@keyframes fz-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes fz-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes fz-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+}
+@keyframes fz-pop-out {
+  to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+}
+@keyframes fz-slide-in-right {
+  from {
+    transform: translateX(calc(100% + 1rem));
+  }
+}
+@keyframes fz-slide-out-right {
+  to {
+    transform: translateX(calc(100% + 1rem));
+  }
+}
+@keyframes fz-slide-in-left {
+  from {
+    transform: translateX(calc(-100% - 1rem));
+  }
+}
+@keyframes fz-slide-out-left {
+  to {
+    transform: translateX(calc(-100% - 1rem));
+  }
+}
+@keyframes fz-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+}
+
+/* Navigation progress (components/site/navigation-progress.jsx): hidden for the first 150 ms of a navigation,
+   then eases towards 92% and holds until the next page is ready. Reduced motion: a static bar while loading. */
+.fz-progress {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 70;
+  height: 2px;
+  pointer-events: none;
+  transform: scaleX(0);
+  transform-origin: left center;
+  opacity: 0;
+  background: linear-gradient(90deg, var(--color-taupe), var(--color-accent));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--color-accent) 45%, transparent);
+}
+.fz-progress[data-active] {
+  animation: fz-progress 8s cubic-bezier(0.1, 0.7, 0.2, 1) 150ms both;
+}
+@keyframes fz-progress {
+  0% {
+    transform: scaleX(0.04);
+    opacity: 0;
+  }
+  3% {
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(0.92);
+    opacity: 1;
   }
 }

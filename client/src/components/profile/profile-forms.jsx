@@ -5,7 +5,8 @@ import { ChipSelect } from "@/components/forms/chip-select";
 import { Field } from "@/components/ui/field";
 import { Input, Textarea } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { CAPABILITIES, GARMENT_CATEGORIES, MACHINERY_LIMITS, MACHINERY_TYPES } from "@fashinza/shared/constants.js";
+import { SocialLinksEditor } from "@/components/profile/social-links";
+import { CAPABILITIES, GARMENT_CATEGORIES, GARMENT_CATEGORY_GROUPS, MACHINERY_LIMITS, MACHINERY_TYPES } from "@fashinza/shared/constants.js";
 import { cn } from "@fashinza/shared/utils.js";
 
 export function BrandProfileForm({ values, submitLabel = "Save profile" }) {
@@ -28,6 +29,7 @@ export function BrandProfileForm({ values, submitLabel = "Save profile" }) {
           <Input name="phone" type="tel" defaultValue={values.phone ?? ""} autoComplete="tel" />
         </Field>
       </div>
+      <SocialLinksEditor defaultValue={values.socialLinks ?? []} />
       <Field id="description" label="About your brand" hint="What you sell and who you sell to. Factories see this with your projects.">
         <Textarea name="description" rows={4} defaultValue={values.description ?? ""} />
       </Field>
@@ -64,6 +66,7 @@ export function FactoryProfileForm({ values, submitLabel = "Save factory profile
             <Input name="city" defaultValue={values.city} autoComplete="address-level2" />
           </Field>
         </div>
+        <SocialLinksEditor defaultValue={values.socialLinks ?? []} />
         <Field id="description" label="About the factory" required hint="Machinery, specialities, team size and the brands or markets you usually serve.">
           <Textarea name="description" rows={4} defaultValue={values.description} />
         </Field>
@@ -71,7 +74,14 @@ export function FactoryProfileForm({ values, submitLabel = "Save factory profile
 
       <section className="space-y-5" aria-labelledby="fp-capabilities">
         <SectionHead id="fp-capabilities" title="Capabilities" description="Matching uses these to decide which projects you are invited to quote on." />
-        <ChipSelect name="categories" label="Product categories" required options={GARMENT_CATEGORIES} defaultValue={values.categories} />
+        <ChipSelect
+          name="categories"
+          label="Product categories"
+          required
+          options={GARMENT_CATEGORIES}
+          groups={GARMENT_CATEGORY_GROUPS}
+          defaultValue={values.categories}
+        />
         <ChipSelect name="production" label="Production processes" required options={CAPABILITIES.PRODUCTION} defaultValue={values.production} allowCustom />
         <ChipSelect name="fabrics" label="Fabric expertise" options={CAPABILITIES.FABRIC} defaultValue={values.fabrics} allowCustom />
         <ChipSelect name="finishing" label="Finishing" options={CAPABILITIES.FINISHING} defaultValue={values.finishing} allowCustom />

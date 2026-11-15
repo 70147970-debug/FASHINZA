@@ -14,7 +14,7 @@ import { cn } from "@fashinza/shared/utils.js";
 const CAPTION = "Illustrative example built from the product's own components. Names, figures and dates are not real.";
 
 function MockCard({ className, children }) {
-  return <div className={cn("overflow-hidden rounded-lg border border-line-strong bg-surface", className)}>{children}</div>;
+  return <div className={cn("overflow-hidden rounded-xl border border-line-strong bg-surface shadow-float", className)}>{children}</div>;
 }
 
 /** Simplified app chrome: breadcrumb trail + example badge. */

@@ -4,6 +4,7 @@ import { DescriptionList, EmptyState, PageHeader, Panel, StatusBadge, Timeline }
 import { PageTabs, resolveTab } from "@/components/app/page-tabs";
 import { LegacyHashTab } from "@/components/app/legacy-hash-tab";
 import { AttachmentList } from "@/components/projects/attachment-list";
+import { ColourList } from "@/components/projects/colour-swatches";
 import { RevisionChanges, revisionTitle } from "@/components/projects/revision-changes";
 import { ScoreBreakdownView, ScoreRing } from "@/components/projects/match-card";
 import { QuotationForm, WithdrawQuotationButton } from "@/components/quotations/quotation-form";
@@ -254,7 +255,7 @@ export default function OpportunityPage() {
     { label: "Deliver by", value: formatDate(project.deadline) },
     { label: "Target price", value: targetPrice },
     { label: "Fabric", value: fabric },
-    { label: "Colours", value: project.colors || "—" },
+    { label: "Colours", value: <ColourList value={project.colors} /> },
     { label: "Sizes", value: project.sizes.join(", ") || "—" },
     { label: "Samples", value: samples },
     { label: "Certifications", value: project.requiredCertifications.join(", ") || "None required" },
@@ -358,7 +359,7 @@ export default function OpportunityPage() {
           <DescriptionList
             items={[
               { label: "Fabric", value: fabric },
-              { label: "Colours", value: project.colors || "—" },
+              { label: "Colours", value: <ColourList value={project.colors} /> },
               { label: "Sizes", value: project.sizes.join(", ") || "—" },
               { label: "Target price", value: targetPrice },
               { label: "Processes", value: project.requiredCapabilities.join(", ") || "None specified" },

@@ -8,8 +8,9 @@ export const SheetTrigger = Dialog.Trigger;
 export const SheetClose = Dialog.Close;
 
 /**
- * Side drawer (a Radix dialog). The title is always the dialog's accessible name; `hideTitle` keeps it for
- * screen readers only, in which case the close button floats in the top-right corner over the content.
+ * Side drawer (a Radix dialog): a floating liquid-glass panel inset 8px from the screen edge that slides in. The
+ * title is always the dialog's accessible name; `hideTitle` keeps it for screen readers only, in which case the
+ * close button floats in the top-right corner over the content.
  */
 export function SheetContent({ className, children, title, side = "right", hideTitle = false, ...props }) {
   const close = (
@@ -25,11 +26,11 @@ export function SheetContent({ className, children, title, side = "right", hideT
   );
   return (
     <Dialog.Portal>
-      <Dialog.Overlay className="fixed inset-0 z-50 bg-overlay" />
+      <Dialog.Overlay className="fz-overlay fixed inset-0 z-50 bg-overlay backdrop-blur-[3px]" />
       <Dialog.Content
         className={cn(
-          "fixed inset-y-0 z-50 flex w-[85vw] max-w-sm flex-col overflow-y-auto bg-surface-raised p-5 text-ink shadow-pop focus:outline-none",
-          side === "right" ? "right-0 border-l border-line" : "left-0 border-r border-line",
+          "glass-strong fixed inset-y-2 z-50 flex w-[85vw] max-w-sm flex-col overflow-y-auto rounded-2xl border border-line p-5 text-ink focus:outline-none",
+          side === "right" ? "fz-sheet-right right-2" : "fz-sheet-left left-2",
           className,
         )}
         {...props}

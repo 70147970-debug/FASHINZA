@@ -1,4 +1,7 @@
+import fs from "node:fs";
+import path from "node:path";
 import { expect } from "@playwright/test";
+import { E2E_ENV } from "./env.js";
 
 export const pdf = (name = "techpack.pdf") => ({ name, mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4\n% e2e test document\n%%EOF\n") });
 export const png = (name = "photo.png") => ({
@@ -19,6 +22,48 @@ export async function login(page, email, password) {
 /** @param {import("@playwright/test").Page} page */
 export async function logout(page) {
   await page.context().clearCookies();
+}
+
+/**
+ * The newest email to `to` whose subject contains `subject`, written by the server to MAIL_OUTBOX_DIR
+ * (server/src/lib/mail.js: `{ to, subject, text, html, sentAt }`) after `since` (ms). Waits up to 15 s for it.
+ * @param {{ to: string, subject: string, since?: number }} query
+ * @returns {Promise<{ to: string | string[], subject: string, text: string, html: string | null, sentAt: string }>}
+ */
+export async function readMail({ to, subject, since = 0 }) {
+  const find = () => {
+    let files = [];
+    try {
+      files = fs.readdirSync(E2E_ENV.MAIL_OUTBOX_DIR).filter((f) => f.endsWith(".json"));
+    } catch {
+      return null; // nothing written yet
+    }
+    const mails = files
+      .map((f) => JSON.parse(fs.readFileSync(path.join(E2E_ENV.MAIL_OUTBOX_DIR, f), "utf8")))
+      .filter((m) => [m.to].flat().includes(to) && m.subject.includes(subject) && Date.parse(m.sentAt) >= since)
+      .sort((a, b) => Date.parse(b.sentAt) - Date.parse(a.sentAt));
+    return mails[0] ?? null;
+  };
+  await expect.poll(find, { message: `an email to ${to} about "${subject}"`, timeout: 15_000 }).not.toBeNull();
+  return /** @type {NonNullable<ReturnType<typeof find>>} */ (find());
+}
+
+/**
+ * Picks a named colour in the brief's colour picker (client/src/components/projects/colour-picker.jsx): searches
+ * for it in the "Colours" combobox, chooses the listed option, and checks it was added to the selection.
+ * @param {import("@playwright/test").Page} page @param {string} name @param {{ typeSlowly?: boolean }} [options]
+ */
+export async function pickColour(page, name, { typeSlowly = false } = {}) {
+  const search = page.getByRole("combobox", { name: "Colours" });
+  if (typeSlowly) {
+    await search.click();
+    await search.fill("");
+    await search.pressSequentially(name, { delay: 28 });
+  } else {
+    await search.fill(name);
+  }
+  await page.getByRole("listbox", { name: "Colour suggestions" }).getByRole("option", { name, exact: true }).click();
+  await expect(page.getByRole("list", { name: "Your colour selection" }).getByRole("listitem").filter({ hasText: name })).toBeVisible();
 }
 
 /** Clicks a toggle chip inside a labelled ChipSelect group. @param {import("@playwright/test").Page} page */

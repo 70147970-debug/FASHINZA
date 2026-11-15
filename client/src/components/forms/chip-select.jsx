@@ -7,8 +7,10 @@ import { fieldClass } from "@/components/ui/input";
 /**
  * Multi-select rendered as toggle chips. Each chip is a real checkbox named `name`, so the
  * selection is posted with the form like any checkbox group (FormData.getAll(name)).
+ * With `groups` ([{ label, values }]) the chips are shown under group headings (long lists such as the 32
+ * garment categories); options not in any group, and custom entries, follow under "Other".
  */
-export function ChipSelect({ name, label, options, defaultValue = [], allowCustom = false, required = false, hint }) {
+export function ChipSelect({ name, label, options, defaultValue = [], allowCustom = false, required = false, hint, groups }) {
   const id = useId();
   const opts = options.map((o) => (typeof o === "string" ? { value: o, label: o } : o));
   const [selected, setSelected] = useState(defaultValue);
@@ -25,6 +27,39 @@ export function ChipSelect({ name, label, options, defaultValue = [], allowCusto
     setDraft("");
   };
 
+  const renderChip = (o) => {
+    const on = selected.includes(o.value);
+    return (
+      <label
+        key={o.value}
+        className={cn(
+          "inline-flex min-h-8 cursor-pointer select-none items-center gap-1.5 rounded-md border px-3 py-1 text-[13px] font-medium transition-colors duration-150 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus max-sm:min-h-10",
+          on
+            ? "border-accent bg-accent-soft text-accent-strong"
+            : "border-line-strong bg-surface text-ink-muted hover:border-line-control hover:text-ink",
+        )}
+      >
+        <input type="checkbox" name={name} value={o.value} checked={on} onChange={() => toggle(o.value)} className="sr-only" />
+        {on && <Check className="size-3.5" aria-hidden />}
+        {o.label}
+        {custom.includes(o.value) && (
+          <button
+            type="button"
+            className="-mr-1 rounded-sm p-0.5 hover:bg-accent/15"
+            aria-label={`Remove ${o.label}`}
+            onClick={(e) => {
+              e.preventDefault();
+              setCustom((c) => c.filter((x) => x !== o.value));
+              setSelected((s) => s.filter((x) => x !== o.value));
+            }}
+          >
+            <X className="size-3" aria-hidden />
+          </button>
+        )}
+      </label>
+    );
+  };
+
   return (
     <fieldset aria-describedby={hint ? `${id}-hint` : undefined}>
       <legend className="mb-2 text-[13px] font-medium leading-5 text-ink">
@@ -38,40 +73,28 @@ export function ChipSelect({ name, label, options, defaultValue = [], allowCusto
           <span className="font-normal text-ink-muted"> (optional)</span>
         )}
       </legend>
-      <div className="flex flex-wrap gap-2">
-        {all.map((o) => {
-          const on = selected.includes(o.value);
-          return (
-            <label
-              key={o.value}
-              className={cn(
-                "inline-flex min-h-8 cursor-pointer select-none items-center gap-1.5 rounded-md border px-3 py-1 text-[13px] font-medium transition-colors duration-150 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus max-sm:min-h-10",
-                on
-                  ? "border-accent bg-accent-soft text-accent-strong"
-                  : "border-line-strong bg-surface text-ink-muted hover:border-line-control hover:text-ink",
-              )}
-            >
-              <input type="checkbox" name={name} value={o.value} checked={on} onChange={() => toggle(o.value)} className="sr-only" />
-              {on && <Check className="size-3.5" aria-hidden />}
-              {o.label}
-              {custom.includes(o.value) && (
-                <button
-                  type="button"
-                  className="-mr-1 rounded-sm p-0.5 hover:bg-accent/15"
-                  aria-label={`Remove ${o.label}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setCustom((c) => c.filter((x) => x !== o.value));
-                    setSelected((s) => s.filter((x) => x !== o.value));
-                  }}
-                >
-                  <X className="size-3" aria-hidden />
-                </button>
-              )}
-            </label>
-          );
-        })}
-      </div>
+      {groups ? (
+        // Columns follow the width of the form (container queries), not the window: the profile form is narrow on wide screens.
+        <div className="@container">
+          <div className="grid gap-x-6 gap-y-4 @md:grid-cols-2 @3xl:grid-cols-3">
+            {[
+              ...groups.map((g) => ({ label: g.label, items: g.values.map((v) => all.find((o) => o.value === v)).filter(Boolean) })),
+              { label: "Other", items: all.filter((o) => !groups.some((g) => g.values.includes(o.value))) },
+            ]
+              .filter((g) => g.items.length > 0)
+              .map((g, i) => (
+                <div key={g.label} role="group" aria-labelledby={`${id}-group-${i}`} className="min-w-0">
+                  <p id={`${id}-group-${i}`} className="mb-1.5 text-xs font-medium leading-4 text-ink-muted">
+                    {g.label}
+                  </p>
+                  <div className="flex flex-wrap gap-2">{g.items.map((o) => renderChip(o))}</div>
+                </div>
+              ))}
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-2">{all.map((o) => renderChip(o))}</div>
+      )}
       {allowCustom && (
         <div className="mt-2 flex max-w-sm gap-2">
           <label htmlFor={`${id}-custom`} className="sr-only">

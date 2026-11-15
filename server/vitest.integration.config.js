@@ -39,6 +39,11 @@ export default defineConfig({
       UPLOAD_DIR: path.join(os.tmpdir(), "fashinza-test-uploads"),
       PAYMENT_PROVIDER: "sandbox",
       PAYMENT_SANDBOX_SECRET: "integration-test-secret-integration-test-secret",
+      // Profile links are never opened live in tests.
+      LINK_CHECK: "off",
+      // Emails are never sent from tests (empty values win over SMTP settings in .env); they go to the console.
+      SMTP_USER: "",
+      SMTP_PASS: "",
     },
   },
 });

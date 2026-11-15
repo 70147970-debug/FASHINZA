@@ -1,9 +1,12 @@
 import { z } from "zod";
 import { CURRENCIES } from "../constants.js";
+import { GarmentCategory } from "../enums.js";
 
-const CATEGORY_VALUES = /** @type {const} */ ([
-  "T_SHIRTS", "SHIRTS", "DRESSES", "DENIM", "TROUSERS", "ACTIVEWEAR", "OUTERWEAR", "KNITWEAR", "HOODIES_SWEATSHIRTS", "KIDSWEAR", "SLEEPWEAR", "ACCESSORIES",
-]);
+const CATEGORY_VALUES = /** @type {[string, ...string[]]} */ ([...GarmentCategory]);
+
+/** Longest stored colour list (the comma-separated "colors" field the colour picker writes). */
+export const COLOURS_MAX_LENGTH = 1000;
+const COLOURS_TOO_LONG = "Keep the colour list under 1,000 characters.";
 
 /** @param {number} max */
 const optionalText = (max) => z.string().trim().max(max).optional().transform((v) => v || undefined);
@@ -34,7 +37,7 @@ export const projectDraftSchema = z.object({
   description: optionalText(5000),
   fabricRequirements: optionalText(1000),
   fabrics: list,
-  colors: optionalText(300),
+  colors: z.string().trim().max(COLOURS_MAX_LENGTH, COLOURS_TOO_LONG).optional().transform((v) => v || undefined),
   sizes: list,
   requiredCapabilities: list,
   additionalInstructions: optionalText(3000),
@@ -65,7 +68,7 @@ export const projectSubmitSchema = projectDraftSchema
   .extend({
     description: z.string().trim().min(20, "Describe the product in at least 20 characters.").max(5000),
     fabricRequirements: z.string().trim().min(3, "Describe the fabric type and composition.").max(1000),
-    colors: z.string().trim().min(1, "List at least one colour.").max(300),
+    colors: z.string().trim().min(1, "List at least one colour.").max(COLOURS_MAX_LENGTH, COLOURS_TOO_LONG),
     sizes: z.array(z.string().trim().min(1)).min(1, "Choose at least one size."),
     quantity: z.number({ required_error: "Enter the estimated quantity." }).int().min(1).max(1_000_000),
     deadline: z.date({ required_error: "Choose a desired delivery date." }),

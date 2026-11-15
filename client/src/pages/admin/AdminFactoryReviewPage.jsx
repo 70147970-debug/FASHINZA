@@ -4,6 +4,7 @@ import { DescriptionList, EmptyState, MetaItem, PageHeader, Panel, StatusBadge, 
 import { DocumentReviewButtons, RevokeVerificationButton, UserStatusButton, VerificationDecision } from "@/components/admin/admin-forms";
 import { auditTimelineItem } from "@/components/admin/audit-parts";
 import { SubHeading } from "@/components/orders/order-parts";
+import { SocialLinksList } from "@/components/profile/social-links";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { PageMeta } from "@/components/meta";
@@ -238,6 +239,10 @@ export default function AdminFactoryPage() {
                 <span className="min-w-0 break-all text-ink">{p.website ?? "—"}</span>
               </li>
             </ul>
+            <div className="mt-4 border-t border-line-subtle pt-4">
+              <SubHeading className="mb-2">Social media</SubHeading>
+              <SocialLinksList links={p.socialLinks} empty="No social links added." />
+            </div>
             <p className="mt-4 whitespace-pre-line border-t border-line-subtle pt-4 text-sm leading-6 text-ink">{p.description}</p>
           </Panel>
         </div>

@@ -6,6 +6,7 @@ import { withTransaction } from "../db.js";
 import { assertRole } from "../lib/access.js";
 import { conflict, invalid, notFound } from "../lib/errors.js";
 import { notifyAdmins } from "../lib/events.js";
+import { checkLink, linkChecksEnabled } from "../lib/link-check.js";
 import { defined, oid, opts, s } from "../lib/records.js";
 import { serialize } from "../lib/serialize.js";
 import { deleteStoredFile, saveUpload } from "../lib/storage.js";
@@ -15,16 +16,68 @@ import { ManufacturerDocument } from "../models/ManufacturerDocument.js";
 import { ManufacturerMachine } from "../models/ManufacturerMachine.js";
 import { ManufacturerProfile } from "../models/ManufacturerProfile.js";
 import { User } from "../models/User.js";
+import { LINK_NOT_FOUND_MESSAGE } from "@fashinza/shared/social.js";
+
+/** A stored check older than this is repeated when the profile is saved again. */
+export const LINK_RECHECK_AFTER_MS = 30 * 86_400_000;
 
 /**
- * @param {{ id: string, role: string }} actor
- * @param {{ companyName: string, country: string, city?: string, website?: string, phone?: string, description?: string }} input
+ * Live-checks the links of a profile that is being saved (decision 5), before anything is written:
+ * - the website, when it changed: NOT_FOUND → field error `website`;
+ * - each social link that is new or changed (or whose stored check is old, or was SKIPPED while checks are now
+ *   on): NOT_FOUND → field error `socialLinks.<row>.url`; FOUND / UNCONFIRMED / SKIPPED are stored with the link.
+ * Unchanged links keep their stored check. Links pointing to a private network address are refused with their
+ * own message. Throws INVALID with every field error at once.
+ * @param {{ website?: string | null, socialLinks?: { platform: string, url: string, check?: { status: string, checkedAt: Date | null } }[] } | null} existing
+ * @param {{ website?: string, socialLinks?: { platform: string, url: string, row: number }[] }} input
+ * @param {{ check?: typeof checkLink }} [deps]
+ * @returns {Promise<{ socialLinks?: { platform: string, url: string, check: { status: string, checkedAt: Date } }[] }>}
  */
-export async function saveBrandProfile(actor, input) {
+export async function verifyProfileLinks(existing, input, { check = checkLink } = {}) {
+  /** @type {Record<string, string>} */
+  const fieldErrors = {};
+  const refusal = (r) => (r.reason === "BLOCKED_ADDRESS" ? r.message : LINK_NOT_FOUND_MESSAGE);
+  const enabled = linkChecksEnabled();
+  const websiteCheck =
+    input.website && input.website !== existing?.website
+      ? check({ url: input.website }).then((r) => {
+          if (r.status === "NOT_FOUND") fieldErrors.website = refusal(r);
+        })
+      : null;
+  let socialLinks;
+  if (input.socialLinks) {
+    const stored = new Map((existing?.socialLinks ?? []).map((l) => [`${l.platform} ${l.url}`, l.check]));
+    socialLinks = await Promise.all(
+      input.socialLinks.map(async (l) => {
+        const prev = stored.get(`${l.platform} ${l.url}`);
+        const age = prev?.checkedAt ? Date.now() - new Date(prev.checkedAt).getTime() : Infinity;
+        const keep = prev?.status && prev.status !== "NOT_FOUND" && age < LINK_RECHECK_AFTER_MS && (prev.status !== "SKIPPED" || !enabled);
+        if (keep) return { platform: l.platform, url: l.url, check: { status: prev.status, checkedAt: prev.checkedAt } };
+        const r = await check({ platform: l.platform, url: l.url });
+        if (r.status === "NOT_FOUND") fieldErrors[`socialLinks.${l.row}.url`] = refusal(r);
+        return { platform: l.platform, url: l.url, check: { status: r.status, checkedAt: r.checkedAt } };
+      }),
+    );
+  }
+  await websiteCheck;
+  if (Object.keys(fieldErrors).length) throw invalid("Please correct the highlighted fields.", fieldErrors);
+  return { socialLinks };
+}
+
+/**
+ * Website and social links are checked live first (verifyProfileLinks); `socialLinks` undefined keeps the stored list.
+ * @param {{ id: string, role: string }} actor
+ * @param {{ companyName: string, country: string, city?: string, website?: string, phone?: string, description?: string, socialLinks?: { platform: string, url: string, row: number }[] }} input
+ * @param {{ check?: typeof checkLink }} [deps] replaces the live link check (tests)
+ */
+export async function saveBrandProfile(actor, input, deps) {
   assertRole(actor, "BRAND");
   const userId = oid(actor.id);
+  const { socialLinks, ...rest } = input;
+  const existing = rest.website !== undefined || socialLinks !== undefined ? await BrandProfile.findOne({ userId }, { website: 1, socialLinks: 1 }).lean() : null;
+  const links = await verifyProfileLinks(existing, { website: rest.website, socialLinks }, deps);
   // Prisma upsert: undefined (cleared optional) fields are left as they are, exactly like today.
-  const fields = defined(input);
+  const fields = defined({ ...rest, socialLinks: links.socialLinks });
   await withTransaction(async (session) => {
     await BrandProfile.findOneAndUpdate({ userId }, { $set: fields }, opts(session, { upsert: true, setDefaultsOnInsert: true }));
     await User.updateOne({ _id: userId }, { $set: { profileCompleted: true } }, opts(session));
@@ -50,13 +103,18 @@ export function capabilityRows(production = [], fabrics = [], finishing = []) {
 /**
  * Saves the factory profile with its capabilities and machinery. Capabilities and machinery are replaced as
  * a whole; when `machinery` is omitted (older callers such as the seed script) the stored list is kept.
+ * Website and social links are checked live first (verifyProfileLinks); `socialLinks` undefined keeps the stored list.
+ * @param {{ check?: typeof checkLink }} [deps] replaces the live link check (tests)
  */
-export async function saveManufacturerProfile(actor, input) {
+export async function saveManufacturerProfile(actor, input, deps) {
   assertRole(actor, "MANUFACTURER");
-  const { production = [], fabrics = [], finishing = [], machinery, ...rest } = input;
-  const fields = defined(rest);
-  const capabilities = capabilityRows(production, fabrics, finishing);
+  const { production = [], fabrics = [], finishing = [], machinery, socialLinks, ...rest } = input;
   const userId = oid(actor.id);
+  const existing =
+    rest.website !== undefined || socialLinks !== undefined ? await ManufacturerProfile.findOne({ userId }, { website: 1, socialLinks: 1 }).lean() : null;
+  const links = await verifyProfileLinks(existing, { website: rest.website, socialLinks }, deps);
+  const fields = defined({ ...rest, socialLinks: links.socialLinks });
+  const capabilities = capabilityRows(production, fabrics, finishing);
   await withTransaction(async (session) => {
     const profile = await ManufacturerProfile.findOneAndUpdate(
       { userId },
@@ -142,11 +200,14 @@ export async function listMachinery(profileId, session) {
   return rows.map((r) => ({ type: r.type, quantity: r.quantity }));
 }
 
+/** Profiles saved before social links existed have no `socialLinks` field: always answer with a list. */
+const withLinks = (profile) => (profile ? { ...profile, socialLinks: profile.socialLinks ?? [] } : profile);
+
 /** GET /api/profile/brand */
 export async function getBrandProfile(actor) {
   assertRole(actor, "BRAND");
   const profile = await BrandProfile.findOne({ userId: oid(actor.id) }).lean();
-  return serialize(BrandProfile, profile);
+  return withLinks(serialize(BrandProfile, profile));
 }
 
 /** GET /api/profile/factory: profile + capabilities + documents (newest first) + machinery (factory order). */
@@ -160,7 +221,7 @@ export async function getFactoryProfile(actor) {
     listMachinery(profile._id),
   ]);
   return {
-    ...serialize(ManufacturerProfile, profile),
+    ...withLinks(serialize(ManufacturerProfile, profile)),
     capabilities: serialize(ManufacturerCapability, capabilities),
     documents: serialize(ManufacturerDocument, documents),
     machinery,

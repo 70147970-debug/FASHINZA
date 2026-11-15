@@ -5,7 +5,8 @@ import { chip, confirmDialog, login, logout, pdf } from "./helpers.js";
 
 test.describe.configure({ mode: "serial" });
 
-const factory = { email: `factory-${Date.now()}@e2e.test`, password: "FactoryPassword1", name: "E2E Stitch Works" };
+// New passwords follow the policy: 12–16 characters with a capital, a small letter, a number and a symbol.
+const factory = { email: `factory-${Date.now()}@e2e.test`, password: "Factory#Pass26", name: "E2E Stitch Works" };
 
 test("a new manufacturer onboards, uploads documents and requests verification", async ({ page }) => {
   await page.goto("/register?role=manufacturer");
@@ -134,10 +135,19 @@ test.describe("access control and validation", () => {
     await expect(page.getByText("The email or password is incorrect.")).toBeVisible();
 
     await page.goto("/register");
-    await page.getByRole("textbox", { name: "Password", exact: true }).fill("short");
+    const password = page.getByRole("textbox", { name: "Password", exact: true });
+    await password.fill("short");
+    // The checklist under the field ticks each rule of the password policy as it is met.
+    const rules = page.locator("#password-requirements");
+    await expect(rules.locator("li", { hasText: "A small letter" })).toHaveAttribute("data-met", "true");
+    await expect(rules.locator("li", { hasText: "12 to 16 characters" })).toHaveAttribute("data-met", "false");
     await page.getByRole("button", { name: "Create account" }).click();
-    await expect(page.getByText("Use at least 8 characters.")).toBeVisible();
+    await expect(page.getByText("Use 12 to 16 characters.")).toBeVisible();
     await expect(page.getByText("Enter your full name.")).toBeVisible();
+    await password.fill("Shortpass1234");
+    await expect(rules.locator("li", { hasText: "12 to 16 characters" })).toHaveAttribute("data-met", "true");
+    await page.getByRole("button", { name: "Create account" }).click();
+    await expect(page.getByText("Include at least one symbol, such as ! @ # $ %.")).toBeVisible();
   });
 
   test("the health check reports the database", async ({ request }) => {

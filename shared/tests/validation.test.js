@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { contactSchema } from "../src/validation/contact.js";
-import { registerSchema, loginSchema } from "../src/validation/auth.js";
+import { registerSchema, loginSchema, passwordSchema, passwordChecks, PASSWORD_RULES, resetCodeSchema, resetPasswordSchema } from "../src/validation/auth.js";
+import { changePasswordSchema } from "../src/validation/profile.js";
 import { projectDraftSchema, projectSubmitSchema, PROJECT_STEPS, REVIEW_STEP, FILES_STEP } from "../src/validation/project.js";
 import { quotationSchema } from "../src/validation/quotation.js";
 import { categoryLabel, fieldLabel, formatRevisionValue, sampleRequestSummary } from "../src/labels.js";
@@ -40,8 +41,8 @@ const validRegister = {
   name: "Ayesha Khan",
   organization: "North Thread",
   email: "ayesha@example.com",
-  password: "winter2026",
-  confirmPassword: "winter2026",
+  password: "Winter#2026ab",
+  confirmPassword: "Winter#2026ab",
 };
 
 describe("registration validation", () => {
@@ -52,19 +53,61 @@ describe("registration validation", () => {
     expect(registerSchema.safeParse({ ...validRegister, role: "ADMIN" }).success).toBe(false);
   });
   it.each([
-    ["short", "abc1"],
-    ["no number", "abcdefgh"],
-    ["no letter", "12345678"],
-  ])("rejects a weak password (%s)", (_label, pw) => {
-    expect(registerSchema.safeParse({ ...validRegister, password: pw, confirmPassword: pw }).success).toBe(false);
+    ["short", "Ab1!", "Use 12 to 16 characters."],
+    ["17 characters", "Abcdefghijklm12!x", "Use 12 to 16 characters."],
+    ["no capital letter", "winter#2026ab", "Include at least one capital letter."],
+    ["no small letter", "WINTER#2026AB", "Include at least one small letter."],
+    ["no number", "Winter#Garden", "Include at least one number."],
+    ["no symbol", "Winter2026abc", "Include at least one symbol, such as ! @ # $ %."],
+    ["a space", "Winter 2026a#", "Don't use spaces."],
+  ])("rejects a weak password (%s) with the policy message", (_label, pw, message) => {
+    const r = registerSchema.safeParse({ ...validRegister, password: pw, confirmPassword: pw });
+    expect(r.success).toBe(false);
+    expect(r.success ? null : r.error.issues[0]).toMatchObject({ path: ["password"], message });
+  });
+  it("accepts 12 and 16 characters, and non-English letters", () => {
+    for (const pw of ["Brand#Pass26", "Factory#Pass2026", "Ünïcødé#Pass1"]) expect(passwordSchema.safeParse(pw).success, pw).toBe(true);
+  });
+  it("reports every unmet rule in policy order and ticks the checklist", () => {
+    const r = passwordSchema.safeParse("abc");
+    expect(r.success ? [] : r.error.issues.map((i) => i.message)).toEqual([
+      "Use 12 to 16 characters.",
+      "Include at least one capital letter.",
+      "Include at least one number.",
+      "Include at least one symbol, such as ! @ # $ %.",
+    ]);
+    expect(passwordChecks("Brand#Pass2026").every((c) => c.met)).toBe(true);
+    expect(passwordChecks("").filter((c) => c.met).map((c) => c.key)).toEqual(["spaces"]);
+    expect(PASSWORD_RULES.map((rule) => rule.key)).toEqual(["length", "upper", "lower", "number", "symbol", "spaces"]);
+  });
+  it("uses the same policy when changing a password", () => {
+    const r = changePasswordSchema.safeParse({ currentPassword: "old", newPassword: "Password123", confirmPassword: "Password123" });
+    expect(r.success ? null : r.error.issues[0]).toMatchObject({ path: ["newPassword"], message: "Use 12 to 16 characters." });
   });
   it("rejects mismatched passwords on the confirm field", () => {
-    const r = registerSchema.safeParse({ ...validRegister, confirmPassword: "different1" });
+    const r = registerSchema.safeParse({ ...validRegister, confirmPassword: "Different#2026" });
     expect(r.success).toBe(false);
     expect(r.success ? null : r.error.issues[0].path).toEqual(["confirmPassword"]);
   });
-  it("requires email and password to log in", () => {
+  it("requires email and password to log in, without the new-password policy", () => {
     expect(loginSchema.safeParse({ email: "", password: "" }).success).toBe(false);
+    expect(loginSchema.safeParse({ email: "a@example.com", password: "winter2026" }).success).toBe(true);
+  });
+});
+
+describe("password reset code validation", () => {
+  it("ignores spaces and needs exactly six digits", () => {
+    expect(resetCodeSchema.parse({ email: "A@Example.com", code: " 123 456 " })).toEqual({ email: "a@example.com", code: "123456" });
+    const empty = resetCodeSchema.safeParse({ email: "a@example.com", code: "" });
+    expect(empty.success ? null : empty.error.issues[0].message).toBe("Enter the 6-digit code from the email.");
+    for (const bad of ["12345", "1234567", "12a456"]) {
+      const r = resetCodeSchema.safeParse({ email: "a@example.com", code: bad });
+      expect(r.success ? null : r.error.issues[0].message).toBe("You have entered the incorrect code.");
+    }
+  });
+  it("checks the new password and confirmation on the last step", () => {
+    const r = resetPasswordSchema.safeParse({ token: "x".repeat(20), password: "Brand#Pass2026", confirmPassword: "Brand#Pass2027" });
+    expect(r.success ? null : r.error.issues[0].path).toEqual(["confirmPassword"]);
   });
 });
 

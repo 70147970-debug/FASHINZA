@@ -6,7 +6,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import request from "supertest";
 import { createApp } from "../../src/app.js";
-import { authenticate, changePassword, createPasswordReset, registerAccount, resetPassword } from "../../src/services/accounts.js";
+import { authenticate, changePassword, createPasswordResetCode, registerAccount, resetPassword, verifyPasswordResetCode } from "../../src/services/accounts.js";
 import { getProject, listProjects, saveProject } from "../../src/services/projects.js";
 import { authorizeFile } from "../../src/services/files.js";
 import { decideVerification, setUserStatus } from "../../src/services/admin.js";
@@ -25,17 +25,17 @@ beforeEach(async () => {
 
 describe("authentication", () => {
   it("registers an account with a hashed password and an organisation profile", async () => {
-    const id = await registerAccount({ role: "BRAND", name: "Ayesha Khan", organization: "Loom & Line", email: "ayesha@example.test", password: "Password123", confirmPassword: "Password123" });
+    const id = await registerAccount({ role: "BRAND", name: "Ayesha Khan", organization: "Loom & Line", email: "ayesha@example.test", password: PASSWORD, confirmPassword: PASSWORD });
     const account = await Account.findOne({ userId: id }).orFail().lean();
-    expect(account.password).not.toContain("Password123");
+    expect(account.password).not.toContain(PASSWORD);
     expect(account).toMatchObject({ providerId: "credential", accountId: id });
-    expect(await verifyPassword("Password123", account.password)).toBe(true);
+    expect(await verifyPassword(PASSWORD, account.password)).toBe(true);
     expect((await BrandProfile.findOne({ userId: id }).orFail().lean()).companyName).toBe("Loom & Line");
     expect(await Notification.countDocuments({ userId: id })).toBe(1);
   });
 
   it("rejects duplicate emails", async () => {
-    const input = { role: "BRAND", name: "A", organization: "Org", email: "dup@example.test", password: "Password123", confirmPassword: "Password123" };
+    const input = { role: "BRAND", name: "A", organization: "Org", email: "dup@example.test", password: PASSWORD, confirmPassword: PASSWORD };
     await registerAccount(input);
     await expect(registerAccount(input)).rejects.toMatchObject({ code: "CONFLICT" });
   });
@@ -43,33 +43,35 @@ describe("authentication", () => {
   it("authenticates only with the right password and blocks suspended accounts", async () => {
     const user = await makeUser("BRAND");
     await expect(authenticate(user.email, "wrong-password1")).rejects.toThrow(/incorrect/);
-    await expect(authenticate("nobody@example.test", "Password123")).rejects.toThrow(/incorrect/);
-    expect(await authenticate(user.email, "Password123")).toBe(user.id);
+    await expect(authenticate("nobody@example.test", PASSWORD)).rejects.toThrow(/incorrect/);
+    expect(await authenticate(user.email, PASSWORD)).toBe(user.id);
     const admin = await makeAdmin();
     await setUserStatus(admin, user.id, "SUSPENDED", "Policy violation under review");
-    await expect(authenticate(user.email, "Password123")).rejects.toThrow(/suspended/);
+    await expect(authenticate(user.email, PASSWORD)).rejects.toThrow(/suspended/);
     expect(await AuditLog.countDocuments({ targetId: user.id, action: "USER_SUSPENDED" })).toBe(1);
   });
 
-  it("resets a password with a single-use token and signs out other sessions", async () => {
+  it("resets a password with an emailed code, a single-use token, and signs out other sessions", async () => {
+    // The whole code flow (wrong, expired, attempt limit, HTTP) is covered in password-reset.test.js.
     const user = await makeUser("BRAND");
     await Session.create({ userId: user.id, token: "hash", expiresAt: new Date(Date.now() + 1e6) });
-    expect(await createPasswordReset("unknown@example.test")).toBeNull();
-    const token = await createPasswordReset(user.email);
+    expect(await createPasswordResetCode("unknown@example.test")).toBeNull();
+    const { code } = await createPasswordResetCode(user.email);
     const stored = await Verification.findOne().orFail().lean();
-    expect(stored.value).not.toBe(token); // only the hash is stored
-    expect(stored.value).toBe(sha256(token));
-    await resetPassword(token, "NewPassword9");
-    expect(await authenticate(user.email, "NewPassword9")).toBe(user.id);
+    expect(stored.value).not.toContain(code); // only a salted hash of the code is stored
+    const { token } = await verifyPasswordResetCode(user.email, code);
+    expect((await Verification.findOne().orFail().lean()).value).toBe(sha256(token));
+    await resetPassword(token, "Changed#Pass2026");
+    expect(await authenticate(user.email, "Changed#Pass2026")).toBe(user.id);
     expect(await Session.countDocuments({ userId: user.id })).toBe(0);
-    await expect(resetPassword(token, "Another123")).rejects.toThrow(/invalid or has expired/);
+    await expect(resetPassword(token, "Another#Pass2026")).rejects.toThrow("Your reset session has expired. Request a new code.");
   });
 
   it("changes a password only with the current password", async () => {
     const user = await makeUser("BRAND");
-    await expect(changePassword(user, "wrong", "Password456")).rejects.toThrow(/incorrect/);
-    await changePassword(user, "Password123", "Password456");
-    expect(await authenticate(user.email, "Password456")).toBe(user.id);
+    await expect(changePassword(user, "wrong", "Changed#Pass2026")).rejects.toThrow(/incorrect/);
+    await changePassword(user, PASSWORD, "Changed#Pass2026");
+    expect(await authenticate(user.email, "Changed#Pass2026")).toBe(user.id);
   });
 });
 
@@ -207,23 +209,31 @@ describe("HTTP: auth endpoints", () => {
 
   it("resets a password over HTTP and always gives the same forgot-password answer", async () => {
     const user = await makeUser("BRAND");
-    const message = "If an account exists for that email, a reset link has been issued. It expires in one hour.";
-    expect((await sameOrigin(request(app).post("/api/auth/forgot-password")).send({ email: "nobody@example.test" })).body).toEqual({ ok: true, message });
-    expect((await sameOrigin(request(app).post("/api/auth/forgot-password")).send({ email: user.email })).body).toEqual({ ok: true, message });
-    const token = await createPasswordReset(user.email);
-    const res = await sameOrigin(request(app).post("/api/auth/reset-password")).send({ token, password: "NewPassword9", confirmPassword: "NewPassword9" });
+    const message = "If an account exists for that email, we've sent a 6-digit code. It expires in 10 minutes.";
+    const unknown = await sameOrigin(request(app).post("/api/auth/forgot-password")).send({ email: "nobody@example.test" });
+    expect(unknown.body).toEqual({ ok: true, message, email: "nobody@example.test", resendAfter: 60 });
+    const known = await sameOrigin(request(app).post("/api/auth/forgot-password")).send({ email: user.email });
+    expect(known.body).toEqual({ ok: true, message, email: user.email, resendAfter: 60 });
+    const { code } = await createPasswordResetCode(user.email);
+    const verified = await sameOrigin(request(app).post("/api/auth/forgot-password/verify")).send({ email: user.email, code });
+    const token = verified.body.resetToken;
+    const res = await sameOrigin(request(app).post("/api/auth/reset-password")).send({ token, password: "Changed#Pass2026", confirmPassword: "Changed#Pass2026" });
     expect(res.body).toEqual({ ok: true, redirectTo: "/login?reset=1" });
-    const again = await sameOrigin(request(app).post("/api/auth/reset-password")).send({ token, password: "NewPassword9", confirmPassword: "NewPassword9" });
-    expect(again.body.error).toEqual({ code: "INVALID", message: "This reset link is invalid or has expired. Request a new one." });
+    const again = await sameOrigin(request(app).post("/api/auth/reset-password")).send({ token, password: "Changed#Pass2026", confirmPassword: "Changed#Pass2026" });
+    expect(again.body.error).toEqual({ code: "INVALID", message: "Your reset session has expired. Request a new code." });
   });
 
   it("changes the password of the signed-in user", async () => {
     const user = await makeUser("BRAND");
     const cookie = await sessionCookie(user.id);
-    const bad = await sameOrigin(request(app).post("/api/auth/change-password")).set("Cookie", cookie).send({ currentPassword: "nope", newPassword: "Password456", confirmPassword: "Password456" });
+    const bad = await sameOrigin(request(app).post("/api/auth/change-password")).set("Cookie", cookie).send({ currentPassword: "nope", newPassword: "Changed#Pass2026", confirmPassword: "Changed#Pass2026" });
     expect(bad.status).toBe(400);
     expect(bad.body.error).toEqual({ code: "INVALID", message: "Your current password is incorrect.", fieldErrors: { currentPassword: "Your current password is incorrect." } });
-    const good = await sameOrigin(request(app).post("/api/auth/change-password")).set("Cookie", cookie).send({ currentPassword: PASSWORD, newPassword: "Password456", confirmPassword: "Password456" });
+    // The new password must meet the password policy.
+    const weak = await sameOrigin(request(app).post("/api/auth/change-password")).set("Cookie", cookie).send({ currentPassword: PASSWORD, newPassword: "Password456", confirmPassword: "Password456" });
+    expect(weak.status).toBe(400);
+    expect(weak.body.error.fieldErrors).toEqual({ newPassword: "Use 12 to 16 characters." });
+    const good = await sameOrigin(request(app).post("/api/auth/change-password")).set("Cookie", cookie).send({ currentPassword: PASSWORD, newPassword: "Changed#Pass2026", confirmPassword: "Changed#Pass2026" });
     expect(good.body).toEqual({ ok: true, message: "Password changed." });
   });
 });

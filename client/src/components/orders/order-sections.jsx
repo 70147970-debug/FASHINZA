@@ -5,6 +5,7 @@ import { ActivityTimeline } from "@/components/app/activity-timeline";
 import { MessageForm, ScheduleEditor } from "@/components/orders/order-forms";
 import { FileThumb, InlineEmpty } from "@/components/orders/order-parts";
 import { AttachmentList } from "@/components/projects/attachment-list";
+import { ColourList } from "@/components/projects/colour-swatches";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { decimalText } from "@/lib/data";
@@ -373,6 +374,7 @@ export function DetailsSection({ order, view }) {
           layout="rows"
           items={[
             { label: "Quantity", value: <span className="tabular">{formatNumber(Number(terms.quantity ?? order.quantity))}</span> },
+            ...(order.project?.colors ? [{ label: "Colours", value: <ColourList value={order.project.colors} /> }] : []),
             { label: "Production", value: `${terms.productionDays ?? "—"} days` },
             { label: "Making / unit", value: <span className="tabular">{formatMoney(terms.unitPrice, order.currency)}</span> },
             { label: "Fabric / unit", value: <span className="tabular">{formatMoney(terms.fabricCostPerUnit, order.currency)}</span> },

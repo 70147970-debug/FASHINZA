@@ -8,7 +8,8 @@ import { cn } from "@fashinza/shared/utils.js";
 export function Field({ id, label, error, hint, required, name, children, className }) {
   const ctx = React.useContext(FormErrorsContext);
   const message = error ?? ctx[name ?? id];
-  const describedBy = [hint && `${id}-hint`, message && `${id}-error`].filter(Boolean).join(" ") || undefined;
+  // The control may already point at extra help (e.g. the password checklist); keep it after the hint and error.
+  const describedBy = [hint && `${id}-hint`, message && `${id}-error`, children.props["aria-describedby"]].filter(Boolean).join(" ") || undefined;
   const control = React.cloneElement(children, {
     id,
     "aria-invalid": message ? true : undefined,

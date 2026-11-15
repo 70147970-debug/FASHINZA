@@ -16,6 +16,7 @@ import {
   ShieldAlert,
   Building2,
   Users,
+  UserCheck,
   ScanSearch,
 } from "lucide-react";
 
@@ -71,7 +72,9 @@ export const NAV = {
     {
       label: "Operations",
       items: [
+        { href: "/admin/brands", label: "Brand approvals", icon: UserCheck },
         { href: "/admin/factories", label: "Factory verification", icon: BadgeCheck },
+        { href: "/admin/projects", label: "Projects", icon: ClipboardList },
         { href: "/admin/orders", label: "Orders", icon: PackageSearch },
         { href: "/admin/qc", label: "Quality issues", icon: ScanSearch },
         { href: "/admin/disputes", label: "Disputes", icon: ShieldAlert },

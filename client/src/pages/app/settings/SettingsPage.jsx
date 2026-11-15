@@ -2,6 +2,7 @@ import { Link, useLoaderData } from "react-router";
 import { BellRing, KeyRound, Palette, UserRound } from "lucide-react";
 import { DescriptionList, PageHeader } from "@/components/app/primitives";
 import { ActionForm, SubmitButton } from "@/components/forms/action-form";
+import { NewPasswordField } from "@/components/forms/password-requirements";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Field } from "@/components/ui/field";
@@ -23,9 +24,7 @@ function ChangePasswordForm() {
       <Field id="currentPassword" label="Current password" required>
         <Input name="currentPassword" type="password" autoComplete="current-password" />
       </Field>
-      <Field id="newPassword" label="New password" required>
-        <Input name="newPassword" type="password" autoComplete="new-password" />
-      </Field>
+      <NewPasswordField id="newPassword" label="New password" />
       <Field id="confirmPassword" label="Confirm new password" required>
         <Input name="confirmPassword" type="password" autoComplete="new-password" />
       </Field>
@@ -65,7 +64,12 @@ export default function SettingsPage() {
           </p>
         </SettingsSection>
 
-        <SettingsSection id="password" icon={KeyRound} title="Change password" description="Use at least 8 characters with a letter and a number.">
+        <SettingsSection
+          id="password"
+          icon={KeyRound}
+          title="Change password"
+          description="Use 12 to 16 characters with a capital letter, a small letter, a number and a symbol."
+        >
           <ChangePasswordForm />
         </SettingsSection>
 
@@ -79,10 +83,11 @@ export default function SettingsPage() {
         <SettingsSection id="email" icon={BellRing} title="Email notifications" description="How Fashinza reaches you outside the app.">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <p className="text-sm leading-6 text-ink-muted">
-              Email notifications are not switched on yet. All notifications are kept in your in-app notification centre.
+              Fashinza emails you about your account only: password reset codes and, for brands, the approval decision. Everything else is kept in
+              your in-app notification centre.
             </p>
             <Badge tone="neutral" className="shrink-0 self-start">
-              Not configured
+              Account emails only
             </Badge>
           </div>
         </SettingsSection>

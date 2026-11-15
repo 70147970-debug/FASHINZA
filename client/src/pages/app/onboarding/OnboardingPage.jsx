@@ -1,8 +1,9 @@
 import { useLoaderData } from "react-router";
-import { ClipboardList, Eye, FileCheck2, ShieldCheck, Sparkles } from "lucide-react";
+import { BadgeCheck, ClipboardList, Eye, FileCheck2, ShieldCheck, Sparkles } from "lucide-react";
 import { loadJson } from "@/lib/api";
 import { PageHeader, Panel } from "@/components/app/primitives";
 import { BrandProfileForm, FactoryProfileForm } from "@/components/profile/profile-forms";
+import { BrandApprovalNotice } from "@/components/app/brand-approval";
 import { cn } from "@fashinza/shared/utils.js";
 import { PageMeta } from "@/components/meta";
 
@@ -11,7 +12,7 @@ import { PageMeta } from "@/components/meta";
  * BRAND: GET /api/profile/brand; MANUFACTURER: GET /api/profile/factory.
  */
 export async function loader({ request, user }) {
-  const actor = { role: user.role, name: user.name, email: user.email };
+  const actor = { role: user.role, name: user.name, email: user.email, approvalStatus: user.approvalStatus, approvalNote: user.approvalNote, profileCompleted: user.profileCompleted };
   const { profile } = await loadJson(user.role === "BRAND" ? "/api/profile/brand" : "/api/profile/factory", { request });
   return { actor, p: profile };
 }
@@ -22,13 +23,15 @@ export default function OnboardingPage() {
   if (actor.role === "BRAND") {
     return (
       <OnboardingLayout
-        steps={["Company profile", "First production project"]}
+        steps={["Company profile", "Brand approval", "First production project"]}
         title="Tell us about your company"
-        description="Factories see your company name and country with the projects you send them. Next you can create your first production project."
+        description="Factories see your company name and country with the projects you send them. Fashinza checks every new brand within 24–48 hours; then you can create your first production project."
+        notice={<BrandApprovalNotice user={actor} profileLink={false} />}
         aside={[
           { icon: Eye, title: "What factories see", text: "Your company name, country and description — shown only with projects you submit." },
-          { icon: ClipboardList, title: "Next: brief a project", text: "Describe the product, quantity and deadline. Drafts stay private until you submit." },
-          { icon: Sparkles, title: "Then get matched", text: "Verified factories that meet every requirement are invited to quote." },
+          { icon: BadgeCheck, title: "Next: brand approval", text: "Fashinza checks your brand within 24–48 hours and tells you by email and in the app." },
+          { icon: ClipboardList, title: "Then brief a project", text: "Describe the product, quantity and deadline. Drafts stay private until you submit." },
+          { icon: Sparkles, title: "Get matched", text: "Verified factories that meet every requirement are invited to quote." },
         ]}
       >
         <BrandProfileForm values={{ ...p, country: p?.country || "" }} submitLabel="Save and continue" />
@@ -63,7 +66,7 @@ export default function OnboardingPage() {
   );
 }
 
-function OnboardingLayout({ steps, title, description, aside, children }) {
+function OnboardingLayout({ steps, title, description, aside, notice, children }) {
   return (
     <div className="mx-auto max-w-6xl">
       <PageMeta title="Complete your profile" />
@@ -85,7 +88,8 @@ function OnboardingLayout({ steps, title, description, aside, children }) {
               </span>
               <span className={i === 0 ? "font-medium text-ink" : "text-ink-muted max-sm:sr-only"}>
                 <span className="sr-only">
-                  Step {i + 1} of 2{i === 0 ? " (current)" : ""}:{" "}
+                  Step {i + 1} of {steps.length}
+                  {i === 0 ? " (current)" : ""}:{" "}
                 </span>
                 {s}
               </span>
@@ -95,6 +99,7 @@ function OnboardingLayout({ steps, title, description, aside, children }) {
       </ol>
 
       <PageHeader title={title} description={description} />
+      {notice}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <Panel>{children}</Panel>

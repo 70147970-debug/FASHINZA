@@ -5,22 +5,33 @@
  *   POST /register           public
  *   POST /login              public
  *   POST /logout             public
- *   POST /forgot-password    public
- *   POST /reset-password     public
- *   POST /change-password    user
+ *   POST /forgot-password         public  step 1: email a 6-digit code
+ *   POST /forgot-password/verify  public  step 2: check the code, receive a reset token
+ *   POST /reset-password          public  step 3: new password with the reset token
+ *   POST /change-password         user
  */
 import { Router } from "express";
-import { z } from "zod";
-import { loginSchema, passwordSchema, registerSchema } from "@fashinza/shared/validation/auth.js";
+import { forgotPasswordSchema, loginSchema, registerSchema, resetCodeSchema, resetPasswordSchema } from "@fashinza/shared/validation/auth.js";
 import { changePasswordSchema } from "@fashinza/shared/validation/profile.js";
-import { config } from "../config.js";
 import { createSession, destroySession, getCurrentUser } from "../auth/session.js";
 import { ok, readForm, validateForm } from "../lib/form.js";
+import { composeEmail, sendMailInBackground } from "../lib/mail.js";
 import { enforceRateLimit, RATE_LIMIT_MESSAGES } from "../lib/rate-limit.js";
 import { clientIp, userAgent } from "../lib/request.js";
 import { requireUser } from "../middleware/auth.js";
 import { User } from "../models/User.js";
-import { authenticate, changePassword, createPasswordReset, currentUserSummary, homeFor, registerAccount, resetPassword } from "../services/accounts.js";
+import { invalid } from "../lib/errors.js";
+import {
+  authenticate,
+  changePassword,
+  createPasswordResetCode,
+  currentUserSummary,
+  homeFor,
+  registerAccount,
+  resetPassword,
+  RESET_CODE_TTL_MINUTES,
+  verifyPasswordResetCode,
+} from "../services/accounts.js";
 
 const router = Router();
 const HOUR = 60 * 60 * 1000;
@@ -28,11 +39,14 @@ const TOO_MANY = RATE_LIMIT_MESSAGES.attempts;
 
 const sessionMeta = (req) => ({ ip: clientIp(req), userAgent: userAgent(req) });
 
-export const forgotSchema = z.object({ email: z.string().trim().toLowerCase().email("Enter a valid email address.") });
+/** Kept under their old names for callers of the previous reset-link flow. */
+export const forgotSchema = forgotPasswordSchema;
+export const resetSchema = resetPasswordSchema;
 
-export const resetSchema = z
-  .object({ token: z.string().min(10), password: passwordSchema, confirmPassword: z.string() })
-  .refine((d) => d.password === d.confirmPassword, { path: ["confirmPassword"], message: "Passwords do not match." });
+/** Same answer whether or not the account exists, so emails cannot be enumerated. */
+export const FORGOT_PASSWORD_MESSAGE = `If an account exists for that email, we've sent a 6-digit code. It expires in ${RESET_CODE_TTL_MINUTES} minutes.`;
+/** Seconds before the client offers "Resend code" (the server enforces the same per email). */
+export const RESEND_AFTER_SECONDS = 60;
 
 /** Only same-site relative paths are allowed as a post-login destination. */
 export function loginDestination(next, role) {
@@ -73,22 +87,44 @@ router.post("/logout", async (req, res) => {
 });
 
 router.post("/forgot-password", async (req, res) => {
-  enforceRateLimit(`forgot:${clientIp(req)}`, 5, HOUR, TOO_MANY);
-  const { email } = validateForm(forgotSchema, readForm(req));
-  const token = await createPasswordReset(email);
-  if (token) {
-    const link = `${config.appUrl ?? "http://localhost:3000"}/reset-password?token=${token}`;
-    // No email service is configured in this build. In development the link is written to the
-    // server log so the flow can be tested; in production it is never logged.
-    if (!config.isProduction) console.info(`[password-reset] ${email}: ${link}`);
+  enforceRateLimit(`forgot:${clientIp(req)}`, 10, HOUR, TOO_MANY);
+  const { email } = validateForm(forgotPasswordSchema, readForm(req));
+  // Per email (whether or not an account exists): one code a minute, five an hour.
+  enforceRateLimit(`forgot-wait:${email}`, 1, RESEND_AFTER_SECONDS * 1000, "Please wait a minute before requesting another code.");
+  enforceRateLimit(`forgot-email:${email}`, 5, HOUR, "Too many codes were requested for this email. Please try again in an hour.");
+  const issued = await createPasswordResetCode(email);
+  if (issued) {
+    const { text, html } = composeEmail({
+      greeting: `Hello ${issued.user.name.split(" ")[0] || issued.user.name},`,
+      paragraphs: [
+        "Use this code to reset your Fashinza password. Enter it on the page where you asked for it.",
+        `The code expires in ${RESET_CODE_TTL_MINUTES} minutes and works once. If you didn't ask to reset your password, you can ignore this email; your password stays the same.`,
+      ],
+      code: issued.code,
+    });
+    // Not awaited: the answer must not wait for (or reveal) the delivery.
+    sendMailInBackground({ to: issued.user.email, subject: "Your Fashinza password reset code", text, html });
   }
-  // Same response whether or not the account exists, so emails cannot be enumerated.
-  ok(res, { message: "If an account exists for that email, a reset link has been issued. It expires in one hour." });
+  ok(res, { message: FORGOT_PASSWORD_MESSAGE, email, resendAfter: RESEND_AFTER_SECONDS });
+});
+
+router.post("/forgot-password/verify", async (req, res) => {
+  enforceRateLimit(`reset-code:${clientIp(req)}`, 30, 15 * 60 * 1000, TOO_MANY);
+  const form = readForm(req);
+  const parsed = resetCodeSchema.safeParse({ email: form.email, code: form.code });
+  if (!parsed.success) {
+    // Show the code's own message (e.g. "You have entered the incorrect code.") rather than the generic one.
+    const issue = parsed.error.issues.find((i) => i.path[0] === "code") ?? parsed.error.issues[0];
+    const field = String(issue.path[0] ?? "code");
+    throw invalid(issue.message, { [field]: issue.message });
+  }
+  const { token } = await verifyPasswordResetCode(parsed.data.email, parsed.data.code);
+  ok(res, { resetToken: token });
 });
 
 router.post("/reset-password", async (req, res) => {
   enforceRateLimit(`reset:${clientIp(req)}`, 10, HOUR, TOO_MANY);
-  const data = validateForm(resetSchema, readForm(req));
+  const data = validateForm(resetPasswordSchema, readForm(req));
   await resetPassword(data.token, data.password);
   ok(res, { redirectTo: "/login?reset=1" });
 });

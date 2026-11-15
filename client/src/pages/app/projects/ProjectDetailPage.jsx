@@ -7,6 +7,7 @@ import { LegacyHashTab } from "@/components/app/legacy-hash-tab";
 import { ProjectProgress, lifecycleStep } from "@/components/projects/project-progress";
 import { ActivityTimeline } from "@/components/app/activity-timeline";
 import { AttachmentList } from "@/components/projects/attachment-list";
+import { ColourList } from "@/components/projects/colour-swatches";
 import { FileUploader } from "@/components/projects/file-uploader";
 import { MatchCard } from "@/components/projects/match-card";
 import { cn } from "@fashinza/shared/utils.js";
@@ -299,7 +300,7 @@ export default function ProjectPage() {
       <PageHeader
         eyebrow="Production project"
         title={project.name}
-        breadcrumbs={[{ href: actor.role === "ADMIN" ? "/admin/orders" : "/projects", label: actor.role === "ADMIN" ? "Admin" : "Projects" }]}
+        breadcrumbs={[{ href: actor.role === "ADMIN" ? "/admin/projects" : "/projects", label: actor.role === "ADMIN" ? "All projects" : "Projects" }]}
         meta={<StatusBadge map={PROJECT_STATUS} value={project.status} />}
         description={`${categoryLabel(project.category)} · ${formatNumber(project.quantity)} units · delivery by ${formatDate(project.deadline)}${
           project.deadline && !["DELIVERED", "CANCELLED"].includes(project.status) ? ` (${relativeDays(project.deadline)})` : ""
@@ -431,7 +432,7 @@ export default function ProjectPage() {
             columns={3}
             items={[
               { label: "Fabric", value: project.fabricRequirements },
-              { label: "Colours", value: project.colors },
+              { label: "Colours", value: <ColourList value={project.colors} /> },
               { label: "Sizes", value: project.sizes.join(", ") },
               { label: "Target price", value: project.targetUnitPrice ? `${formatMoney(project.targetUnitPrice, project.currency)} per unit` : "Not shared" },
               { label: "MOQ limit", value: project.maxMoq ? formatNumber(project.maxMoq) : "Up to the order quantity" },

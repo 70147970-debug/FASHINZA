@@ -7,7 +7,10 @@ import { BasicsStep, QuantityStep, SamplesStep, SpecificationsStep, Sustainabili
 import { STEP_INFO, WizardSteps } from "@/components/projects/wizard-steps";
 import { FileUploader } from "@/components/projects/file-uploader";
 import { AttachmentList } from "@/components/projects/attachment-list";
+import { ColourList } from "@/components/projects/colour-swatches";
 import { DeleteDraftButton, SubmitProjectForm } from "@/components/projects/project-buttons";
+import { BrandApprovalNotice } from "@/components/app/brand-approval";
+import { useSessionUser } from "@/lib/session";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { FILES_STEP, LAST_FIELD_STEP, PROJECT_STEPS, REVIEW_STEP } from "@fashinza/shared/validation/project.js";
@@ -41,6 +44,8 @@ export async function loader({ request, params }) {
 
 export default function EditProjectPage() {
   const { id, sp, project, submitIssues } = useLoaderData();
+  // A brand whose approval was withdrawn keeps its drafts but cannot change or submit them (BRAND_NOT_APPROVED).
+  const user = useSessionUser();
   const isDraft = project.status === "DRAFT";
   const maxStep = isDraft ? REVIEW_STEP : LAST_FIELD_STEP;
   const step = Math.min(Math.max(Number(sp.step) || (isDraft ? project.wizardStep : 1), 1), maxStep);
@@ -85,6 +90,7 @@ export default function EditProjectPage() {
         }
         actions={isDraft ? <DeleteDraftButton projectId={id} /> : undefined}
       />
+      <BrandApprovalNotice user={user} />
       {sp.saved && (
         <Alert tone="success" className="mb-6">
           Draft saved. You can leave and continue later from your projects list.
@@ -201,7 +207,7 @@ export default function EditProjectPage() {
                       items: [
                         { label: "Fabric", value: project.fabricRequirements },
                         { label: "Fabrics to match", value: project.fabrics.join(", ") || "—" },
-                        { label: "Colours", value: project.colors },
+                        { label: "Colours", value: <ColourList value={project.colors} /> },
                         { label: "Sizes", value: project.sizes.join(", ") || "—" },
                         { label: "Manufacturing requirements", value: project.requiredCapabilities.join(", ") || "None", full: true },
                       ],

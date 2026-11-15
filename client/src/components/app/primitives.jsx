@@ -110,7 +110,7 @@ export function MetricStrip({ children, columns, className, label }) {
   const count = React.Children.toArray(children).filter(Boolean).length;
   const cols = metricCols[Math.min(Math.max(columns ?? count, 1), 8)];
   return (
-    <section aria-label={label} className={cn("mb-6 overflow-hidden rounded-lg border border-line bg-surface sm:mb-8", className)}>
+    <section aria-label={label} className={cn("mb-6 overflow-hidden rounded-lg border border-line bg-surface shadow-card sm:mb-8", className)}>
       <div className={cn("-ml-px -mt-px grid", cols)}>{children}</div>
     </section>
   );
@@ -217,7 +217,7 @@ export function Panel({ title, description, actions, children, className, id, bo
   return (
     <section
       id={id}
-      className={cn("min-w-0 scroll-mt-24 rounded-lg border border-line bg-surface", className)}
+      className={cn("min-w-0 scroll-mt-24 rounded-lg border border-line bg-surface shadow-card", className)}
       aria-labelledby={id && title ? `${id}-title` : undefined}
     >
       {(title || actions) && (
@@ -262,12 +262,24 @@ export function PageSection({ title, description, actions, children, id, classNa
   );
 }
 
-/** Empty state: 40px hairline icon tile, serif title, one sentence, one action. `variant="plain"` drops the card chrome (use inside a Panel). */
+/**
+ * Empty state: a glass icon disc on a soft forest-green halo, serif title, one sentence, one action.
+ * `variant="plain"` drops the card chrome (use inside a Panel).
+ */
 export function EmptyState({ icon: Icon, title, description, action, className, variant = "card" }) {
   return (
-    <div className={cn("flex flex-col items-center px-6 py-12 text-center", variant === "card" && "rounded-lg border border-line bg-surface", className)}>
-      <span className="mb-4 grid size-11 place-items-center rounded-md border border-line bg-canvas text-ink-muted">
-        <Icon className="size-5" strokeWidth={1.5} aria-hidden />
+    <div
+      className={cn(
+        "flex flex-col items-center px-6 py-12 text-center",
+        variant === "card" && "rounded-lg border border-dashed border-line-strong bg-surface/70 bg-[image:var(--liquid-ambient)]",
+        className,
+      )}
+    >
+      <span className="relative mb-5 grid size-14 place-items-center" aria-hidden>
+        <span className="absolute inset-0 rounded-full bg-accent-soft blur-md" />
+        <span className="glass relative grid size-12 place-items-center rounded-full border border-accent-line text-accent-strong">
+          <Icon className="size-5" strokeWidth={1.5} />
+        </span>
       </span>
       <h2 className="type-heading text-ink">{title}</h2>
       <div className="mt-1.5 max-w-sm text-sm leading-6 text-ink-muted">{description}</div>
@@ -331,7 +343,7 @@ export function DataTable({ children, cards, label, className }) {
         role={label ? "region" : undefined}
         aria-label={label}
         tabIndex={label ? 0 : undefined}
-        className={cn("relative min-w-0 overflow-x-auto rounded-lg border border-line bg-surface", cards && "hidden md:block", className)}
+        className={cn("relative min-w-0 overflow-x-auto rounded-lg border border-line bg-surface shadow-card", cards && "hidden md:block", className)}
       >
         {children}
       </div>
@@ -359,7 +371,7 @@ export function MobileCard({ href, title, badge, meta, children }) {
       {children && <span className="mt-3 block">{children}</span>}
     </>
   );
-  const cls = "block rounded-lg border border-line bg-surface p-4";
+  const cls = "block rounded-lg border border-line bg-surface p-4 shadow-card";
   return (
     <li>
       {href ? (
@@ -552,8 +564,9 @@ export function AnchorNav({ items, label = "On this page", className }) {
  * Loading
  * -----------------------------------------------------------------------------------------------*/
 
+/** Loading placeholder with a slow liquid shimmer (static under reduced motion). */
 export function Skeleton({ className }) {
-  return <div className={cn("animate-pulse rounded-sm bg-surface-muted", className)} aria-hidden />;
+  return <div className={cn("skeleton rounded-sm", className)} aria-hidden />;
 }
 
 /** Route-level loading layout (header, metric strip, two-column cards). `variant="list"` shows a table instead. */
@@ -566,7 +579,7 @@ export function PageSkeleton({ variant = "dashboard" }) {
         <Skeleton className="mt-3 h-4 w-96 max-w-full" />
       </div>
       {variant !== "list" && (
-        <div className="mb-8 grid grid-cols-2 overflow-hidden rounded-lg border border-line bg-surface lg:grid-cols-4">
+        <div className="mb-8 grid grid-cols-2 overflow-hidden rounded-lg border border-line bg-surface shadow-card lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className={cn("space-y-3 p-5", i > 0 && "border-l border-line")}>
               <Skeleton className="h-3 w-24" />
@@ -576,7 +589,7 @@ export function PageSkeleton({ variant = "dashboard" }) {
         </div>
       )}
       {variant === "list" ? (
-        <div className="overflow-hidden rounded-lg border border-line bg-surface">
+        <div className="overflow-hidden rounded-lg border border-line bg-surface shadow-card">
           <div className="h-10 border-b border-line-strong" />
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="flex items-center gap-6 border-b border-line-subtle px-5 py-4 last:border-0">
@@ -589,7 +602,7 @@ export function PageSkeleton({ variant = "dashboard" }) {
       ) : (
         <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
           {[0, 1].map((c) => (
-            <div key={c} className="rounded-lg border border-line bg-surface">
+            <div key={c} className="rounded-lg border border-line bg-surface shadow-card">
               <div className="border-b border-line px-5 py-4">
                 <Skeleton className="h-4 w-36" />
               </div>

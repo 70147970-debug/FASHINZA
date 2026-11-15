@@ -3,7 +3,7 @@
  * src/server/services/profiles.ts — reviewDocument, decideVerification, revokeVerification — and
  * src/server/services/accounts.ts — setUserStatus; docs/mern/api.md §5 places them here).
  */
-import { VerificationStatus } from "@fashinza/shared/enums.js";
+import { ProjectStatus, VerificationStatus } from "@fashinza/shared/enums.js";
 import { withTransaction } from "../db.js";
 import { revokeAllSessions } from "../auth/session.js";
 import { assertRole } from "../lib/access.js";
@@ -28,6 +28,8 @@ import {
   User,
   WebhookEvent,
   IssueReport,
+  MatchResult,
+  Quotation,
 } from "../models/index.js";
 
 const page = (p) => Math.max(1, p ?? 1);
@@ -411,7 +413,8 @@ export async function resolveAuditTargets(items) {
     const org = mp?.businessName ?? userBrands.get(id)?.companyName;
     out[id] = {
       name: org ? `${u.name} (${org})` : u.name,
-      href: mp ? `/admin/factories/${idOf(mp._id)}` : `/admin/users?q=${encodeURIComponent(u.name)}`,
+      // Brands have their own review page (brand approval); other accounts open the users list.
+      href: mp ? `/admin/factories/${idOf(mp._id)}` : userBrands.has(id) ? `/admin/brands/${id}` : `/admin/users?q=${encodeURIComponent(u.name)}`,
     };
   }
   for (const [id, p] of profiles) out[id] = { name: p.businessName, href: `/admin/factories/${id}` };
@@ -438,6 +441,64 @@ export async function resolveAuditTargets(items) {
     if (name) out[key] = { name };
   }
   return out;
+}
+
+// ───────────────────────────── Projects ─────────────────────────────
+
+/** Projects matching the admin search: project name, or the brand's company name, person or email. */
+async function adminProjectSearch(q) {
+  if (!q) return {};
+  const rx = containsInsensitive(q);
+  const [byCompany, byUser] = await Promise.all([BrandProfile.distinct("userId", { companyName: rx }), User.distinct("_id", { role: "BRAND", $or: [{ name: rx }, { email: rx }] })]);
+  return { $or: [{ name: rx }, { brandId: { $in: [...byCompany, ...byUser] } }] };
+}
+
+/**
+ * Every project on the platform for administrators (read-only links to each project page), newest activity
+ * first. `status`: ACTIVE (between submission and delivery), a ProjectStatus, or nothing for all.
+ * @param {{ status?: string, q?: string, page?: number }} f
+ */
+export async function listAllProjects(actor, f = {}) {
+  assertRole(actor, "ADMIN");
+  const size = 20;
+  const search = await adminProjectSearch(f.q);
+  const statusWhere = f.status === "ACTIVE" ? { status: { $nin: ["DRAFT", "DELIVERED", "CANCELLED"] } } : f.status ? { status: f.status } : {};
+  const where = { ...search, ...statusWhere };
+  const [rows, total, byStatus] = await Promise.all([
+    Project.find(where)
+      .sort({ updatedAt: -1, _id: -1 })
+      .skip((page(f.page) - 1) * size)
+      .limit(size)
+      .lean(),
+    Project.countDocuments(where),
+    countBy(Project, "status", ProjectStatus, search),
+  ]);
+  const ids = rows.map((p) => p._id);
+  const brandIds = rows.map((p) => p.brandId);
+  const [brands, brandProfiles, orders, quoteCounts, matchCounts] = await Promise.all([
+    mapById(User, brandIds, { name: 1, email: 1, approvalStatus: 1 }),
+    oneByRef(BrandProfile, "userId", brandIds, { userId: 1, companyName: 1 }),
+    oneByRef(Order, "projectId", ids, { projectId: 1, reference: 1, status: 1 }),
+    ids.length
+      ? Quotation.aggregate([{ $match: { projectId: { $in: ids }, status: { $in: ["SUBMITTED", "REVISION_REQUESTED"] } } }, { $group: { _id: "$projectId", n: { $sum: 1 } } }])
+      : [],
+    ids.length ? MatchResult.aggregate([{ $match: { projectId: { $in: ids } } }, { $group: { _id: "$projectId", n: { $sum: 1 } } }]) : [],
+  ]);
+  const quotes = new Map(quoteCounts.map((c) => [idOf(c._id), c.n]));
+  const matches = new Map(matchCounts.map((c) => [idOf(c._id), c.n]));
+  const items = rows.map((p) => {
+    const b = brands.get(idOf(p.brandId));
+    const bp = brandProfiles.get(idOf(p.brandId));
+    const o = orders.get(idOf(p._id));
+    return {
+      ...serialize(Project, p),
+      brand: b ? { id: idOf(b._id), name: b.name, email: b.email, companyName: bp?.companyName ?? null, approvalStatus: b.approvalStatus ?? "APPROVED" } : null,
+      order: o ? { id: idOf(o._id), reference: o.reference, status: o.status } : null,
+      _count: { quotations: quotes.get(idOf(p._id)) ?? 0, matchResults: matches.get(idOf(p._id)) ?? 0 },
+    };
+  });
+  const counts = Object.fromEntries(byStatus.map((r) => [r.status, r._count]));
+  return { items, total, page: page(f.page), pages: pages(total, size), counts };
 }
 
 // ───────────────────────────── Enquiries ─────────────────────────────

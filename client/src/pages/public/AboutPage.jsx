@@ -88,8 +88,8 @@ export default function AboutPage() {
           <div className="border-l-2 border-accent pl-6 lg:col-span-7 lg:mt-[3.75rem]">
             <p className="text-[1.0625rem] leading-8 text-ink">
               Fashinza is being developed as a Final Year Project in the Department of Software Engineering at The University of Lahore. This version is a
-              working prototype: payments are simulated (no real money moves), production updates refresh every few seconds, and email notifications are not
-              switched on yet. Demand forecasting, message translation and a more advanced matching service are planned for later versions.
+              working prototype: payments are simulated (no real money moves), production updates refresh every few seconds, and email is used only for account
+              messages such as password reset codes. Demand forecasting, message translation and a more advanced matching service are planned for later versions.
             </p>
           </div>
         </div>

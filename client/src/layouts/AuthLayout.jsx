@@ -21,14 +21,14 @@ const POINTS = [
 ];
 
 /**
- * Editorial split: the form on ivory (left), and a photographic panel (lg+) — designers fitting a sample, under a
+ * Editorial split: the form on ivory with soft liquid glows (left), and a photographic panel (lg+) — designers fitting a sample, under a
  * scrim that deepens towards the bottom where the ivory copy sits. Below lg the panel is replaced by a ruled list
  * under the form.
  */
 export default function AuthLayout() {
   return (
     <div className="grid min-h-dvh bg-canvas lg:grid-cols-[minmax(0,1fr)_minmax(0,0.92fr)]">
-      <main id="main" className="flex min-w-0 flex-col">
+      <main id="main" className="bg-liquid flex min-w-0 flex-col">
         <div className="flex h-16 items-center justify-between gap-2 border-b border-line px-4 sm:px-8 lg:border-b-0 lg:px-12">
           <Logo />
           <div className="flex items-center gap-1 sm:gap-2">

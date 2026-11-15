@@ -8,6 +8,7 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
+import { NewPasswordField } from "@/components/forms/password-requirements";
 import { cn } from "@fashinza/shared/utils.js";
 
 const ROLES = [
@@ -78,6 +79,12 @@ export function RegisterForm({ defaultRole }) {
           ))}
         </div>
         {errors.role && <p className="mt-1.5 text-xs text-danger-strong">{errors.role}</p>}
+        {role === "BRAND" && (
+          <p className="mt-2 text-xs leading-5 text-ink-muted">
+            Fashinza checks every new brand within 24–48 hours. You can complete your company profile straight away and create projects once
+            your brand is approved.
+          </p>
+        )}
       </fieldset>
       <Field id="name" label="Full name" required error={errors.name}>
         <Input name="name" autoComplete="name" />
@@ -88,9 +95,7 @@ export function RegisterForm({ defaultRole }) {
       <Field id="email" label="Work email" required error={errors.email}>
         <Input name="email" type="email" autoComplete="email" />
       </Field>
-      <Field id="password" label="Password" required error={errors.password} hint="At least 8 characters, with a letter and a number.">
-        <Input name="password" type="password" autoComplete="new-password" />
-      </Field>
+      <NewPasswordField id="password" label="Password" error={errors.password} />
       <Field id="confirmPassword" label="Confirm password" required error={errors.confirmPassword}>
         <Input name="confirmPassword" type="password" autoComplete="new-password" />
       </Field>

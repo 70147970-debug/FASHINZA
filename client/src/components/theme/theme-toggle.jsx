@@ -40,7 +40,7 @@ export function ThemeToggle({ className, align = "end" }) {
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content align={align} sideOffset={8} className="z-50 w-44 rounded-lg border border-line bg-surface-raised p-1 text-ink shadow-pop">
+        <DropdownMenu.Content align={align} sideOffset={8} className="fz-menu glass-strong z-50 w-44 rounded-xl border border-line p-1 text-ink">
           <DropdownMenu.Label className="label-caps px-2.5 pb-1 pt-1.5 text-ink-muted">Theme</DropdownMenu.Label>
           <DropdownMenu.RadioGroup value={pref} onValueChange={(v) => setThemePreference(v)}>
             {THEME_OPTIONS.map((o) => {

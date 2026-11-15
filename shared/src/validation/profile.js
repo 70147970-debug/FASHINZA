@@ -1,5 +1,8 @@
 import { z } from "zod";
 import { MACHINERY_LIMITS } from "../constants.js";
+import { GarmentCategory } from "../enums.js";
+import { passwordSchema } from "./auth.js";
+import { socialLinksSchema } from "../social.js";
 
 /** @param {number} max */
 const optionalText = (max) => z.string().trim().max(max).optional().transform((v) => v || undefined);
@@ -22,13 +25,13 @@ export const brandProfileSchema = z.object({
   country: z.string().trim().min(2, "Enter your country.").max(80),
   city: optionalText(80),
   website: optionalUrl,
+  socialLinks: socialLinksSchema,
   phone: optionalText(40),
   description: optionalText(2000),
 });
 
-const CATEGORY_VALUES = /** @type {const} */ ([
-  "T_SHIRTS", "SHIRTS", "DRESSES", "DENIM", "TROUSERS", "ACTIVEWEAR", "OUTERWEAR", "KNITWEAR", "HOODIES_SWEATSHIRTS", "KIDSWEAR", "SLEEPWEAR", "ACCESSORIES",
-]);
+/** Every garment category (shared/src/enums.js), including the MERN-only additions. */
+const CATEGORY_VALUES = /** @type {[string, ...string[]]} */ ([...GarmentCategory]);
 
 /**
  * One machinery row from the profile form. A row left completely empty is ignored; a half-filled row is
@@ -82,6 +85,7 @@ export const manufacturerProfileSchema = z
     contactEmail: z.string().trim().toLowerCase().email("Enter a valid email address.").max(200),
     contactPhone: optionalText(40),
     website: optionalUrl,
+    socialLinks: socialLinksSchema,
     machinery: machinerySchema,
   })
   .refine((d) => d.production.length > 0, { path: ["production"], message: "Choose at least one production capability." })
@@ -100,12 +104,8 @@ export const documentSchema = z
 export const changePasswordSchema = z
   .object({
     currentPassword: z.string().min(1, "Enter your current password."),
-    newPassword: z
-      .string()
-      .min(8, "Use at least 8 characters.")
-      .max(128)
-      .regex(/[A-Za-z]/, "Include at least one letter.")
-      .regex(/[0-9]/, "Include at least one number."),
+    // The password policy (12–16 characters, capital, small letter, number, symbol, no spaces) lives in ./auth.js.
+    newPassword: passwordSchema,
     confirmPassword: z.string(),
   })
   .refine((d) => d.newPassword === d.confirmPassword, { path: ["confirmPassword"], message: "Passwords do not match." });

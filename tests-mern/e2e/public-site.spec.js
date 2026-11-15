@@ -64,7 +64,9 @@ test("the User Guide in the header opens a video demo of the whole process, with
 
   // Chapters jump to their part of the video.
   const chapters = page.getByRole("navigation", { name: "Video chapters" });
-  await expect(chapters.getByRole("button")).toHaveCount(10);
+  // 11 chapters, including the brand approval by an administrator (tests-mern/demo/record-user-guide.js).
+  await expect(chapters.getByRole("button")).toHaveCount(11);
+  await expect(chapters.getByRole("button", { name: /Fashinza approves the brand/ })).toBeVisible();
   await chapters.getByRole("button", { name: /The brand accepts a quotation/ }).click();
   await expect.poll(() => video.evaluate((v) => v.currentTime)).toBeGreaterThan(30);
   await expect(chapters.getByRole("button", { name: /The brand accepts a quotation/ })).toHaveAttribute("aria-current", "true");

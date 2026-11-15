@@ -24,6 +24,7 @@ import { ProjectRevision } from "../models/ProjectRevision.js";
 import { Quotation } from "../models/Quotation.js";
 import { QuotationRevision } from "../models/QuotationRevision.js";
 import { User } from "../models/User.js";
+import { assertBrandApproved } from "./brand-approval.js";
 import { runMatchingForProject } from "./matching.js";
 
 const EDITABLE_AFTER_SUBMIT = ["SUBMITTED", "QUOTING"];
@@ -91,6 +92,17 @@ async function ownedProject(actor, projectId, session) {
 }
 
 /**
+ * ownedProject for changes that need an approved brand (edit, files, submit, matching): a brand waiting for
+ * approval, or rejected, gets 403 BRAND_NOT_APPROVED (services/brand-approval.js). Cancelling and deleting drafts
+ * stay possible.
+ */
+async function ownedProjectForChange(actor, projectId, session) {
+  const project = await ownedProject(actor, projectId, session);
+  await assertBrandApproved(actor, session);
+  return project;
+}
+
+/**
  * Creates or updates a project from wizard step data. Drafts can be saved with partial data;
  * submitted projects can still be edited until a quotation is accepted, and every such change
  * is stored as a ProjectRevision and announced to factories that are quoting.
@@ -98,6 +110,9 @@ async function ownedProject(actor, projectId, session) {
  */
 export async function saveProject(actor, projectId, raw, step) {
   assertRole(actor, "BRAND");
+  // Brands waiting for approval (or rejected) cannot create or edit projects; checked before validation so the
+  // reason is shown instead of field errors.
+  await assertBrandApproved(actor);
   const parsed = projectDraftSchema.partial({ name: true, category: true }).safeParse(raw);
   if (!parsed.success) throw new AppError(INVALID_FIELDS, "INVALID", zodFieldErrors(parsed.error));
   // Only the fields sent by this wizard step are written; defaults must not overwrite other steps.
@@ -158,7 +173,7 @@ export async function saveProject(actor, projectId, raw, step) {
 
 /** Validates the complete project, then runs factory matching. */
 export async function submitProject(actor, projectId) {
-  const project = await ownedProject(actor, projectId);
+  const project = await ownedProjectForChange(actor, projectId);
   if (project.status !== "DRAFT") throw conflict("This project has already been submitted.");
   const check = projectSubmitSchema.safeParse(forValidation(project));
   if (!check.success) throw new AppError("Some required details are missing. Complete the highlighted steps before submitting.", "INVALID", zodFieldErrors(check.error));
@@ -192,7 +207,7 @@ export async function submitProject(actor, projectId) {
 }
 
 export async function rerunMatching(actor, projectId) {
-  const project = await ownedProject(actor, projectId);
+  const project = await ownedProjectForChange(actor, projectId);
   if (!EDITABLE_AFTER_SUBMIT.includes(project.status)) throw conflict("Matching can only be run before a quotation is accepted.");
   return withTransaction(async (session) => {
     const summary = await runMatchingForProject(session, project._id.toHexString(), actor.id);
@@ -245,7 +260,7 @@ export async function deleteDraft(actor, projectId) {
  * @param {{ originalname: string, mimetype: string, size: number, buffer: Buffer }} file multer-like file
  */
 export async function addAttachment(actor, projectId, file, kind, notes) {
-  const project = await ownedProject(actor, projectId);
+  const project = await ownedProjectForChange(actor, projectId);
   if (["CANCELLED", "DELIVERED"].includes(project.status)) throw conflict("Files cannot be added to a closed project.");
   const stored = await saveUpload(file, "projects", { imagesOnly: attachmentKind(kind).imagesOnly });
   const id = project._id.toHexString();

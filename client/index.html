@@ -17,9 +17,27 @@
     <script>
       (function(){var d=document.documentElement,k="fz-theme",m;try{m=window.matchMedia("(prefers-color-scheme: dark)")}catch(e){}function p(){var v=null;try{v=localStorage.getItem(k)}catch(e){}return v==="light"||v==="dark"?v:"system"}function a(){var v=p();d.setAttribute("data-theme",v==="system"?(m&&m.matches?"dark":"light"):v)}a();try{m&&m.addEventListener("change",function(){if(p()==="system")a()})}catch(e){}})();
     </script>
+    <!--
+      Boot splash: while the first page's code and data load, the root is empty; this quiet wordmark with a
+      liquid shimmer shows instead of a blank page (only if loading takes longer than ~300 ms). It hides itself
+      as soon as React renders anything into #root. Colours follow <html data-theme>.
+    -->
+    <style>
+      #fz-boot{position:fixed;inset:0;display:grid;place-items:center;background:#f8f6f1;color:#202020;opacity:0;animation:fz-boot-in .4s ease .3s forwards;z-index:0}
+      [data-theme=dark] #fz-boot{background:#161616;color:#f8f6f1}
+      #root:not(:empty)~#fz-boot{display:none}
+      #fz-boot p{margin:0;font:500 1.75rem/1 "Playfair Display Variable",Georgia,"Times New Roman",serif;letter-spacing:-.03em}
+      #fz-boot p span{color:#536b55}
+      [data-theme=dark] #fz-boot p span{color:#8fab91}
+      #fz-boot i{display:block;width:7.5rem;height:2px;margin:1rem auto 0;border-radius:2px;background:linear-gradient(90deg,transparent,#b7a895,transparent) 0 0/50% 100% no-repeat,rgba(183,168,149,.25);animation:fz-boot-bar 1.4s ease-in-out infinite}
+      @keyframes fz-boot-in{to{opacity:1}}
+      @keyframes fz-boot-bar{from{background-position:-100% 0,0 0}to{background-position:200% 0,0 0}}
+      @media (prefers-reduced-motion:reduce){#fz-boot,#fz-boot i{animation:none;opacity:1}}
+    </style>
   </head>
   <body class="min-h-dvh">
     <div id="root"></div>
+    <div id="fz-boot" role="status" aria-label="Loading Fashinza"><div><p aria-hidden="true">Fashinza<span>.</span></p><i aria-hidden="true"></i></div></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

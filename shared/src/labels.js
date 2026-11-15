@@ -106,6 +106,13 @@ export const USER_STATUS = {
   SUSPENDED: { label: "Suspended", tone: "danger" },
 };
 
+/** Brand approval (User.approvalStatus). A missing value reads as APPROVED. @type {StatusMap} */
+export const APPROVAL_STATUS = {
+  PENDING: { label: "Awaiting approval", tone: "warning" },
+  APPROVED: { label: "Approved", tone: "success" },
+  REJECTED: { label: "Not approved", tone: "danger" },
+};
+
 /** @type {StatusMap} */
 export const INQUIRY_STATUS = {
   NEW: { label: "New", tone: "warning" },
